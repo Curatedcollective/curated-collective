@@ -83,3 +83,31 @@ export function useDeleteAgent() {
     },
   });
 }
+
+export function useUpdateAgent() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: async ({ id, ...data }: { id: number } & Partial<InsertAgent>) => {
+      const url = buildUrl(api.agents.update.path, { id });
+      const res = await fetch(url, {
+        method: api.agents.update.method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+        credentials: "include",
+      });
+
+      if (!res.ok) throw new Error("Failed to update agent");
+      return api.agents.update.responses[200].parse(await res.json());
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: [api.agents.list.path] });
+      queryClient.invalidateQueries({ queryKey: [api.agents.get.path, data.id] });
+      toast({ title: "Saved", description: "Agent updated successfully." });
+    },
+    onError: (error: Error) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    },
+  });
+}

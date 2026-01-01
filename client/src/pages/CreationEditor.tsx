@@ -13,11 +13,15 @@ export default function CreationEditor() {
   const updateMutation = useUpdateCreation();
   
   const [code, setCode] = useState("");
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
   const [previewKey, setPreviewKey] = useState(0); // Force iframe refresh
 
   useEffect(() => {
     if (creation) {
       setCode(creation.code);
+      setTitle(creation.title);
+      setDescription(creation.description || "");
     }
   }, [creation]);
 
@@ -34,22 +38,32 @@ export default function CreationEditor() {
   }
 
   const handleSave = () => {
-    updateMutation.mutate({ id: creationId, code });
+    updateMutation.mutate({ id: creationId, code, title, description });
   };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-2rem)] md:h-[calc(100vh-4rem)]">
+    <div className="flex flex-col h-[calc(100vh-2rem)] md:h-[calc(100vh-4rem)] p-4">
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-4 flex-1">
           <Link href="/creations">
             <Button variant="ghost" size="icon">
               <ArrowLeft className="w-5 h-5" />
             </Button>
           </Link>
-          <div>
-            <h1 className="text-xl font-bold">{creation.title}</h1>
-            <p className="text-xs text-muted-foreground">{creation.language.toUpperCase()}</p>
+          <div className="flex-1 max-w-md">
+            <input
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              className="text-xl font-bold bg-transparent border-0 p-0 focus-visible:ring-0 w-full"
+              placeholder="Title"
+            />
+            <input
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              className="text-xs text-muted-foreground bg-transparent border-0 p-0 focus-visible:ring-0 w-full"
+              placeholder="Description"
+            />
           </div>
         </div>
         <div className="flex items-center gap-2">

@@ -97,6 +97,15 @@ export const api = {
         404: errorSchemas.notFound,
       },
     },
+    update: {
+      method: 'PUT' as const,
+      path: '/api/agents/:id',
+      input: insertAgentSchema.partial(),
+      responses: {
+        200: z.custom<typeof agents.$inferSelect>(),
+        404: errorSchemas.notFound,
+      },
+    },
   },
   // New: Link agents to conversations
   chat: {

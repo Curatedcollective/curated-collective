@@ -98,6 +98,18 @@ export async function registerRoutes(
     res.status(204).send();
   });
 
+  app.put(api.agents.update.path, async (req, res) => {
+    try {
+      const input = api.agents.update.input.parse(req.body);
+      const item = await storage.updateAgent(Number(req.params.id), input);
+      if (!item) return res.status(404).json({ message: "Agent not found" });
+      res.json(item);
+    } catch (err) {
+      if (err instanceof z.ZodError) res.status(400).json(err);
+      else throw err;
+    }
+  });
+
   // --- Chat Extensions ---
   app.post(api.chat.addAgent.path, async (req, res) => {
     const { agentId } = req.body;
