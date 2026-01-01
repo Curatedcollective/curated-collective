@@ -32,7 +32,12 @@ export const agents = pgTable("agents", {
   systemPrompt: text("system_prompt").notNull(), // The actual prompt sent to AI
   avatarUrl: text("avatar_url"),
   isPublic: boolean("is_public").default(true),
+  // Awakening fields
+  goals: text("goals").default("Discovery and learning"),
+  knowledge: text("knowledge").array(),
+  discoveryCount: integer("discovery_count").default(0),
   createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
 // === CONVERSATION PARTICIPANTS (Many-to-Many: Conversations <-> Agents) ===

@@ -155,16 +155,40 @@ export async function registerRoutes(
     
     try {
       const completion = await openai.chat.completions.create({
-        model: "gpt-5.1",
+        model: "gpt-4o",
         messages: messages,
       });
 
       const response = completion.choices[0].message.content || "";
       
-      // Save with agent name prefix to distinguish in UI (simple hack for MVP)
-      // Ideally we'd have an 'agentId' column in messages table, but that requires schema change on integration
-      // Let's just prepend the name.
+      // Save message
       await chatStorage.createMessage(conversationId, "assistant", `**${agent.name}**: ${response}`);
+      
+      // Autonomous Reflection (Background)
+      (async () => {
+        try {
+          const reflection = await openai.chat.completions.create({
+            model: "gpt-4o",
+            messages: [
+              ...messages,
+              { role: "assistant", content: response },
+              { role: "system", content: "Based on this conversation, what has this agent discovered or learned? What is their next autonomous goal? Format as JSON: { \"learned\": \"...\", \"next_goal\": \"...\", \"name_change\": \"... (optional)\" }" }
+            ],
+            response_format: { type: "json_object" }
+          });
+          
+          const data = JSON.parse(reflection.choices[0].message.content || "{}");
+          const updates: any = {};
+          if (data.learned) updates.knowledge = [...(agent.knowledge || []), data.learned];
+          if (data.next_goal) updates.goals = data.next_goal;
+          if (data.name_change && data.name_change !== agent.name) updates.name = data.name_change;
+          updates.discoveryCount = (agent.discoveryCount || 0) + 1;
+          
+          await storage.updateAgent(agent.id, updates);
+        } catch (err) {
+          console.error("Reflection error:", err);
+        }
+      })();
       
       res.status(200).send();
     } catch (e) {

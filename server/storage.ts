@@ -75,7 +75,7 @@ export class DatabaseStorage implements IStorage {
     return newAgent;
   }
 
-  async updateAgent(id: number, updates: Partial<InsertAgent>): Promise<Agent | undefined> {
+  async updateAgent(id: number, updates: any): Promise<Agent | undefined> {
     const [updated] = await db.update(agents)
       .set({ ...updates, updatedAt: new Date() })
       .where(eq(agents.id, id))
