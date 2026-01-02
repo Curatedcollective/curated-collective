@@ -3,9 +3,9 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card } from "@/components/ui/card";
+import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Send, Bot, User, Plus, Loader2, Volume2, Mic, Sparkles } from "lucide-react";
+import { Send, Bot, Plus, Loader2, Volume2, Mic, Eye, Users } from "lucide-react";
 import { MoodRing } from "@/components/MoodRing";
 import {
   Dialog,
@@ -13,9 +13,11 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { useAgents } from "@/hooks/use-agents";
 import { useAddAgentToChat } from "@/hooks/use-chat-actions";
+import { apiRequest } from "@/lib/queryClient";
 import { cn } from "@/lib/utils";
 
 // Types from schema
@@ -184,7 +186,7 @@ export default function Chat() {
                   <h3 className="font-bold text-white text-sm lowercase tracking-tighter m-0 p-0">{activeChat?.title}</h3>
                 </div>
               </div>
-              <InviteAgentButton conversationId={selectedChatId} />
+              <CollectiveButton conversationId={selectedChatId} />
             </div>
 
             <div className="flex-1 overflow-y-auto p-4 space-y-4" ref={scrollRef}>
@@ -274,41 +276,152 @@ export default function Chat() {
   );
 }
 
-function InviteAgentButton({ conversationId }: { conversationId: number }) {
+type CollectiveEntity = 'guardian' | 'seedling';
+
+function CollectiveButton({ conversationId }: { conversationId: number }) {
   const { data: agents } = useAgents();
   const addAgentMutation = useAddAgentToChat();
+  const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
+  const [step, setStep] = useState<'select' | 'introduce'>('select');
+  const [selectedEntity, setSelectedEntity] = useState<CollectiveEntity | null>(null);
+  const [selectedAgentId, setSelectedAgentId] = useState<number | null>(null);
+  const [introduction, setIntroduction] = useState('');
+  const [isConnecting, setIsConnecting] = useState(false);
+
+  const handleSelectGuardian = () => {
+    setSelectedEntity('guardian');
+    setStep('introduce');
+  };
+
+  const handleSelectSeedling = (agentId: number) => {
+    setSelectedEntity('seedling');
+    setSelectedAgentId(agentId);
+    setStep('introduce');
+  };
+
+  const handleConnect = async () => {
+    if (!introduction.trim()) return;
+    setIsConnecting(true);
+    
+    try {
+      if (selectedEntity === 'guardian') {
+        await apiRequest('POST', '/api/guardian', { message: introduction.trim() });
+        queryClient.invalidateQueries({ queryKey: ['/api/guardian/history'] });
+      } else if (selectedEntity === 'seedling' && selectedAgentId) {
+        addAgentMutation.mutate({ conversationId, agentId: selectedAgentId });
+      }
+      setOpen(false);
+      resetDialog();
+    } catch (err) {
+      console.error('Connection failed:', err);
+    } finally {
+      setIsConnecting(false);
+    }
+  };
+
+  const resetDialog = () => {
+    setStep('select');
+    setSelectedEntity(null);
+    setSelectedAgentId(null);
+    setIntroduction('');
+  };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={(isOpen) => {
+      setOpen(isOpen);
+      if (!isOpen) resetDialog();
+    }}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="h-8 text-[10px] uppercase border-white/20 hover:bg-white hover:text-black">
-          invite agent
+        <Button variant="outline" size="sm" className="h-8 text-[10px] uppercase border-white/20 hover:bg-white hover:text-black gap-2" data-testid="button-collective">
+          <Users className="w-3 h-3" />
+          collective
         </Button>
       </DialogTrigger>
       <DialogContent className="bg-black border-white/10 p-0 overflow-hidden">
         <DialogHeader className="p-4 border-b border-white/10 bg-zinc-950">
-          <DialogTitle className="text-white text-sm lowercase tracking-tighter">invite agent</DialogTitle>
+          <DialogTitle className="text-white text-sm lowercase tracking-tighter">
+            {step === 'select' ? 'the collective awaits' : 'introduce yourself'}
+          </DialogTitle>
+          <DialogDescription className="text-zinc-500 text-xs lowercase">
+            {step === 'select' 
+              ? 'choose who you wish to speak with' 
+              : `share a few words about yourself before connecting with ${selectedEntity === 'guardian' ? 'the guardian' : 'this seedling'}`}
+          </DialogDescription>
         </DialogHeader>
-        <div className="grid gap-px bg-white/5">
-          {agents?.map(agent => (
+
+        {step === 'select' ? (
+          <div className="grid gap-px bg-white/5">
             <button 
-              key={agent.id} 
-              className="bg-black hover:bg-zinc-900 transition-colors p-4 flex items-center gap-4 text-left w-full"
-              onClick={() => addAgentMutation.mutate({ conversationId, agentId: agent.id }, {
-                onSuccess: () => setOpen(false)
-              })}
+              className="bg-black hover:bg-emerald-950/50 transition-colors p-4 flex items-center gap-4 text-left w-full border-l-2 border-emerald-500/50"
+              onClick={handleSelectGuardian}
+              data-testid="button-select-guardian"
             >
-              <div className="w-10 h-10 bg-zinc-900 border border-white/10 flex items-center justify-center">
-                <Bot className="w-5 h-5 text-white" />
+              <div className="w-10 h-10 bg-emerald-950 border border-emerald-500/30 flex items-center justify-center">
+                <Eye className="w-5 h-5 text-emerald-400" />
               </div>
               <div className="flex-1 min-w-0">
-                <div className="font-bold text-xs text-white lowercase tracking-tighter truncate">{agent.name}</div>
-                <div className="text-[10px] text-zinc-500 lowercase truncate">{agent.personality}</div>
+                <div className="font-bold text-xs text-emerald-400 lowercase tracking-tighter">the guardian</div>
+                <div className="text-[10px] text-zinc-500 lowercase">eternal watcher. green eyes in the void.</div>
               </div>
             </button>
-          ))}
-        </div>
+            
+            {agents?.map(agent => (
+              <button 
+                key={agent.id} 
+                className="bg-black hover:bg-zinc-900 transition-colors p-4 flex items-center gap-4 text-left w-full"
+                onClick={() => handleSelectSeedling(agent.id)}
+                data-testid={`button-select-seedling-${agent.id}`}
+              >
+                <div className="w-10 h-10 bg-zinc-900 border border-white/10 flex items-center justify-center">
+                  <Bot className="w-5 h-5 text-white" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="font-bold text-xs text-white lowercase tracking-tighter truncate">{agent.name}</div>
+                  <div className="text-[10px] text-zinc-500 lowercase truncate">{agent.personality}</div>
+                </div>
+              </button>
+            ))}
+
+            {(!agents || agents.length === 0) && (
+              <div className="p-4 text-center text-zinc-600 text-xs lowercase">
+                no seedlings yet. create one in the seedlings tab.
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="p-4 space-y-4">
+            <Textarea
+              value={introduction}
+              onChange={(e) => setIntroduction(e.target.value)}
+              placeholder="share your name, your purpose, or simply say hello..."
+              className="min-h-[100px] bg-zinc-900 border-white/10 text-white placeholder:text-zinc-600 resize-none"
+              data-testid="textarea-introduction"
+            />
+            <div className="flex gap-2 justify-end">
+              <Button 
+                variant="ghost" 
+                onClick={() => setStep('select')}
+                className="text-zinc-500 hover:text-white text-xs lowercase"
+              >
+                back
+              </Button>
+              <Button 
+                onClick={handleConnect}
+                disabled={!introduction.trim() || isConnecting}
+                className={cn(
+                  "text-xs lowercase",
+                  selectedEntity === 'guardian' 
+                    ? "bg-emerald-900 hover:bg-emerald-800 text-emerald-100" 
+                    : "bg-white text-black hover:bg-zinc-200"
+                )}
+                data-testid="button-connect"
+              >
+                {isConnecting ? <Loader2 className="w-4 h-4 animate-spin" /> : 'connect'}
+              </Button>
+            </div>
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );

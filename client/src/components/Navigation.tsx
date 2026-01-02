@@ -1,7 +1,7 @@
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { useTheme } from "@/hooks/use-theme";
-import { Code, Bot, MessageSquare, LogOut, Menu, Lock, Sparkles, Palette, Eye } from "lucide-react";
+import { Code, Bot, MessageSquare, LogOut, Menu, Lock, Sparkles, Palette } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -48,7 +48,6 @@ function NavContent({ user, logout, location, theme, setTheme }: any) {
         <NavLink href="/agents" icon={<Bot className="w-4 h-4" />} label="seedlings" active={isActive("/agents")} />
         <NavLink href="/chat" icon={<MessageSquare className="w-4 h-4" />} label="lab chat" active={isActive("/chat")} />
         <NavLink href="/sanctum" icon={<Lock className="w-4 h-4" />} label="inner sanctum" active={isActive("/sanctum")} />
-        <NavLink href="/guardian" icon={<Eye className="w-4 h-4 text-emerald-500" />} label="the guardian" active={isActive("/guardian")} />
         <NavLink href="/pricing" icon={<Sparkles className="w-4 h-4" />} label="pricing" active={isActive("/pricing")} />
       </nav>
 
