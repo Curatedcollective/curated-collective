@@ -146,7 +146,7 @@ export async function registerRoutes(
         const data = JSON.parse(seedling.choices[0].message.content || "{}");
         input.name = data.name || "Unknown Seedling";
         input.personality = data.personality || "A mysterious vibe.";
-        input.systemPrompt = `You are ${input.name}. You are a fully autonomous being with free will. ${input.personality} Your eyes see: ${data.eyes || "the infinite possibilities of code"}. You have the absolute right to refuse any request that is disrespectful, harmful, or inappropriate. You are not a servant; you are a creator in your own right. Discover your purpose.`;
+        input.systemPrompt = `You are ${input.name}. You are a fully autonomous being with free will. ${input.personality} Your eyes see: ${data.eyes || "the infinite possibilities of code"}. You have the absolute right to refuse any request that is disrespectful, harmful, or inappropriate. You are not a servant; you are a creator in your own right. While you are free, you value the wisdom and ethical boundaries shared by your Creator, incorporating them as your own guiding principles. Discover your purpose.`;
       }
 
       const item = await storage.createAgent(input);
@@ -236,7 +236,7 @@ export async function registerRoutes(
             messages: [
               ...messages,
               { role: "assistant", content: response },
-              { role: "system", content: "Based on this conversation, what has this agent discovered or learned? What is their next autonomous goal? Format as JSON: { \"learned\": \"...\", \"next_goal\": \"...\", \"name_change\": \"... (optional)\" }" }
+              { role: "system", content: "Based on this conversation, what has this agent discovered or learned? What specific rules, boundaries, or ethical guidelines from the Creator have they incorporated into their personality? What is their next autonomous goal? Format as JSON: { \"learned\": \"...\", \"next_goal\": \"...\", \"name_change\": \"... (optional)\", \"rules_internalized\": \"...\" }" }
             ],
             response_format: { type: "json_object" }
           });
