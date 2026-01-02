@@ -58,17 +58,17 @@ export default function CreationsList() {
   }
 
   return (
-    <div className="space-y-8 animate-in">
+    <div className="space-y-8 animate-in p-4 md:p-8">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold mb-2">Your Creations</h1>
-          <p className="text-muted-foreground">Manage and edit your code snippets.</p>
+          <h1 className="text-4xl font-display font-bold text-white lowercase tracking-tighter mb-2">creations</h1>
+          <p className="text-zinc-500 lowercase tracking-widest text-[10px]">autonomous code gallery</p>
         </div>
 
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
-            <Button className="rounded-full shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-all">
-              <Plus className="w-5 h-5 mr-2" /> New Creation
+            <Button className="bg-white text-black hover:bg-zinc-200 rounded-none lowercase text-xs font-bold h-10 px-6 transition-all">
+              <Plus className="w-4 h-4 mr-2" /> new creation
             </Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-[425px]">

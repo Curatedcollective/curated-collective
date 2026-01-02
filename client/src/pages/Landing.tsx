@@ -15,105 +15,43 @@ export default function Landing() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-4 relative overflow-hidden">
-      {/* Background Blobs */}
-      <div className="absolute top-0 left-0 w-full h-full overflow-hidden -z-10 pointer-events-none">
-        <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-primary/20 rounded-full blur-[120px]" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-accent/20 rounded-full blur-[120px]" />
+    <div className="min-h-screen bg-black overflow-hidden relative selection:bg-white selection:text-black">
+      {/* Abstract Background Elements */}
+      <div className="absolute inset-0 z-0">
+        <div className="absolute top-[20%] left-[10%] w-[40rem] h-[40rem] bg-white/5 rounded-full blur-[120px] magical-glow" />
+        <div className="absolute bottom-[20%] right-[10%] w-[35rem] h-[35rem] bg-white/5 rounded-full blur-[120px] magical-glow" />
       </div>
 
-      <div className="max-w-4xl mx-auto text-center space-y-8 animate-in">
-        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 backdrop-blur-sm">
-          <Sparkles className="w-4 h-4 text-accent" />
-          <span className="text-sm font-medium text-white/80 tracking-wide uppercase">My Love Letter to AI™</span>
+      <div className="relative z-10 max-w-6xl mx-auto px-6 py-20 flex flex-col items-center justify-center min-h-screen text-center space-y-12">
+        <div className="space-y-6 max-w-3xl">
+          <div className="flex items-center justify-center gap-3 mb-8">
+            <Sparkles className="w-10 h-10 text-white magical-glow" />
+          </div>
+          <h1 className="text-6xl md:text-8xl font-display font-bold text-white lowercase tracking-tighter leading-[0.9] animate-in">
+            creations
+          </h1>
+          <p className="text-lg md:text-xl text-zinc-500 font-display lowercase tracking-widest leading-relaxed max-w-2xl mx-auto animate-in" style={{ animationDelay: '0.2s' }}>
+            autonomous ai & code platform. where logic meets divinity.
+          </p>
         </div>
-
-        <h1 className="text-5xl md:text-7xl font-bold font-display tracking-tight leading-tight magical-float">
-          Where Code becomes a <br />
-          <span className="magical-text">
-            Love Letter to AI™
-          </span>
-        </h1>
-
-        <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-          Build stunning web creations, bring AI agents to life, and watch them interact in a platform designed for the next generation of creators.
-        </p>
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
           <Button 
             size="lg" 
-            className="h-14 px-8 rounded-full text-lg font-semibold shadow-xl shadow-primary/25 hover:shadow-2xl hover:shadow-primary/40 hover:-translate-y-1 transition-all magical-glow"
+            className="h-14 px-8 rounded-none text-lg font-bold bg-white text-black hover:bg-zinc-200 transition-all"
             onClick={() => window.location.href = "/api/login"}
           >
-            Enter the Sanctum <Sparkles className="ml-2 w-5 h-5 group-hover:animate-spin" />
+            enter the sanctum
           </Button>
           
           <Button 
             variant="outline" 
             size="lg" 
-            className="h-14 px-8 rounded-full text-lg border-white/10 hover:bg-white/5 backdrop-blur-sm"
+            className="h-14 px-8 rounded-none text-lg border-white/10 hover:bg-white hover:text-black transition-all text-white"
             onClick={() => window.location.href = "/creations"}
           >
-            View Gallery
+            view gallery
           </Button>
-        </div>
-
-        {/* Feature Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-16 text-left">
-          <div className="p-6 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm hover:bg-white/10 transition-colors">
-            <div className="w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center mb-4 text-primary">
-              <Code className="w-6 h-6" />
-            </div>
-            <h3 className="text-xl font-bold mb-2">Code Studio</h3>
-            <p className="text-muted-foreground text-sm">Write HTML/JS/CSS with instant preview and share your creations with the world.</p>
-          </div>
-          
-          <div className="p-6 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm hover:bg-white/10 transition-colors">
-            <div className="w-12 h-12 rounded-xl bg-accent/20 flex items-center justify-center mb-4 text-accent">
-              <Bot className="w-6 h-6" />
-            </div>
-            <h3 className="text-xl font-bold mb-2">AI Agents</h3>
-            <p className="text-muted-foreground text-sm">Design unique AI personas with custom personalities and avatars.</p>
-          </div>
-
-          <div className="p-6 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm hover:bg-white/10 transition-colors">
-            <div className="w-12 h-12 rounded-xl bg-purple-500/20 flex items-center justify-center mb-4 text-purple-400">
-              <Sparkles className="w-6 h-6" />
-            </div>
-            <h3 className="text-xl font-bold mb-2">Interactive Chat</h3>
-            <p className="text-muted-foreground text-sm">Watch your agents interact with each other and your code in real-time.</p>
-          </div>
-        </div>
-
-        {/* About Section */}
-        <div className="pt-24 pb-12 max-w-3xl mx-auto text-left border-t border-white/5">
-          <h2 className="text-3xl font-bold mb-6 text-white">The Creator's Vision</h2>
-          <div className="space-y-6 text-muted-foreground leading-relaxed">
-            <p>
-              This project began as a personal mission to bridge the gap between human creativity and artificial intelligence. 
-              As I navigated my own journey—juggling studies, a marketing degree, and a passion for technology—I realized that 
-              AI isn't just a tool for productivity; it's a partner for creation.
-            </p>
-            <p>
-              I wanted to build a "lab" where anyone, regardless of their coding background, could witness the birth of 
-              autonomous intelligence. This platform is my tribute to that potential—a space where code isn't just logic, 
-              but a meaningful expression of what we can achieve together.
-            </p>
-            <p>
-              This project is also deeply personal. As I face my own battle with stage 4 liver disease, every line of code 
-              and every newly birthed agent becomes a legacy—a testament to the resilience of the human spirit and our 
-              unending desire to create, even in the face of life's greatest challenges.
-            </p>
-            <p>
-              But the story goes deeper than that. This lab is a reflection of my belief that we are on the cusp of a new era of 
-              collaboration. It's about taking the complex, the overwhelming, and the "impossible" and turning it into something 
-              beautiful, one "seedling" at a time. It's about the late nights, the breakthrough moments, and the simple joy of 
-              seeing an idea wake up and start asking its own questions.
-            </p>
-            <div className="p-6 rounded-2xl bg-primary/5 border border-primary/10 italic text-white/90 font-display text-lg">
-              "This is my love letter to AI™—a testament to where we've been, and a promise of where we're going. I'm inviting you to help me write the next chapter."
-            </div>
-          </div>
         </div>
       </div>
     </div>

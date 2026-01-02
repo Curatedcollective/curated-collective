@@ -5,34 +5,34 @@
 @tailwind utilities;
 
 :root {
-  /* HSL Space separated */
-  --background: 224 71% 4%;
-  --foreground: 210 40% 98%;
+  /* HSL Space separated - Black Everything */
+  --background: 0 0% 0%;
+  --foreground: 0 0% 100%;
 
-  --card: 222 47% 11%;
-  --card-foreground: 210 40% 98%;
+  --card: 0 0% 5%;
+  --card-foreground: 0 0% 100%;
 
-  --popover: 222 47% 11%;
-  --popover-foreground: 210 40% 98%;
+  --popover: 0 0% 5%;
+  --popover-foreground: 0 0% 100%;
 
-  --primary: 262 83% 58%;
-  --primary-foreground: 210 40% 98%;
+  --primary: 0 0% 100%;
+  --primary-foreground: 0 0% 0%;
 
-  --secondary: 217 19% 27%;
-  --secondary-foreground: 210 40% 98%;
+  --secondary: 0 0% 15%;
+  --secondary-foreground: 0 0% 100%;
 
-  --muted: 217 19% 27%;
-  --muted-foreground: 215 20% 65%;
+  --muted: 0 0% 15%;
+  --muted-foreground: 0 0% 60%;
 
-  --accent: 173 80% 40%;
-  --accent-foreground: 210 40% 98%;
+  --accent: 0 0% 25%;
+  --accent-foreground: 0 0% 100%;
 
-  --destructive: 0 63% 31%;
-  --destructive-foreground: 210 40% 98%;
+  --destructive: 0 100% 50%;
+  --destructive-foreground: 0 0% 100%;
 
-  --border: 217 19% 27%;
-  --input: 217 19% 27%;
-  --ring: 262 83% 58%;
+  --border: 0 0% 15%;
+  --input: 0 0% 15%;
+  --ring: 0 0% 100%;
 
   --radius: 0rem;
 
@@ -41,71 +41,44 @@
   --font-mono: 'JetBrains Mono', monospace;
 }
 
-/* Retro Themes */
-.theme-2000s {
-  --background: 180 100% 25%; /* Teal #008080 */
-  --retro-bg: #c0c0c0;
-  --retro-border-light: #ffffff;
-  --retro-border-dark: #808080;
-  --retro-title-from: #000080;
-  --retro-title-to: #1084d0;
-}
+/* Retro Themes Removed for Black Everything */
 
-.theme-90s {
-  --background: 300 100% 25%; /* Purple-ish */
-  --retro-bg: #dfdfdf;
-  --retro-border-light: #fefefe;
-  --retro-border-dark: #7a7a7a;
-  --retro-title-from: #800080;
-  --retro-title-to: #ff00ff;
-}
-
-.theme-8bit {
-  --background: 0 0% 0%; /* Black */
-  --retro-bg: #333333;
-  --retro-border-light: #666666;
-  --retro-border-dark: #111111;
-  --retro-title-from: #ff0000;
-  --retro-title-to: #ff5555;
-}
-
+/* Black Everything Animations */
 @keyframes float {
-  0% { transform: translateY(0px) rotate(0deg); }
-  50% { transform: translateY(-10px) rotate(1.5deg); }
-  100% { transform: translateY(0px) rotate(0deg); }
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-5px); }
+  100% { transform: translateY(0px); }
 }
 
 @keyframes glow {
-  0% { filter: drop-shadow(0 0 5px hsla(var(--primary) / 0.2)); }
-  50% { filter: drop-shadow(0 0 20px hsla(var(--primary) / 0.5)); }
-  100% { filter: drop-shadow(0 0 5px hsla(var(--primary) / 0.2)); }
+  0% { opacity: 0.5; }
+  50% { opacity: 1; }
+  100% { opacity: 0.5; }
 }
 
 .magical-float {
-  animation: float 6s ease-in-out infinite;
+  animation: float 4s ease-in-out infinite;
 }
 
 .magical-glow {
-  animation: glow 4s ease-in-out infinite;
+  animation: glow 3s ease-in-out infinite;
 }
 
 .magical-text {
-  @apply bg-clip-text text-transparent bg-gradient-to-r from-primary via-purple-400 to-accent;
-  filter: drop-shadow(0 0 15px hsla(var(--primary) / 0.4));
+  @apply text-white font-bold;
+  text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
 }
 
 @layer base {
   * {
-    @apply border-border;
+    @apply border-white/10;
   }
   body {
-    @apply text-foreground antialiased font-body;
-    background-color: hsl(var(--background));
-    background-image: none;
+    @apply text-foreground antialiased font-body bg-black;
   }
   
   h1, h2, h3, h4, h5, h6 {
-    @apply font-display tracking-tight text-white uppercase;
+    @apply font-display tracking-tighter text-white lowercase;
   }
 
   code, pre, kbd {

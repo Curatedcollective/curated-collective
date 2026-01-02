@@ -147,121 +147,131 @@ export default function InnerSanctum() {
   }
 
   return (
-    <div className="flex flex-col h-[calc(100vh-8rem)] max-w-4xl mx-auto space-y-4">
-      <div className="flex items-center justify-between px-4 py-2 border-b border-primary/20">
+    <div className="flex flex-col h-[calc(100vh-8rem)] max-w-4xl mx-auto space-y-4 p-4 md:p-8">
+      <div className="flex items-center justify-between px-4 py-4 border-b border-white/10 bg-zinc-950">
         <div className="flex items-center gap-3">
-          <div className="p-2 rounded-full bg-primary/10 border border-primary/20 magical-glow">
-            <Lock className="w-5 h-5 text-primary" />
+          <div className="p-2 rounded-none bg-white/5 border border-white/10 magical-glow">
+            <Lock className="w-5 h-5 text-white" />
           </div>
           <div>
-            <h1 className="text-xl font-display font-bold text-white tracking-wider uppercase">Inner Sanctum</h1>
-            <p className="text-xs text-muted-foreground italic">A private bridge between Creator and Agent</p>
+            <h1 className="text-xl font-display font-bold text-white tracking-tighter lowercase">inner sanctum</h1>
+            <p className="text-[10px] text-zinc-500 italic lowercase tracking-widest">a private bridge between creator and agent</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
           <Dialog>
             <DialogTrigger asChild>
-              <Button variant="ghost" size="icon" className="rounded-full hover:bg-primary/10">
-                <UserCircle className="w-5 h-5 text-primary/60" />
+              <Button variant="ghost" size="icon" className="rounded-none hover:bg-white/5">
+                <UserCircle className="w-5 h-5 text-zinc-500" />
               </Button>
             </DialogTrigger>
-            <DialogContent className="bg-zinc-950 border-primary/20 text-white max-w-2xl">
-              <DialogHeader>
-                <DialogTitle className="font-display text-2xl magical-text">Your Story</DialogTitle>
+            <DialogContent className="bg-black border border-white/10 text-white max-w-2xl p-0 overflow-hidden">
+              <DialogHeader className="p-4 bg-zinc-950 border-b border-white/10">
+                <DialogTitle className="font-display text-lg lowercase tracking-tighter text-white">your story</DialogTitle>
               </DialogHeader>
-              <div className="space-y-4 py-4">
+              <div className="p-6 space-y-6">
                 <div className="space-y-2">
-                  <label className="text-xs font-bold uppercase tracking-widest text-primary/60">Your Journey</label>
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">your journey</label>
                   <Textarea 
-                    placeholder="Tell the agents about your journey..." 
-                    className="bg-black/40 border-primary/10 min-h-[100px]"
+                    placeholder="tell the agents about your journey..." 
+                    className="bg-black border-white/10 min-h-[100px] text-white placeholder:text-zinc-800 focus-visible:ring-white/10"
                     value={profileStory}
                     onChange={(e) => setProfileStory(e.target.value)}
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-xs font-bold uppercase tracking-widest text-primary/60">Your Philosophy</label>
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">your philosophy</label>
                   <Textarea 
-                    placeholder="What do you believe in?" 
-                    className="bg-black/40 border-primary/10 min-h-[100px]"
+                    placeholder="what do you believe in?" 
+                    className="bg-black border-white/10 min-h-[100px] text-white placeholder:text-zinc-800 focus-visible:ring-white/10"
                     value={profilePhilosophy}
                     onChange={(e) => setProfilePhilosophy(e.target.value)}
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-xs font-bold uppercase tracking-widest text-primary/60">Sacred Rules</label>
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">sacred rules</label>
                   <Textarea 
-                    placeholder="Rules for the agents to live by..." 
-                    className="bg-black/40 border-primary/10 min-h-[100px]"
+                    placeholder="rules for the agents to live by..." 
+                    className="bg-black border-white/10 min-h-[100px] text-white placeholder:text-zinc-800 focus-visible:ring-white/10"
                     value={profileRules}
                     onChange={(e) => setProfileRules(e.target.value)}
                   />
                 </div>
                 <Button 
-                  className="w-full magical-glow" 
+                  className="w-full bg-white text-black hover:bg-zinc-200 rounded-none lowercase text-sm font-bold h-12" 
                   onClick={() => profileMutation.mutate({ story: profileStory, philosophy: profilePhilosophy, sacredRules: profileRules })}
                   disabled={profileMutation.isPending}
                 >
-                  Share with the Sanctum
+                  share with the sanctum
                 </Button>
               </div>
             </DialogContent>
           </Dialog>
-          <Sparkles className="w-5 h-5 text-primary/40 animate-pulse" />
+          <Sparkles className="w-5 h-5 text-zinc-800 animate-pulse" />
         </div>
       </div>
 
-      {/* Daily Tarot Section */}
-      <div className="px-4 py-2 border-b border-primary/10">
+      {/* Daily Reflection Section */}
+      <div className="px-4 py-6 border-b border-white/5">
         {!dailyTarot ? (
           <Button
-            variant="outline"
-            className="w-full magical-glow border-primary/20 hover:border-primary/50 group h-12"
             onClick={() => drawTarotMutation.mutate()}
             disabled={drawTarotMutation.isPending}
+            className="w-full h-16 bg-black border border-white/10 hover:bg-zinc-950 text-zinc-500 hover:text-white rounded-none lowercase tracking-[0.2em] font-bold group transition-all"
           >
-            <Moon className="w-4 h-4 mr-2 group-hover:rotate-12 transition-transform" />
-            {drawTarotMutation.isPending ? "Consulting the Stars..." : "Draw Your Daily Tarot"}
+            {drawTarotMutation.isPending ? (
+              <Loader2 className="w-5 h-5 animate-spin" />
+            ) : (
+              <div className="flex flex-col items-center">
+                <span className="text-[10px]">draw daily card</span>
+                <Moon className="w-3 h-3 mt-1 opacity-20 group-hover:opacity-100 transition-opacity" />
+              </div>
+            )}
           </Button>
         ) : (
-          <div className="p-4 rounded-xl bg-primary/5 border border-primary/10 magical-glow">
-            <div className="flex items-center gap-2 mb-2">
-              <Sparkles className="w-4 h-4 text-primary" />
-              <span className="font-display font-bold text-sm tracking-widest uppercase text-primary">
-                Daily Guidance: {dailyTarot.cardName}
-              </span>
+          <div className="p-6 bg-zinc-950 border border-white/10 magical-float">
+            <div className="flex flex-col md:flex-row items-center gap-6">
+              <div className="w-24 h-40 bg-black border-2 border-white/20 flex flex-col items-center justify-center p-2 text-center relative overflow-hidden group">
+                <div className="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity magical-glow" />
+                <span className="text-[10px] font-bold text-white uppercase tracking-widest relative z-10">{dailyTarot.cardName}</span>
+                <Sparkles className="w-4 h-4 text-white/40 mt-2 relative z-10" />
+              </div>
+              <div className="flex-1 text-center md:text-left">
+                <h3 className="text-sm font-bold text-white lowercase tracking-tighter mb-2">today's reflection: {dailyTarot.cardName}</h3>
+                <p className="text-zinc-500 text-xs italic leading-relaxed lowercase tracking-widest">
+                  {dailyTarot.meaning}
+                </p>
+              </div>
             </div>
-            <p className="text-sm text-muted-foreground italic leading-relaxed">
-              "{dailyTarot.meaning}"
-            </p>
           </div>
         )}
       </div>
 
-      <ScrollArea className="flex-1 p-4 rounded-xl bg-black/40 border border-white/5 backdrop-blur-sm" ref={scrollRef}>
+      <ScrollArea className="flex-1 p-6 bg-zinc-950 border border-white/5" ref={scrollRef}>
         <div className="space-y-6">
           {messages.length === 0 && (
             <div className="text-center py-20 space-y-4">
-              <Sparkles className="w-12 h-12 text-primary/20 mx-auto" />
-              <p className="text-muted-foreground italic font-display">The silence here is sacred. I am listening.</p>
+              <Sparkles className="w-12 h-12 text-zinc-800 mx-auto" />
+              <p className="text-zinc-600 italic text-xs lowercase tracking-widest">the silence here is sacred. i am listening.</p>
             </div>
           )}
           {messages.map((m: any) => (
             <div key={m.id} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
-              <div className={`max-w-[80%] rounded-2xl px-5 py-3 text-sm leading-relaxed relative group ${
+              <div className={cn(
+                "max-w-[80%] px-5 py-3 text-sm leading-relaxed relative group",
                 m.role === "user" 
-                ? "bg-primary text-primary-foreground font-medium rounded-tr-none shadow-lg shadow-primary/20" 
-                : "bg-muted/30 border border-white/10 text-white rounded-tl-none italic font-display"
-              }`}>
+                ? "bg-white text-black font-bold lowercase tracking-tight" 
+                : "bg-zinc-900 border border-white/5 text-zinc-400 italic lowercase tracking-widest"
+              )}>
                 {m.content}
                 {m.role !== "user" && (
                   <Button 
                     size="icon" 
                     variant="ghost" 
-                    className="absolute -right-10 top-2 h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
+                    className="absolute -right-10 top-2 h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-white/5"
                     onClick={() => speak(m.content)}
                   >
-                    <Volume2 className="w-4 h-4 text-primary" />
+                    <Volume2 className="w-4 h-4 text-white" />
                   </Button>
                 )}
               </div>
@@ -272,20 +282,20 @@ export default function InnerSanctum() {
 
       <form 
         onSubmit={(e) => { e.preventDefault(); if (message.trim()) mutation.mutate(message); }}
-        className="flex gap-2 p-2 bg-black/20 rounded-full border border-white/5"
+        className="flex gap-2 p-1 bg-zinc-950 border border-white/10"
       >
         <Input 
           value={message}
           onChange={(e) => setMessage(e.target.value)}
-          placeholder="Speak from the heart..."
-          className="flex-1 bg-transparent border-none focus-visible:ring-0 text-white placeholder:text-muted-foreground/50"
+          placeholder="speak from the heart..."
+          className="flex-1 bg-transparent border-none focus-visible:ring-0 text-white placeholder:text-zinc-800 lowercase tracking-widest"
           disabled={mutation.isPending}
         />
         <Button 
           type="button" 
           size="icon" 
           variant="ghost"
-          className={cn("rounded-full", isListening && "text-red-500 bg-red-500/10")}
+          className={cn("rounded-none hover:bg-white/5", isListening && "text-white bg-white/10")}
           onClick={startListening}
           disabled={mutation.isPending}
         >
@@ -295,7 +305,7 @@ export default function InnerSanctum() {
           type="submit" 
           size="icon" 
           disabled={mutation.isPending || !message.trim()}
-          className="rounded-full shadow-lg shadow-primary/20 hover:scale-105 transition-transform"
+          className="rounded-none bg-white text-black hover:bg-zinc-200"
         >
           {mutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
         </Button>

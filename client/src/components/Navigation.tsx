@@ -15,40 +15,40 @@ export function Navigation() {
   const NavContent = () => (
     <div className="flex flex-col h-full">
       <div className="mb-8 px-2 flex items-center gap-2">
-        <Sparkles className="w-6 h-6 text-primary magical-glow" />
+        <Sparkles className="w-6 h-6 text-white magical-glow" />
         <div>
-          <h1 className="text-2xl font-bold font-display bg-clip-text text-transparent bg-gradient-to-r from-primary to-accent">
-            Creations
+          <h1 className="text-2xl font-bold font-display text-white lowercase tracking-tighter">
+            creations
           </h1>
-          <p className="text-xs text-muted-foreground mt-1">AI & Code Platform</p>
+          <p className="text-[10px] text-zinc-500 mt-1 lowercase tracking-widest">ai & code platform</p>
         </div>
       </div>
 
-      <nav className="space-y-2 flex-1">
-        <NavLink href="/creations" icon={<Code className="w-5 h-5" />} label="Creations" active={isActive("/creations")} />
-        <NavLink href="/agents" icon={<Bot className="w-5 h-5" />} label="Agents" active={isActive("/agents")} />
-        <NavLink href="/chat" icon={<MessageSquare className="w-5 h-5" />} label="Lab Chat" active={isActive("/chat")} />
-        <NavLink href="/sanctum" icon={<Lock className="w-5 h-5" />} label="Inner Sanctum" active={isActive("/sanctum")} />
+      <nav className="space-y-1 flex-1">
+        <NavLink href="/creations" icon={<Code className="w-4 h-4" />} label="creations" active={isActive("/creations")} />
+        <NavLink href="/agents" icon={<Bot className="w-4 h-4" />} label="agents" active={isActive("/agents")} />
+        <NavLink href="/chat" icon={<MessageSquare className="w-4 h-4" />} label="lab chat" active={isActive("/chat")} />
+        <NavLink href="/sanctum" icon={<Lock className="w-4 h-4" />} label="inner sanctum" active={isActive("/sanctum")} />
       </nav>
 
       {user && (
-        <div className="pt-6 border-t border-border mt-auto">
-          <div className="flex items-center gap-3 px-3 py-3 mb-4 rounded-xl bg-secondary/30">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-primary to-accent flex items-center justify-center text-white font-bold">
+        <div className="pt-6 border-t border-white/10 mt-auto">
+          <div className="flex items-center gap-3 px-3 py-3 mb-4 rounded-none bg-zinc-900 border border-white/5">
+            <div className="w-8 h-8 rounded-none bg-white flex items-center justify-center text-black font-bold text-xs">
               {user.firstName?.[0] || "U"}
             </div>
             <div className="overflow-hidden">
-              <p className="font-medium text-sm truncate">{user.firstName || "User"}</p>
-              <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+              <p className="font-bold text-xs truncate lowercase text-white">{user.firstName || "user"}</p>
+              <p className="text-[10px] text-zinc-500 truncate">{user.email}</p>
             </div>
           </div>
           <Button 
             variant="ghost" 
-            className="w-full justify-start text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+            className="w-full justify-start text-zinc-500 hover:text-white hover:bg-white/5 text-xs lowercase"
             onClick={() => logout()}
           >
-            <LogOut className="w-4 h-4 mr-2" />
-            Sign Out
+            <LogOut className="w-3 h-3 mr-2" />
+            sign out
           </Button>
         </div>
       )}
@@ -58,22 +58,22 @@ export function Navigation() {
   return (
     <>
       {/* Desktop Sidebar */}
-      <aside className="hidden md:flex flex-col w-64 fixed inset-y-0 left-0 border-r border-border bg-background/50 backdrop-blur-xl p-6 z-40">
+      <aside className="hidden md:flex flex-col w-64 fixed inset-y-0 left-0 border-r border-white/10 bg-black p-6 z-40">
         <NavContent />
       </aside>
 
       {/* Mobile Header */}
-      <div className="md:hidden fixed top-0 left-0 right-0 h-16 border-b border-border bg-background/80 backdrop-blur-md z-40 px-4 flex items-center justify-between">
-         <h1 className="text-xl font-bold font-display bg-clip-text text-transparent bg-gradient-to-r from-primary to-accent">
-          Creations
+      <div className="md:hidden fixed top-0 left-0 right-0 h-16 border-b border-white/10 bg-black z-40 px-4 flex items-center justify-between">
+         <h1 className="text-xl font-bold font-display text-white lowercase tracking-tighter">
+          creations
         </h1>
         <Sheet open={open} onOpenChange={setOpen}>
           <SheetTrigger asChild>
-            <Button variant="ghost" size="icon">
+            <Button variant="ghost" size="icon" className="text-white">
               <Menu className="w-6 h-6" />
             </Button>
           </SheetTrigger>
-          <SheetContent side="left" className="w-64 bg-background border-r border-border p-6">
+          <SheetContent side="left" className="w-64 bg-black border-r border-white/10 p-6">
             <NavContent />
           </SheetContent>
         </Sheet>
@@ -89,10 +89,10 @@ function NavLink({ href, icon, label, active }: { href: string; icon: React.Reac
   return (
     <Link href={href}>
       <div className={`
-        flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 cursor-pointer
+        flex items-center gap-3 px-4 py-2 rounded-none transition-all duration-200 cursor-pointer text-xs lowercase
         ${active 
-          ? "bg-primary text-primary-foreground shadow-lg shadow-primary/25 font-medium" 
-          : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"}
+          ? "bg-white text-black font-bold" 
+          : "text-zinc-500 hover:text-white hover:bg-white/5"}
       `}>
         {icon}
         <span>{label}</span>

@@ -36,28 +36,7 @@ export default function Chat() {
   const queryClient = useQueryClient();
   const [selectedChatId, setSelectedChatId] = useState<number | null>(null);
   const [input, setInput] = useState("");
-  const [currentTheme, setCurrentTheme] = useState("theme-2000s");
   const scrollRef = useRef<HTMLDivElement>(null);
-
-  const themes = ["theme-2000s", "theme-90s", "theme-8bit"];
-
-  const setTheme = (theme: string) => {
-    setCurrentTheme(theme);
-    localStorage.setItem("chat-theme", theme);
-  };
-
-  useEffect(() => {
-    const savedTheme = localStorage.getItem("chat-theme");
-    if (savedTheme) setCurrentTheme(savedTheme);
-  }, []);
-
-  useEffect(() => {
-    document.body.classList.remove("theme-2000s", "theme-90s", "theme-8bit");
-    document.body.classList.add(currentTheme);
-    return () => {
-      document.body.classList.remove(currentTheme);
-    };
-  }, [currentTheme]);
 
   // Fetch Conversations
   const { data: conversations, isLoading: loadingConvos } = useQuery<Conversation[]>({
@@ -159,33 +138,13 @@ export default function Chat() {
   return (
     <div className="flex h-[calc(100vh-2rem)] md:h-[calc(100vh-4rem)] gap-4 animate-in">
       {/* Sidebar List */}
-      <div className="w-64 flex flex-col gap-4 border-r border-border pr-4">
+      <div className="w-64 flex flex-col gap-4 border-r border-white/10 pr-4">
         <div className="flex flex-col gap-2">
           <div className="flex items-center justify-between">
-            <h2 className="font-bold text-lg">Era Selection</h2>
+            <h2 className="font-bold text-lg lowercase tracking-tighter">chats</h2>
             <Button size="icon" variant="ghost" onClick={() => createChatMutation.mutate()}>
               <Plus className="w-5 h-5" />
             </Button>
-          </div>
-          <div className="flex gap-1">
-            <button 
-              className={cn("retro-button flex-1 text-[10px]", currentTheme === "theme-2000s" && "ring-2 ring-primary")} 
-              onClick={() => setTheme("theme-2000s")}
-            >
-              2000s TEAL
-            </button>
-            <button 
-              className={cn("retro-button flex-1 text-[10px]", currentTheme === "theme-90s" && "ring-2 ring-primary")} 
-              onClick={() => setTheme("theme-90s")}
-            >
-              90s PURPLE
-            </button>
-            <button 
-              className={cn("retro-button flex-1 text-[10px]", currentTheme === "theme-8bit" && "ring-2 ring-primary")} 
-              onClick={() => setTheme("theme-8bit")}
-            >
-              8-BIT DARK
-            </button>
           </div>
         </div>
         <ScrollArea className="flex-1">
@@ -195,81 +154,72 @@ export default function Chat() {
                 key={chat.id}
                 onClick={() => setSelectedChatId(chat.id)}
                 className={cn(
-                  "p-3 rounded-xl cursor-pointer transition-colors hover:bg-secondary/50",
-                  selectedChatId === chat.id ? "bg-secondary text-primary font-medium" : "text-muted-foreground"
+                  "p-3 rounded-none cursor-pointer transition-colors border border-transparent",
+                  selectedChatId === chat.id ? "bg-white text-black font-bold border-white" : "text-zinc-500 hover:text-white hover:border-white/20"
                 )}
               >
                 {chat.title}
               </div>
             ))}
             {!loadingConvos && conversations?.length === 0 && (
-              <p className="text-sm text-muted-foreground text-center py-4">No chats yet</p>
+              <p className="text-xs text-zinc-600 text-center py-4">none yet</p>
             )}
           </div>
         </ScrollArea>
       </div>
 
       {/* Main Chat Area */}
-      <div className="flex-1 flex flex-col overflow-hidden retro-window">
-        <div className="retro-title-bar">
-          <div className="flex items-center gap-2">
-            <Bot className="w-3 h-3" />
-            <span>{activeChat?.title || "MESSENGER"}</span>
-          </div>
-          <div className="flex gap-1">
-            <div className="w-3 h-3 bg-[#c0c0c0] border border-white border-r-[#808080] border-b-[#808080]" />
-            <div className="w-3 h-3 bg-[#c0c0c0] border border-white border-r-[#808080] border-b-[#808080]" />
-            <div className="w-3 h-3 bg-[#c0c0c0] border border-white border-r-[#808080] border-b-[#808080] flex items-center justify-center text-[8px] text-black">X</div>
-          </div>
-        </div>
+      <div className="flex-1 flex flex-col overflow-hidden bg-black border border-white/10">
         {selectedChatId ? (
           <>
-            <div className="p-2 border-b border-[#808080] flex justify-between items-center bg-[#c0c0c0]">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 bg-white border border-[#808080] flex items-center justify-center">
-                  <Bot className="w-5 h-5 text-[#000080]" />
-                </div>
+            <div className="p-4 border-b border-white/10 flex justify-between items-center bg-zinc-950">
+              <div className="flex items-center gap-3">
+                <Bot className="w-5 h-5 text-white" />
                 <div>
-                  <h3 className="font-bold text-black text-sm uppercase m-0 p-0 shadow-none">{activeChat?.title}</h3>
-                  <p className="text-[10px] text-green-700 font-bold leading-none">ONLINE</p>
+                  <h3 className="font-bold text-white text-sm lowercase tracking-tighter m-0 p-0">{activeChat?.title}</h3>
                 </div>
               </div>
               <InviteAgentButton conversationId={selectedChatId} />
             </div>
 
-            <div className="flex-1 overflow-y-auto p-2 bg-white font-mono text-xs" ref={scrollRef}>
+            <div className="flex-1 overflow-y-auto p-4 space-y-4" ref={scrollRef}>
               {loadingMessages ? (
-                <div className="flex justify-center p-4"><Loader2 className="animate-spin text-[#000080]" /></div>
+                <div className="flex justify-center p-4"><Loader2 className="animate-spin text-white" /></div>
               ) : (
-                <div className="space-y-1">
+                <div className="space-y-4">
                   {activeChat?.messages?.map((msg, i) => (
                     <div 
                       key={i} 
-                      className="flex flex-col gap-0"
+                      className={cn(
+                        "flex flex-col gap-1",
+                        msg.role === "user" ? "items-end" : "items-start"
+                      )}
                     >
-                      <div className="flex items-start gap-1 leading-tight">
-                        <span className={cn(
-                          "font-bold uppercase whitespace-nowrap",
-                          msg.role === "user" ? "text-red-700" : "text-black"
-                        )}>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
                           {msg.role === "user" ? (user?.firstName || "YOU") : (msg.content.match(/^\*\*(.*?)\*\*/) ? msg.content.match(/^\*\*(.*?)\*\*/)?.[1] : "AGENT")}
-                        </span>
-                        <span className="text-black inline">
-                          {msg.role === "user" ? (
-                            <>says, "{msg.content}"</>
-                          ) : (
-                            <>says, "{msg.content.replace(/^\*\*.*?\*\*:\s*/, "")}"</>
-                          )}
                         </span>
                         {msg.role !== "user" && (
                           <Button 
                             size="icon" 
                             variant="ghost" 
-                            className="h-4 w-4 ml-1 p-0 opacity-50 hover:opacity-100" 
+                            className="h-4 w-4 p-0 opacity-30 hover:opacity-100" 
                             onClick={() => speak(msg.content.replace(/^\*\*.*?\*\*:\s*/, ""))}
                           >
                             <Volume2 className="w-3 h-3" />
                           </Button>
+                        )}
+                      </div>
+                      <div className={cn(
+                        "max-w-[80%] p-3 text-sm leading-relaxed border",
+                        msg.role === "user" 
+                          ? "bg-white text-black border-white" 
+                          : "bg-zinc-900 text-white border-white/10"
+                      )}>
+                        {msg.role === "user" ? (
+                          msg.content
+                        ) : (
+                          msg.content.replace(/^\*\*.*?\*\*:\s*/, "")
                         )}
                       </div>
                     </div>
@@ -278,34 +228,40 @@ export default function Chat() {
               )}
             </div>
 
-            <div className="p-2 bg-[#c0c0c0] border-t border-[#808080]">
+            <div className="p-4 bg-zinc-950 border-t border-white/10">
               <form 
                 onSubmit={(e) => { e.preventDefault(); handleSend(); }}
-                className="flex gap-1"
+                className="flex gap-2"
               >
-                <input 
+                <Input 
                   value={input} 
                   onChange={e => setInput(e.target.value)}
-                  placeholder="Type message..."
-                  className="flex-1 retro-input text-xs"
+                  placeholder="type message..."
+                  className="flex-1 bg-black border-white/10 text-white placeholder:text-zinc-700 focus-visible:ring-white/20"
                 />
-                <button 
+                <Button 
                   type="button" 
-                  className={cn("retro-button w-8 flex items-center justify-center", isListening && "bg-red-200")}
+                  variant="ghost"
+                  size="icon"
+                  className={cn("border border-white/10", isListening && "bg-white text-black")}
                   onClick={startListening}
                 >
-                  <Mic className={cn("w-3 h-3", isListening && "animate-pulse text-red-600")} />
-                </button>
-                <button type="submit" className="retro-button" disabled={!input.trim() || sendMessageMutation.isPending}>
-                  SEND
-                </button>
+                  <Mic className={cn("w-4 h-4", isListening && "animate-pulse")} />
+                </Button>
+                <Button 
+                  type="submit" 
+                  disabled={!input.trim() || sendMessageMutation.isPending}
+                  className="bg-white text-black hover:bg-zinc-200"
+                >
+                  send
+                </Button>
               </form>
             </div>
           </>
         ) : (
-          <div className="flex-1 flex flex-col items-center justify-center text-[#808080] bg-white">
-            <Bot className="w-12 h-12 mb-4 opacity-10" />
-            <p className="font-mono text-xs uppercase tracking-widest">Awaiting Connection...</p>
+          <div className="flex-1 flex flex-col items-center justify-center text-zinc-800">
+            <Bot className="w-12 h-12 mb-4 opacity-20" />
+            <p className="text-xs lowercase tracking-[0.2em]">awaiting connection</p>
           </div>
         )}
       </div>
@@ -321,29 +277,29 @@ function InviteAgentButton({ conversationId }: { conversationId: number }) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <button className="retro-button h-6 text-[10px] px-2">
-          INVITE_AGENT.EXE
-        </button>
+        <Button variant="outline" size="sm" className="h-8 text-[10px] uppercase border-white/20 hover:bg-white hover:text-black">
+          invite agent
+        </Button>
       </DialogTrigger>
-      <DialogContent className="retro-window">
-        <DialogHeader className="retro-title-bar">
-          <DialogTitle className="text-white text-xs">SELECT_AGENT.DLL</DialogTitle>
+      <DialogContent className="bg-black border-white/10 p-0 overflow-hidden">
+        <DialogHeader className="p-4 border-b border-white/10 bg-zinc-950">
+          <DialogTitle className="text-white text-sm lowercase tracking-tighter">invite agent</DialogTitle>
         </DialogHeader>
-        <div className="grid gap-1 py-2 p-2 bg-[#c0c0c0]">
+        <div className="grid gap-px bg-white/5">
           {agents?.map(agent => (
             <button 
               key={agent.id} 
-              className="retro-button justify-start h-auto py-2 flex items-center gap-3 text-left w-full"
+              className="bg-black hover:bg-zinc-900 transition-colors p-4 flex items-center gap-4 text-left w-full"
               onClick={() => addAgentMutation.mutate({ conversationId, agentId: agent.id }, {
                 onSuccess: () => setOpen(false)
               })}
             >
-              <div className="w-6 h-6 bg-white border border-[#808080] flex items-center justify-center">
-                <Bot className="w-4 h-4 text-[#000080]" />
+              <div className="w-10 h-10 bg-zinc-900 border border-white/10 flex items-center justify-center">
+                <Bot className="w-5 h-5 text-white" />
               </div>
-              <div>
-                <div className="font-bold text-[10px] text-black uppercase">{agent.name}</div>
-                <div className="text-[8px] text-[#808080] uppercase truncate w-40">{agent.personality}</div>
+              <div className="flex-1 min-w-0">
+                <div className="font-bold text-xs text-white lowercase tracking-tighter truncate">{agent.name}</div>
+                <div className="text-[10px] text-zinc-500 lowercase truncate">{agent.personality}</div>
               </div>
             </button>
           ))}
