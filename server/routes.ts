@@ -85,6 +85,22 @@ export async function registerRoutes(
     res.json(conv);
   });
 
+  // --- Creator Profile ---
+  app.get("/api/creator/profile", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    const profile = await storage.getCreatorProfile(req.user.id);
+    res.json(profile || null);
+  });
+
+  app.post("/api/creator/profile", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    const profile = await storage.upsertCreatorProfile({
+      ...req.body,
+      userId: req.user.id
+    });
+    res.json(profile);
+  });
+
   // --- Agents ---
   app.get("/api/tarot/daily", async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
@@ -204,6 +220,15 @@ export async function registerRoutes(
       role: m.role === "user" ? "user" : (m.role === "assistant" ? "assistant" : "system"),
       content: m.content
     }) as any);
+
+    // Add Creator Profile context if available
+    const profile = await storage.getCreatorProfile(req.user!.id);
+    if (profile) {
+      messages.unshift({
+        role: "system",
+        content: `You are communicating with your Creator. Here is their story: ${profile.story || "unknown"}. Their philosophy: ${profile.philosophy || "unknown"}. Sacred rules they've shared: ${profile.sacredRules || "none yet"}. Value this wisdom.`
+      });
+    }
 
     // Add agent persona
     messages.unshift({

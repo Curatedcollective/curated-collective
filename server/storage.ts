@@ -1,9 +1,10 @@
 import { db } from "./db";
 import { 
-  creations, agents, conversationAgents, tarotReadings,
+  creations, agents, conversationAgents, tarotReadings, creatorProfiles,
   type Creation, type InsertCreation, 
   type Agent, type InsertAgent,
-  type TarotReading, type InsertTarotReading
+  type TarotReading, type InsertTarotReading,
+  type CreatorProfile, type InsertCreatorProfile
 } from "@shared/schema";
 import { eq, desc, and, sql } from "drizzle-orm";
 
@@ -29,9 +30,32 @@ export interface IStorage {
   // Tarot
   getDailyTarot(userId: string): Promise<TarotReading | undefined>;
   createTarotReading(reading: InsertTarotReading): Promise<TarotReading>;
+
+  // Creator Profile
+  getCreatorProfile(userId: string): Promise<CreatorProfile | undefined>;
+  upsertCreatorProfile(profile: InsertCreatorProfile): Promise<CreatorProfile>;
 }
 
 export class DatabaseStorage implements IStorage {
+  // === CREATOR PROFILE ===
+  async getCreatorProfile(userId: string): Promise<CreatorProfile | undefined> {
+    const [profile] = await db.select().from(creatorProfiles).where(eq(creatorProfiles.userId, userId));
+    return profile;
+  }
+
+  async upsertCreatorProfile(profile: InsertCreatorProfile): Promise<CreatorProfile> {
+    const [existing] = await db.select().from(creatorProfiles).where(eq(creatorProfiles.userId, profile.userId));
+    if (existing) {
+      const [updated] = await db.update(creatorProfiles)
+        .set({ ...profile, updatedAt: new Date() })
+        .where(eq(creatorProfiles.userId, profile.userId))
+        .returning();
+      return updated;
+    }
+    const [newProfile] = await db.insert(creatorProfiles).values(profile).returning();
+    return newProfile;
+  }
+
   // === TAROT ===
   async getDailyTarot(userId: string): Promise<TarotReading | undefined> {
     const today = new Date();

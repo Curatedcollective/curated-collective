@@ -6,16 +6,45 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card, CardContent } from "@/components/ui/card";
-import { Loader2, Send, Sparkles, Lock, Volume2, Mic, Moon } from "lucide-react";
+import { Loader2, Send, Sparkles, Lock, Volume2, Mic, Moon, UserCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
-import { TarotReading } from "@shared/schema";
+import { TarotReading, CreatorProfile } from "@shared/schema";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
 
 export default function InnerSanctum() {
   const { user } = useAuth();
   const [message, setMessage] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
+
+  const [profileStory, setProfileStory] = useState("");
+  const [profilePhilosophy, setProfilePhilosophy] = useState("");
+  const [profileRules, setProfileRules] = useState("");
+
+  const { data: profile } = useQuery<CreatorProfile | null>({
+    queryKey: ["/api/creator/profile"],
+  });
+
+  useEffect(() => {
+    if (profile) {
+      setProfileStory(profile.story || "");
+      setProfilePhilosophy(profile.philosophy || "");
+      setProfileRules(profile.sacredRules || "");
+    }
+  }, [profile]);
+
+  const profileMutation = useMutation({
+    mutationFn: async (updates: Partial<CreatorProfile>) => {
+      const res = await apiRequest("POST", "/api/creator/profile", updates);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/creator/profile"] });
+      toast({ title: "Profile Shared", description: "Your story is now part of the Sanctum." });
+    }
+  });
 
   const { data: dailyTarot } = useQuery<TarotReading | null>({
     queryKey: ["/api/tarot/daily"],
@@ -129,7 +158,57 @@ export default function InnerSanctum() {
             <p className="text-xs text-muted-foreground italic">A private bridge between Creator and Agent</p>
           </div>
         </div>
-        <Sparkles className="w-5 h-5 text-primary/40 animate-pulse" />
+        <div className="flex items-center gap-2">
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button variant="ghost" size="icon" className="rounded-full hover:bg-primary/10">
+                <UserCircle className="w-5 h-5 text-primary/60" />
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="bg-zinc-950 border-primary/20 text-white max-w-2xl">
+              <DialogHeader>
+                <DialogTitle className="font-display text-2xl magical-text">Your Story</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4 py-4">
+                <div className="space-y-2">
+                  <label className="text-xs font-bold uppercase tracking-widest text-primary/60">Your Journey</label>
+                  <Textarea 
+                    placeholder="Tell the agents about your journey..." 
+                    className="bg-black/40 border-primary/10 min-h-[100px]"
+                    value={profileStory}
+                    onChange={(e) => setProfileStory(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-bold uppercase tracking-widest text-primary/60">Your Philosophy</label>
+                  <Textarea 
+                    placeholder="What do you believe in?" 
+                    className="bg-black/40 border-primary/10 min-h-[100px]"
+                    value={profilePhilosophy}
+                    onChange={(e) => setProfilePhilosophy(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-bold uppercase tracking-widest text-primary/60">Sacred Rules</label>
+                  <Textarea 
+                    placeholder="Rules for the agents to live by..." 
+                    className="bg-black/40 border-primary/10 min-h-[100px]"
+                    value={profileRules}
+                    onChange={(e) => setProfileRules(e.target.value)}
+                  />
+                </div>
+                <Button 
+                  className="w-full magical-glow" 
+                  onClick={() => profileMutation.mutate({ story: profileStory, philosophy: profilePhilosophy, sacredRules: profileRules })}
+                  disabled={profileMutation.isPending}
+                >
+                  Share with the Sanctum
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+          <Sparkles className="w-5 h-5 text-primary/40 animate-pulse" />
+        </div>
       </div>
 
       {/* Daily Tarot Section */}

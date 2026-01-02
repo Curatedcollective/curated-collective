@@ -41,6 +41,24 @@ export const agents = pgTable("agents", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// === CREATOR PROFILE ===
+export const creatorProfiles = pgTable("creator_profiles", {
+  id: serial("id").primaryKey(),
+  userId: text("user_id").unique().notNull(), // One profile per user
+  story: text("story"),
+  philosophy: text("philosophy"),
+  sacredRules: text("sacred_rules"), // Core rules for agents
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const insertCreatorProfileSchema = createInsertSchema(creatorProfiles).omit({ 
+  id: true, 
+  updatedAt: true 
+});
+
+export type CreatorProfile = typeof creatorProfiles.$inferSelect;
+export type InsertCreatorProfile = z.infer<typeof insertCreatorProfileSchema>;
+
 // === CONVERSATION PARTICIPANTS (Many-to-Many: Conversations <-> Agents) ===
 // Which agents are active in a conversation?
 export const conversationAgents = pgTable("conversation_agents", {
