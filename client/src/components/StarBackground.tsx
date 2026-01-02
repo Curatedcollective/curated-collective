@@ -1,21 +1,17 @@
 import { useEffect, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { CreatorProfile } from "@shared/schema";
+import { useTheme } from "@/hooks/use-theme";
 
 const THEMES = {
-  noir: { bg: "bg-black", star: "bg-white", glow: "white" },
-  emerald: { bg: "bg-[#021a11]", star: "bg-[#ffd700]", glow: "#ffd700" }, // Green bg, gold stars
-  twilight: { bg: "bg-[#1a0b2e]", star: "bg-[#f0abfc]", glow: "#f0abfc" }, // Purple bg, pink stars
-  crimson: { bg: "bg-[#1a0505]", star: "bg-[#ffffff]", glow: "white" },
+  noir: { glow: "255, 255, 255" },
+  emerald: { glow: "52, 211, 153" },
+  twilight: { glow: "167, 139, 250" },
+  rose: { glow: "251, 113, 133" },
+  amber: { glow: "251, 191, 36" },
 };
 
 export function StarBackground() {
-  const { data: profile } = useQuery<CreatorProfile>({ 
-    queryKey: ["/api/user/profile"] 
-  });
-
-  const themeKey = (profile?.theme as keyof typeof THEMES) || "noir";
-  const theme = THEMES[themeKey] || THEMES.noir;
+  const { theme: currentTheme } = useTheme();
+  const themeColors = THEMES[currentTheme] || THEMES.noir;
 
   const [stars, setStars] = useState<{ id: number; top: string; left: string; size: string; delay: string; duration: string }[]>([]);
 
@@ -32,7 +28,7 @@ export function StarBackground() {
   }, []);
 
   return (
-    <div className={`stars-container fixed inset-0 -z-50 pointer-events-none transition-colors duration-1000 ${theme.bg}`}>
+    <div className="stars-container fixed inset-0 -z-50 pointer-events-none transition-colors duration-1000 bg-background">
       {stars.map((star) => (
         <div
           key={star.id}
@@ -42,8 +38,8 @@ export function StarBackground() {
             left: star.left,
             width: star.size,
             height: star.size,
-            backgroundColor: theme.glow === "white" ? undefined : theme.glow,
-            boxShadow: `0 0 4px ${theme.glow}`,
+            backgroundColor: `rgb(${themeColors.glow})`,
+            boxShadow: `0 0 4px rgba(${themeColors.glow}, 0.8)`,
             "--delay": star.delay,
             "--duration": star.duration,
           } as any}

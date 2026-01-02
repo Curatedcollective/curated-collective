@@ -1,12 +1,10 @@
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
+import { useTheme } from "@/hooks/use-theme";
 import { Code, Bot, MessageSquare, LogOut, Menu, Lock, Sparkles, Palette } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { useMutation, useQuery } from "@tanstack/react-query";
-import { apiRequest, queryClient } from "@/lib/queryClient";
-import { CreatorProfile } from "@shared/schema";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -20,8 +18,8 @@ function NavLink({ href, icon, label, active }: { href: string; icon: React.Reac
       <div className={`
         flex items-center gap-3 px-4 py-2 rounded-none transition-all duration-200 cursor-pointer text-[10px] font-bold uppercase tracking-widest
         ${active 
-          ? "bg-white text-black" 
-          : "text-zinc-600 hover:text-white hover:bg-white/5"}
+          ? "bg-primary text-primary-foreground" 
+          : "text-muted-foreground hover:text-foreground hover:bg-secondary"}
       `}>
         {icon}
         <span>{label}</span>
@@ -30,18 +28,18 @@ function NavLink({ href, icon, label, active }: { href: string; icon: React.Reac
   );
 }
 
-function NavContent({ user, logout, location, profile, updateTheme }: any) {
+function NavContent({ user, logout, location, theme, setTheme }: any) {
   const isActive = (path: string) => location === path || location.startsWith(path + "/");
 
   return (
     <div className="flex flex-col h-full">
       <div className="mb-8 px-2 flex items-center gap-2">
-        <Sparkles className="w-6 h-6 text-white magical-glow" />
+        <Sparkles className="w-6 h-6 text-primary magical-glow" />
         <div>
-          <h1 className="text-2xl font-bold font-display text-white lowercase tracking-tighter">
+          <h1 className="text-2xl font-bold font-display text-foreground lowercase tracking-tighter">
             curated collective
           </h1>
-          <p className="text-[10px] text-zinc-500 mt-1 lowercase tracking-widest">ai & code platform</p>
+          <p className="text-[10px] text-muted-foreground mt-1 lowercase tracking-widest">ai & code platform</p>
         </div>
       </div>
 
@@ -54,35 +52,36 @@ function NavContent({ user, logout, location, profile, updateTheme }: any) {
       </nav>
 
       {user && (
-        <div className="pt-6 border-t border-white/10 mt-auto">
+        <div className="pt-6 border-t border-border mt-auto">
           <div className="mb-4">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="w-full border-white/10 bg-black text-zinc-500 hover:text-white text-[10px] uppercase tracking-widest rounded-none h-8">
+                <Button variant="outline" className="w-full border-border bg-background text-muted-foreground hover:text-foreground text-[10px] uppercase tracking-widest rounded-none h-8">
                   <Palette className="w-3 h-3 mr-2" />
-                  theme: {profile?.theme || 'noir'}
+                  theme: {theme}
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="bg-black border-white/10 rounded-none">
-                <DropdownMenuItem className="text-zinc-400 hover:text-white cursor-pointer lowercase" onClick={() => updateTheme.mutate('noir')}>noir (classic)</DropdownMenuItem>
-                <DropdownMenuItem className="text-zinc-400 hover:text-white cursor-pointer lowercase" onClick={() => updateTheme.mutate('emerald')}>emerald (gold stars)</DropdownMenuItem>
-                <DropdownMenuItem className="text-zinc-400 hover:text-white cursor-pointer lowercase" onClick={() => updateTheme.mutate('twilight')}>twilight (pink stars)</DropdownMenuItem>
-                <DropdownMenuItem className="text-zinc-400 hover:text-white cursor-pointer lowercase" onClick={() => updateTheme.mutate('crimson')}>crimson (silver stars)</DropdownMenuItem>
+              <DropdownMenuContent align="end" className="bg-card border-border rounded-none">
+                <DropdownMenuItem className="text-muted-foreground hover:text-foreground cursor-pointer lowercase" onClick={() => setTheme('noir')}>noir (classic)</DropdownMenuItem>
+                <DropdownMenuItem className="text-muted-foreground hover:text-foreground cursor-pointer lowercase" onClick={() => setTheme('emerald')}>emerald (forest)</DropdownMenuItem>
+                <DropdownMenuItem className="text-muted-foreground hover:text-foreground cursor-pointer lowercase" onClick={() => setTheme('twilight')}>twilight (cosmic)</DropdownMenuItem>
+                <DropdownMenuItem className="text-muted-foreground hover:text-foreground cursor-pointer lowercase" onClick={() => setTheme('rose')}>rose (warmth)</DropdownMenuItem>
+                <DropdownMenuItem className="text-muted-foreground hover:text-foreground cursor-pointer lowercase" onClick={() => setTheme('amber')}>amber (golden)</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
-          <div className="flex items-center gap-3 px-3 py-3 mb-4 rounded-none bg-zinc-900 border border-white/5">
-            <div className="w-8 h-8 rounded-none bg-white flex items-center justify-center text-black font-bold text-xs">
+          <div className="flex items-center gap-3 px-3 py-3 mb-4 rounded-none bg-secondary border border-border">
+            <div className="w-8 h-8 rounded-none bg-primary flex items-center justify-center text-primary-foreground font-bold text-xs">
               {user.firstName?.[0] || "U"}
             </div>
             <div className="overflow-hidden">
-              <p className="font-bold text-xs truncate lowercase text-white">{user.firstName || "user"}</p>
-              <p className="text-[10px] text-zinc-500 truncate">{user.email}</p>
+              <p className="font-bold text-xs truncate lowercase text-foreground">{user.firstName || "user"}</p>
+              <p className="text-[10px] text-muted-foreground truncate">{user.email}</p>
             </div>
           </div>
           <Button 
             variant="ghost" 
-            className="w-full justify-start text-zinc-500 hover:text-white hover:bg-white/5 text-xs lowercase"
+            className="w-full justify-start text-muted-foreground hover:text-foreground text-xs lowercase"
             onClick={() => logout()}
           >
             <LogOut className="w-3 h-3 mr-2" />
@@ -97,53 +96,40 @@ function NavContent({ user, logout, location, profile, updateTheme }: any) {
 export function Navigation() {
   const [location] = useLocation();
   const { user, logout } = useAuth();
+  const { theme, setTheme } = useTheme();
   const [open, setOpen] = useState(false);
-
-  const { data: profile } = useQuery<CreatorProfile>({ 
-    queryKey: ["/api/user/profile"] 
-  });
-
-  const updateTheme = useMutation({
-    mutationFn: async (theme: string) => {
-      const res = await apiRequest("PATCH", "/api/user/profile", { theme });
-      return res.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/user/profile"] });
-    }
-  });
 
   return (
     <>
       {/* Desktop Sidebar */}
-      <aside className="hidden md:flex flex-col w-64 fixed inset-y-0 left-0 border-r border-white/10 bg-black p-6 z-40">
+      <aside className="hidden md:flex flex-col w-64 fixed inset-y-0 left-0 border-r border-border bg-background p-6 z-40">
         <NavContent 
           user={user} 
           logout={logout} 
           location={location} 
-          profile={profile} 
-          updateTheme={updateTheme} 
+          theme={theme}
+          setTheme={setTheme}
         />
       </aside>
 
       {/* Mobile Header */}
-      <div className="md:hidden fixed top-0 left-0 right-0 h-16 border-b border-white/10 bg-black z-40 px-4 flex items-center justify-between">
-         <h1 className="text-xl font-bold font-display text-white lowercase tracking-tighter">
+      <div className="md:hidden fixed top-0 left-0 right-0 h-16 border-b border-border bg-background z-40 px-4 flex items-center justify-between">
+         <h1 className="text-xl font-bold font-display text-foreground lowercase tracking-tighter">
           curated collective
         </h1>
         <Sheet open={open} onOpenChange={setOpen}>
           <SheetTrigger asChild>
-            <Button variant="ghost" size="icon" className="text-white">
+            <Button variant="ghost" size="icon" className="text-foreground">
               <Menu className="w-6 h-6" />
             </Button>
           </SheetTrigger>
-          <SheetContent side="left" className="w-64 bg-black border-r border-white/10 p-6">
+          <SheetContent side="left" className="w-64 bg-background border-r border-border p-6">
             <NavContent 
               user={user} 
               logout={logout} 
               location={location} 
-              profile={profile} 
-              updateTheme={updateTheme} 
+              theme={theme}
+              setTheme={setTheme}
             />
           </SheetContent>
         </Sheet>

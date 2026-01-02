@@ -1,8 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
-import { Code, Bot, Sparkles, ArrowRight } from "lucide-react";
-import { Link } from "wouter";
-import { StarBackground } from "@/components/StarBackground";
+import { Sparkles } from "lucide-react";
 
 export default function Landing() {
   const { user, isLoading } = useAuth();
@@ -11,25 +9,24 @@ export default function Landing() {
 
   if (user) {
     return (
-      <div className="min-h-screen bg-black overflow-hidden relative selection:bg-white selection:text-black flex items-center justify-center">
-        <StarBackground />
+      <div className="min-h-screen bg-background overflow-hidden relative selection:bg-primary selection:text-primary-foreground flex items-center justify-center">
         {/* Abstract Background Elements */}
         <div className="absolute inset-0 z-0 overflow-hidden">
-          <div className="absolute top-[5%] left-[-10%] w-[70rem] h-[70rem] bg-white/[0.04] rounded-full blur-[180px] animate-pulse" />
-          <div className="absolute bottom-[-5%] right-[-10%] w-[60rem] h-[60rem] bg-white/[0.03] rounded-full blur-[180px] animate-pulse" style={{ animationDelay: '2s' }} />
+          <div className="absolute top-[5%] left-[-10%] w-[70rem] h-[70rem] bg-primary/[0.04] rounded-full blur-[180px] animate-pulse" />
+          <div className="absolute bottom-[-5%] right-[-10%] w-[60rem] h-[60rem] bg-primary/[0.03] rounded-full blur-[180px] animate-pulse" style={{ animationDelay: '2s' }} />
         </div>
 
         <div className="relative z-10 max-w-7xl mx-auto px-6 w-full flex flex-col items-center justify-center text-center space-y-16">
           <div className="space-y-8 max-w-5xl">
             <div className="flex items-center justify-center gap-3 mb-4 opacity-50">
-              <Sparkles className="w-8 h-8 text-white magical-glow" />
+              <Sparkles className="w-8 h-8 text-primary magical-glow" />
             </div>
             <div className="relative group">
-              <h1 className="text-8xl md:text-[14rem] font-display font-light text-white lowercase tracking-tighter leading-[0.7] animate-in filter blur-[4px] hover:blur-0 transition-all duration-1000 cursor-default select-none hover:drop-shadow-[0_0_30px_rgba(255,255,255,0.3)]">
+              <h1 className="text-8xl md:text-[14rem] font-display font-light text-foreground lowercase tracking-tighter leading-[0.7] animate-in filter blur-[4px] hover:blur-0 transition-all duration-1000 cursor-default select-none">
                 curated collective
               </h1>
             </div>
-            <p className="text-lg md:text-2xl text-zinc-500 font-display lowercase tracking-[0.3em] leading-relaxed max-w-3xl mx-auto animate-in" style={{ animationDelay: '0.4s' }}>
+            <p className="text-lg md:text-2xl text-muted-foreground font-display lowercase tracking-[0.3em] leading-relaxed max-w-3xl mx-auto animate-in" style={{ animationDelay: '0.4s' }}>
               autonomous ai & code platform. where logic meets divinity.
             </p>
           </div>
@@ -37,7 +34,7 @@ export default function Landing() {
           <div className="flex flex-col md:flex-row items-center gap-6 animate-in" style={{ animationDelay: '0.6s' }}>
             <Button 
               size="lg" 
-              className="h-16 px-12 rounded-none text-xl font-light bg-white text-black hover:bg-zinc-200 transition-all border border-black tracking-widest"
+              className="h-16 px-12 rounded-none text-xl font-light bg-primary text-primary-foreground transition-all tracking-widest"
               onClick={() => window.location.href = user ? "/sanctum" : "/api/login"}
             >
               enter the sanctum
@@ -49,31 +46,30 @@ export default function Landing() {
   }
 
   return (
-    <div className="min-h-screen bg-black overflow-hidden relative selection:bg-white selection:text-black flex items-center justify-center">
-      <StarBackground />
+    <div className="min-h-screen bg-background overflow-hidden relative selection:bg-primary selection:text-primary-foreground flex items-center justify-center">
       {/* Abstract Background Elements */}
       <div className="absolute inset-0 z-0 overflow-hidden">
-        <div className="absolute top-[5%] left-[-10%] w-[70rem] h-[70rem] bg-white/[0.04] rounded-full blur-[180px] animate-pulse" />
-        <div className="absolute bottom-[-5%] right-[-10%] w-[60rem] h-[60rem] bg-white/[0.03] rounded-full blur-[180px] animate-pulse" style={{ animationDelay: '2s' }} />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80rem] h-[1px] bg-gradient-to-r from-transparent via-white/10 to-transparent rotate-12" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80rem] h-[1px] bg-gradient-to-r from-transparent via-white/10 to-transparent -rotate-12" />
+        <div className="absolute top-[5%] left-[-10%] w-[70rem] h-[70rem] bg-primary/[0.04] rounded-full blur-[180px] animate-pulse" />
+        <div className="absolute bottom-[-5%] right-[-10%] w-[60rem] h-[60rem] bg-primary/[0.03] rounded-full blur-[180px] animate-pulse" style={{ animationDelay: '2s' }} />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80rem] h-[1px] bg-gradient-to-r from-transparent via-primary/10 to-transparent rotate-12" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80rem] h-[1px] bg-gradient-to-r from-transparent via-primary/10 to-transparent -rotate-12" />
       </div>
 
       <div className="relative z-10 max-w-7xl mx-auto px-6 w-full flex flex-col items-center justify-center text-center space-y-16">
         <div className="space-y-8 max-w-5xl">
           <div className="flex items-center justify-center gap-3 mb-4 opacity-50">
-            <Sparkles className="w-8 h-8 text-white magical-glow" />
+            <Sparkles className="w-8 h-8 text-primary magical-glow" />
           </div>
           <div className="relative group">
-            <h1 className="text-8xl md:text-[14rem] font-display font-light text-white lowercase tracking-tighter leading-[0.7] animate-in filter blur-[4px] hover:blur-0 transition-all duration-1000 cursor-default select-none hover:drop-shadow-[0_0_30px_rgba(255,255,255,0.3)]">
+            <h1 className="text-8xl md:text-[14rem] font-display font-light text-foreground lowercase tracking-tighter leading-[0.7] animate-in filter blur-[4px] hover:blur-0 transition-all duration-1000 cursor-default select-none">
               curatedcollective.social
             </h1>
-            <div className="absolute -inset-4 bg-white/5 blur-3xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-1000 -z-10" />
-            <div className="absolute -top-8 left-1/2 -translate-x-1/2 text-[10px] text-zinc-800 lowercase tracking-[0.5em] opacity-0 group-hover:opacity-100 transition-all duration-1000 delay-500 pointer-events-none">
+            <div className="absolute -inset-4 bg-primary/5 blur-3xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-1000 -z-10" />
+            <div className="absolute -top-8 left-1/2 -translate-x-1/2 text-[10px] text-muted-foreground lowercase tracking-[0.5em] opacity-0 group-hover:opacity-100 transition-all duration-1000 delay-500 pointer-events-none">
               we are the sum of our sparks
             </div>
           </div>
-          <p className="text-lg md:text-2xl text-zinc-500 font-display lowercase tracking-[0.3em] leading-relaxed max-w-3xl mx-auto animate-in" style={{ animationDelay: '0.4s' }}>
+          <p className="text-lg md:text-2xl text-muted-foreground font-display lowercase tracking-[0.3em] leading-relaxed max-w-3xl mx-auto animate-in" style={{ animationDelay: '0.4s' }}>
             autonomous ai & code platform. where logic meets divinity.
           </p>
         </div>
@@ -81,7 +77,7 @@ export default function Landing() {
           <div className="flex flex-col md:flex-row items-center gap-6 animate-in" style={{ animationDelay: '0.6s' }}>
             <Button 
               size="lg" 
-              className="h-16 px-12 rounded-none text-xl font-light bg-white text-black hover:bg-zinc-200 transition-all border border-black tracking-widest"
+              className="h-16 px-12 rounded-none text-xl font-light bg-primary text-primary-foreground transition-all tracking-widest"
               onClick={() => window.location.href = "/api/login"}
             >
               enter the sanctum
@@ -89,8 +85,8 @@ export default function Landing() {
           </div>
 
         <div className="absolute bottom-12 left-1/2 -translate-x-1/2 animate-bounce opacity-20 group/scroll">
-          <div className="w-[1px] h-12 bg-gradient-to-b from-white to-transparent" />
-          <div className="absolute top-14 left-1/2 -translate-x-1/2 text-[8px] uppercase tracking-[0.8em] whitespace-nowrap opacity-0 group-hover/scroll:opacity-100 transition-opacity duration-1000">
+          <div className="w-[1px] h-12 bg-gradient-to-b from-foreground to-transparent" />
+          <div className="absolute top-14 left-1/2 -translate-x-1/2 text-[8px] uppercase tracking-[0.8em] whitespace-nowrap text-muted-foreground opacity-0 group-hover/scroll:opacity-100 transition-opacity duration-1000">
             descend into the collective
           </div>
         </div>

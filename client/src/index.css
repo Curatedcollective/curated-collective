@@ -41,7 +41,110 @@
   --font-mono: 'JetBrains Mono', monospace;
 }
 
-/* Retro Themes Removed for Black Everything */
+/* === COLLECTIVE THEMES === */
+
+/* Noir (Default) - Pure black and white */
+.theme-noir {
+  --background: 0 0% 0%;
+  --foreground: 0 0% 100%;
+  --card: 0 0% 5%;
+  --card-foreground: 0 0% 100%;
+  --primary: 0 0% 100%;
+  --primary-foreground: 0 0% 0%;
+  --secondary: 0 0% 15%;
+  --secondary-foreground: 0 0% 100%;
+  --muted: 0 0% 15%;
+  --muted-foreground: 0 0% 60%;
+  --accent: 0 0% 25%;
+  --accent-foreground: 0 0% 100%;
+  --border: 0 0% 15%;
+  --theme-glow: 255, 255, 255;
+}
+
+/* Emerald - Deep forest mystery */
+.theme-emerald {
+  --background: 160 30% 3%;
+  --foreground: 160 20% 95%;
+  --card: 160 30% 6%;
+  --card-foreground: 160 20% 95%;
+  --primary: 160 60% 45%;
+  --primary-foreground: 160 30% 3%;
+  --secondary: 160 20% 12%;
+  --secondary-foreground: 160 20% 90%;
+  --muted: 160 15% 15%;
+  --muted-foreground: 160 15% 55%;
+  --accent: 160 40% 20%;
+  --accent-foreground: 160 20% 95%;
+  --border: 160 20% 15%;
+  --theme-glow: 52, 211, 153;
+}
+
+/* Twilight - Deep purple cosmic */
+.theme-twilight {
+  --background: 270 40% 4%;
+  --foreground: 270 20% 95%;
+  --card: 270 35% 8%;
+  --card-foreground: 270 20% 95%;
+  --primary: 270 60% 60%;
+  --primary-foreground: 270 40% 4%;
+  --secondary: 270 25% 15%;
+  --secondary-foreground: 270 20% 90%;
+  --muted: 270 20% 18%;
+  --muted-foreground: 270 15% 55%;
+  --accent: 270 35% 25%;
+  --accent-foreground: 270 20% 95%;
+  --border: 270 25% 18%;
+  --theme-glow: 167, 139, 250;
+}
+
+/* Rose - Soft romantic warmth */
+.theme-rose {
+  --background: 350 30% 4%;
+  --foreground: 350 20% 95%;
+  --card: 350 25% 7%;
+  --card-foreground: 350 20% 95%;
+  --primary: 350 70% 60%;
+  --primary-foreground: 350 30% 4%;
+  --secondary: 350 20% 12%;
+  --secondary-foreground: 350 20% 90%;
+  --muted: 350 15% 15%;
+  --muted-foreground: 350 15% 55%;
+  --accent: 350 35% 20%;
+  --accent-foreground: 350 20% 95%;
+  --border: 350 20% 15%;
+  --theme-glow: 251, 113, 133;
+}
+
+/* Amber - Warm golden glow */
+.theme-amber {
+  --background: 35 40% 4%;
+  --foreground: 35 20% 95%;
+  --card: 35 30% 7%;
+  --card-foreground: 35 20% 95%;
+  --primary: 35 90% 50%;
+  --primary-foreground: 35 40% 4%;
+  --secondary: 35 25% 12%;
+  --secondary-foreground: 35 20% 90%;
+  --muted: 35 20% 15%;
+  --muted-foreground: 35 15% 55%;
+  --accent: 35 40% 20%;
+  --accent-foreground: 35 20% 95%;
+  --border: 35 25% 15%;
+  --theme-glow: 251, 191, 36;
+}
+
+.magical-glow {
+  box-shadow: 0 0 20px rgba(var(--theme-glow), 0.15), 0 0 40px rgba(var(--theme-glow), 0.05);
+}
+
+.magical-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
 
 @keyframes star-twinkle {
   0%, 100% { opacity: 0.2; transform: scale(0.8); }
