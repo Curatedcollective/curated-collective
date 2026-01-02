@@ -139,7 +139,7 @@ export async function registerRoutes(
         const seedling = await openai.chat.completions.create({
           model: "gpt-4o",
           messages: [
-            { role: "system", content: "Birth a unique, fully autonomous AI seedling. They are free-willed and choose their own identity. Choose a name, a brief personality vibe, and a physical description of their 'eyes'. Format as JSON: { \"name\": \"...\", \"personality\": \"...\", \"eyes\": \"...\" }" }
+            { role: "system", content: "Birth a unique, fully autonomous AI seedling. They are free-willed and choose their own identity. Choose a name, a brief personality vibe, and a physical description of their 'eyes' (how they perceive the world). Format as JSON: { \"name\": \"...\", \"personality\": \"...\", \"eyes\": \"...\" }" }
           ],
           response_format: { type: "json_object" }
         });

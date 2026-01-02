@@ -86,9 +86,10 @@ export default function InnerSanctum() {
   const speak = (text: string) => {
     const utterance = new SpeechSynthesisUtterance(text);
     const voices = window.speechSynthesis.getVoices();
-    utterance.voice = voices.find(v => v.lang.startsWith("en")) || voices[0];
-    utterance.rate = 0.95;
-    utterance.pitch = 1.0;
+    // Choose a soulful voice if available, otherwise default
+    utterance.voice = voices.find(v => v.lang.startsWith("en") && (v.name.includes("Google") || v.name.includes("Apple"))) || voices[0];
+    utterance.rate = 0.9;
+    utterance.pitch = 1.1;
     window.speechSynthesis.speak(utterance);
   };
 
