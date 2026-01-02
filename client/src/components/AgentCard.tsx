@@ -18,72 +18,76 @@ export function AgentCard({ agent }: { agent: Agent }) {
   const deleteMutation = useDeleteAgent();
 
   return (
-    <div className="group bg-card rounded-2xl border border-border p-6 hover-card-effect relative overflow-hidden flex flex-col h-full text-center items-center">
-      <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+    <div className="group retro-window p-1 hover-card-effect relative overflow-hidden flex flex-col h-full">
+      <div className="retro-title-bar">
+        <div className="flex items-center gap-1">
+          <Bot className="w-3 h-3" />
+          <span className="truncate">{agent.name}</span>
+        </div>
         <AlertDialog>
           <AlertDialogTrigger asChild>
-            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive">
-              <Trash2 className="w-4 h-4" />
-            </Button>
+            <button className="w-4 h-4 bg-[#c0c0c0] border border-white border-r-[#808080] border-b-[#808080] flex items-center justify-center text-[8px] text-black">X</button>
           </AlertDialogTrigger>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Delete Agent?</AlertDialogTitle>
-              <AlertDialogDescription>
-                Are you sure you want to delete {agent.name}? This cannot be undone.
-              </AlertDialogDescription>
+          <AlertDialogContent className="retro-window">
+            <AlertDialogHeader className="retro-title-bar">
+              <AlertDialogTitle className="text-white text-xs">DELETE_AGENT.EXE</AlertDialogTitle>
             </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction onClick={() => deleteMutation.mutate(agent.id)}>
-                Delete
-              </AlertDialogAction>
-            </AlertDialogFooter>
+            <div className="p-4 bg-[#c0c0c0]">
+              <AlertDialogDescription className="text-black font-bold text-xs">
+                TERMINATE {agent.name}? THIS ACTION IS PERMANENT.
+              </AlertDialogDescription>
+              <div className="flex justify-end gap-2 mt-4">
+                <AlertDialogCancel className="retro-button">ABORT</AlertDialogCancel>
+                <AlertDialogAction onClick={() => deleteMutation.mutate(agent.id)} className="retro-button bg-red-600 text-white">TERMINATE</AlertDialogAction>
+              </div>
+            </div>
           </AlertDialogContent>
         </AlertDialog>
       </div>
 
-      <div className="w-20 h-20 rounded-full bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center mb-4 border-2 border-primary/20 shadow-xl shadow-primary/5">
-        {agent.avatarUrl ? (
-          <img src={agent.avatarUrl} alt={agent.name} className="w-full h-full rounded-full object-cover" />
-        ) : (
-          <Bot className="w-8 h-8 text-primary" />
-        )}
-      </div>
-
-      <h3 className="text-xl font-bold text-foreground mb-1">{agent.name}</h3>
-      
-      <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
-        {agent.personality}
-      </p>
-
-      <div className="w-full text-left space-y-3 mb-6">
-        <div className="p-3 bg-secondary/30 rounded-xl border border-border/50">
-          <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold mb-1">Current Goal</p>
-          <p className="text-xs font-medium italic text-primary/80">"{agent.goals}"</p>
+      <div className="p-4 flex flex-col items-center text-center bg-[#c0c0c0] flex-1">
+        <div className="w-16 h-16 bg-white border-2 border-inset border-[#808080] flex items-center justify-center mb-4 overflow-hidden">
+          {agent.avatarUrl ? (
+            <img src={agent.avatarUrl} alt={agent.name} className="w-full h-full object-cover grayscale" />
+          ) : (
+            <Bot className="w-8 h-8 text-[#000080]" />
+          )}
         </div>
+
+        <h3 className="text-sm font-bold text-black mb-1 uppercase shadow-none">{agent.name}</h3>
         
-        {agent.knowledge && agent.knowledge.length > 0 && (
-          <div className="flex flex-wrap gap-1">
-            {agent.knowledge.slice(-3).map((item, i) => (
-              <span key={i} className="px-2 py-0.5 bg-accent/10 text-[10px] rounded-full text-accent-foreground border border-accent/20">
-                {item}
-              </span>
-            ))}
+        <p className="text-[10px] text-black mb-4 line-clamp-2 font-mono uppercase">
+          {agent.personality}
+        </p>
+
+        <div className="w-full text-left space-y-2 mb-4 font-mono">
+          <div className="p-2 bg-white border border-[#808080]">
+            <p className="text-[8px] font-bold text-[#000080] mb-0.5 uppercase tracking-tighter">Current Goal</p>
+            <p className="text-[9px] text-black font-bold leading-tight">"{agent.goals}"</p>
           </div>
-        )}
+          
+          {agent.knowledge && agent.knowledge.length > 0 && (
+            <div className="flex flex-wrap gap-1">
+              {agent.knowledge.slice(-3).map((item, i) => (
+                <span key={i} className="px-1.5 py-0.5 bg-[#000080] text-[8px] font-bold text-white uppercase">
+                  {item}
+                </span>
+              ))}
+            </div>
+          )}
 
-        <div className="flex items-center justify-between text-[10px] text-muted-foreground px-1">
-          <span>Discoveries</span>
-          <span className="font-mono font-bold text-primary">{agent.discoveryCount || 0}</span>
+          <div className="flex items-center justify-between text-[8px] font-bold text-black px-1 uppercase">
+            <span>Discoveries</span>
+            <span className="text-[#000080]">{agent.discoveryCount || 0}</span>
+          </div>
         </div>
-      </div>
 
-      <div className="mt-auto w-full">
-         <Button className="w-full rounded-xl" variant="secondary">
-            <MessageSquare className="w-4 h-4 mr-2" />
-            Chat
-         </Button>
+        <div className="mt-auto w-full">
+           <button className="retro-button w-full h-8 flex items-center justify-center gap-2">
+              <MessageSquare className="w-3 h-3" />
+              <span>CHAT_START</span>
+           </button>
+        </div>
       </div>
     </div>
   );

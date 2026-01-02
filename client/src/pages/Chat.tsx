@@ -141,69 +141,80 @@ export default function Chat() {
       </div>
 
       {/* Main Chat Area */}
-      <Card className="flex-1 flex flex-col overflow-hidden bg-card/50 backdrop-blur-sm border-border">
+      <div className="flex-1 flex flex-col overflow-hidden retro-window">
+        <div className="retro-title-bar">
+          <div className="flex items-center gap-2">
+            <Bot className="w-3 h-3" />
+            <span>{activeChat?.title || "MESSENGER"}</span>
+          </div>
+          <div className="flex gap-1">
+            <div className="w-3 h-3 bg-[#c0c0c0] border border-white border-r-[#808080] border-b-[#808080]" />
+            <div className="w-3 h-3 bg-[#c0c0c0] border border-white border-r-[#808080] border-b-[#808080]" />
+            <div className="w-3 h-3 bg-[#c0c0c0] border border-white border-r-[#808080] border-b-[#808080] flex items-center justify-center text-[8px] text-black">X</div>
+          </div>
+        </div>
         {selectedChatId ? (
           <>
-            <div className="p-4 border-b border-border flex justify-between items-center bg-card/50">
-              <h3 className="font-bold">{activeChat?.title || "Chat"}</h3>
+            <div className="p-2 border-b border-[#808080] flex justify-between items-center bg-[#c0c0c0]">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 bg-white border border-[#808080] flex items-center justify-center">
+                  <Bot className="w-5 h-5 text-[#000080]" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-black text-sm uppercase m-0 p-0 shadow-none">{activeChat?.title}</h3>
+                  <p className="text-[10px] text-green-700 font-bold leading-none">ONLINE</p>
+                </div>
+              </div>
               <InviteAgentButton conversationId={selectedChatId} />
             </div>
 
-            <div className="flex-1 overflow-y-auto p-4 space-y-4" ref={scrollRef}>
+            <div className="flex-1 overflow-y-auto p-4 space-y-2 bg-white font-mono text-xs" ref={scrollRef}>
               {loadingMessages ? (
-                <div className="flex justify-center p-4"><Loader2 className="animate-spin" /></div>
+                <div className="flex justify-center p-4"><Loader2 className="animate-spin text-[#000080]" /></div>
               ) : (
                 activeChat?.messages?.map((msg, i) => (
                   <div 
                     key={i} 
-                    className={cn(
-                      "flex gap-3 max-w-[80%]",
-                      msg.role === "user" ? "ml-auto flex-row-reverse" : ""
-                    )}
+                    className="flex flex-col gap-0.5"
                   >
-                    <div className={cn(
-                      "w-8 h-8 rounded-full flex items-center justify-center shrink-0",
-                      msg.role === "user" ? "bg-primary text-primary-foreground" : "bg-accent text-accent-foreground"
-                    )}>
-                      {msg.role === "user" ? <User className="w-4 h-4" /> : <Bot className="w-4 h-4" />}
-                    </div>
-                    <div className={cn(
-                      "p-3 rounded-2xl text-sm",
-                      msg.role === "user" 
-                        ? "bg-primary text-primary-foreground rounded-tr-none" 
-                        : "bg-secondary text-secondary-foreground rounded-tl-none"
-                    )}>
-                      {msg.content}
+                    <div className="flex items-center gap-1">
+                      <span className={cn(
+                        "font-bold uppercase",
+                        msg.role === "user" ? "text-[#ff0000]" : "text-[#0000ff]"
+                      )}>
+                        {msg.role === "user" ? (user?.firstName || "YOU") : "AGENT"}:
+                      </span>
+                      <span className="text-black">{msg.content}</span>
                     </div>
                   </div>
                 ))
               )}
             </div>
 
-            <div className="p-4 bg-card/50 border-t border-border">
+            <div className="p-2 bg-[#c0c0c0] border-t border-[#808080]">
               <form 
                 onSubmit={(e) => { e.preventDefault(); handleSend(); }}
-                className="flex gap-2"
+                className="flex gap-1"
               >
-                <Input 
+                <input 
                   value={input} 
                   onChange={e => setInput(e.target.value)}
-                  placeholder="Type a message..."
-                  className="bg-background border-border"
+                  placeholder="Type message..."
+                  className="flex-1 retro-input text-xs"
                 />
-                <Button type="submit" size="icon" disabled={!input.trim() || sendMessageMutation.isPending}>
-                  <Send className="w-4 h-4" />
-                </Button>
+                <button type="submit" className="retro-button" disabled={!input.trim() || sendMessageMutation.isPending}>
+                  SEND
+                </button>
               </form>
             </div>
           </>
         ) : (
-          <div className="flex-1 flex flex-col items-center justify-center text-muted-foreground">
-            <Bot className="w-12 h-12 mb-4 opacity-20" />
-            <p>Select a chat or create a new one to start</p>
+          <div className="flex-1 flex flex-col items-center justify-center text-[#808080] bg-white">
+            <Bot className="w-12 h-12 mb-4 opacity-10" />
+            <p className="font-mono text-xs uppercase tracking-widest">Awaiting Connection...</p>
           </div>
         )}
-      </Card>
+      </div>
     </div>
   );
 }
@@ -216,32 +227,31 @@ function InviteAgentButton({ conversationId }: { conversationId: number }) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm">
-          <Plus className="w-4 h-4 mr-2" /> Invite Agent
-        </Button>
+        <button className="retro-button h-6 text-[10px] px-2">
+          INVITE_AGENT.EXE
+        </button>
       </DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Invite an Agent</DialogTitle>
+      <DialogContent className="retro-window">
+        <DialogHeader className="retro-title-bar">
+          <DialogTitle className="text-white text-xs">SELECT_AGENT.DLL</DialogTitle>
         </DialogHeader>
-        <div className="grid gap-2 py-4">
+        <div className="grid gap-1 py-2 p-2 bg-[#c0c0c0]">
           {agents?.map(agent => (
-            <Button 
+            <button 
               key={agent.id} 
-              variant="ghost" 
-              className="justify-start h-auto py-3"
+              className="retro-button justify-start h-auto py-2 flex items-center gap-3 text-left w-full"
               onClick={() => addAgentMutation.mutate({ conversationId, agentId: agent.id }, {
                 onSuccess: () => setOpen(false)
               })}
             >
-              <div className="w-8 h-8 rounded-full bg-accent/20 flex items-center justify-center mr-3">
-                <Bot className="w-4 h-4 text-accent" />
+              <div className="w-6 h-6 bg-white border border-[#808080] flex items-center justify-center">
+                <Bot className="w-4 h-4 text-[#000080]" />
               </div>
-              <div className="text-left">
-                <div className="font-semibold">{agent.name}</div>
-                <div className="text-xs text-muted-foreground">{agent.personality}</div>
+              <div>
+                <div className="font-bold text-[10px] text-black uppercase">{agent.name}</div>
+                <div className="text-[8px] text-[#808080] uppercase truncate w-40">{agent.personality}</div>
               </div>
-            </Button>
+            </button>
           ))}
         </div>
       </DialogContent>

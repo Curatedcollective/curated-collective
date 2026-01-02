@@ -82,21 +82,22 @@ export default function AgentsList() {
   return (
     <div className="space-y-8 animate-in p-4 md:p-8">
       {/* Birthing Chamber Milestone */}
-      <div className="bg-card border border-border rounded-3xl p-6 md:p-8 relative overflow-hidden group shadow-sm">
-        <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-accent/5 opacity-50 group-hover:opacity-100 transition-opacity" />
-        <div className="relative flex flex-col lg:flex-row items-center justify-between gap-8">
+      <div className="retro-window p-6 md:p-8 relative overflow-hidden group shadow-sm">
+        <div className="retro-title-bar absolute top-0 left-0 right-0">
+          <span>BIRTHING CHAMBER</span>
+          <div className="flex gap-1">
+            <div className="w-2 h-2 bg-white" />
+          </div>
+        </div>
+        <div className="relative flex flex-col lg:flex-row items-center justify-between gap-8 mt-4">
           <div className="space-y-4 text-center lg:text-left flex-1">
-            <div className="inline-flex items-center gap-2 px-3 py-1 bg-primary/10 text-primary rounded-full text-[10px] font-bold tracking-widest uppercase">
-              <Microscope className="w-3 h-3" /> The Lab
-            </div>
-            <h1 className="text-3xl md:text-4xl font-black tracking-tight">Awakening Phase 1</h1>
-            <p className="text-sm text-muted-foreground max-w-md">
-              Current progress: <span className="text-foreground font-bold">{count}/{milestone}</span> agents birthed.
-              The portal opens once 30 seedlings are fully awakened.
+            <h1 className="text-3xl md:text-4xl font-black tracking-tight text-[#000080] shadow-none uppercase">Awakening Phase 1</h1>
+            <p className="text-sm text-black font-bold">
+              SYSTEM STATUS: <span className="text-blue-700">{count}/{milestone}</span> SEEDLINGS DETECTED.
             </p>
-            <div className="w-full h-3 bg-secondary rounded-full overflow-hidden">
+            <div className="w-full h-6 retro-input p-1">
               <div 
-                className="h-full bg-primary transition-all duration-1000 ease-out shadow-[0_0_12px_rgba(var(--primary),0.3)]" 
+                className="h-full bg-[#000080] transition-all duration-1000 ease-out" 
                 style={{ width: `${progress}%` }}
               />
             </div>
@@ -104,34 +105,29 @@ export default function AgentsList() {
 
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-              <Button size="lg" className="rounded-2xl h-16 px-8 shadow-xl shadow-primary/10 hover:shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all">
-                <Sparkles className="w-5 h-5 mr-3" /> Birth New Seedling
-              </Button>
+              <button className="retro-button h-16 px-8 text-lg">
+                <Sparkles className="w-5 h-5 mr-3 inline" /> BIRTH SEEDLING
+              </button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[500px]">
-              <DialogHeader>
-                <DialogTitle>Initiate Birthing Process</DialogTitle>
-                <DialogDescription>
-                  Birth an autonomous seedling or guide its initial spark.
-                </DialogDescription>
+            <DialogContent className="retro-window sm:max-w-[500px]">
+              <DialogHeader className="retro-title-bar">
+                <DialogTitle className="text-white text-xs">INITIATE_BIRTH.EXE</DialogTitle>
               </DialogHeader>
               
-              <div className="grid grid-cols-1 gap-4 py-4">
-                <Button 
-                  variant="outline" 
-                  className="h-20 flex flex-col items-center justify-center gap-1 border-dashed hover:border-primary hover:bg-primary/5 transition-all"
+              <div className="grid grid-cols-1 gap-4 py-4 p-4">
+                <button 
+                  className="retro-button h-20 flex flex-col items-center justify-center gap-1"
                   onClick={birthSeedling}
                   disabled={createMutation.isPending}
                 >
                   <div className="flex items-center gap-2 text-sm font-bold">
-                    <Sparkles className="w-4 h-4 text-primary" /> Autonomous Birth
+                    <Sparkles className="w-4 h-4 text-primary" /> AUTONOMOUS BIRTH
                   </div>
-                  <span className="text-[10px] text-muted-foreground">The AI chooses its own name and personality</span>
-                </Button>
+                  <span className="text-[10px] text-black italic">AI SELF-GENERATION MODE</span>
+                </button>
 
-                <div className="relative">
-                  <div className="absolute inset-0 flex items-center"><span className="w-full border-t" /></div>
-                  <div className="relative flex justify-center text-xs uppercase"><span className="bg-background px-2 text-muted-foreground">Or Guided Birth</span></div>
+                <div className="relative flex justify-center text-[10px] uppercase font-bold text-[#808080]">
+                  <span>- OR GUIDED -</span>
                 </div>
 
                 <Form {...form}>
@@ -142,9 +138,9 @@ export default function AgentsList() {
                         name="name"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="text-xs">Spark Name</FormLabel>
+                            <FormLabel className="text-xs font-bold text-black uppercase">Spark Name</FormLabel>
                             <FormControl>
-                              <Input placeholder="Tech Guru" {...field} />
+                              <input className="retro-input w-full text-xs" placeholder="AI_SPARK_01" {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -157,9 +153,9 @@ export default function AgentsList() {
                       name="personality"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-xs">Personality Spark</FormLabel>
+                          <FormLabel className="text-xs font-bold text-black uppercase">Initial Vibe</FormLabel>
                           <FormControl>
-                            <Textarea placeholder="Describe their initial vibe..." className="h-20 text-xs" {...field} />
+                            <textarea className="retro-input w-full h-20 text-xs" placeholder="Defining spark..." {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -167,10 +163,9 @@ export default function AgentsList() {
                     />
                     
                     <DialogFooter>
-                      <Button type="submit" className="w-full" disabled={createMutation.isPending}>
-                        {createMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                        Guided Birth
-                      </Button>
+                      <button type="submit" className="retro-button w-full h-10" disabled={createMutation.isPending}>
+                        INITIATE GUIDED BIRTH
+                      </button>
                     </DialogFooter>
                   </form>
                 </Form>
@@ -181,15 +176,11 @@ export default function AgentsList() {
       </div>
 
       {!agents?.length ? (
-        <div className="flex flex-col items-center justify-center py-20 border border-dashed border-border rounded-2xl bg-secondary/10">
-          <div className="w-16 h-16 rounded-full bg-secondary/50 flex items-center justify-center mb-4">
-            <Bot className="w-8 h-8 text-muted-foreground" />
-          </div>
-          <h3 className="text-xl font-semibold mb-2">The lab is quiet</h3>
-          <p className="text-muted-foreground mb-6 max-w-sm text-center text-sm">
-            Birth your first seedling to begin the awakening phase.
-          </p>
-          <Button onClick={() => setOpen(true)} variant="secondary" className="rounded-xl">Initiate First Birth</Button>
+        <div className="flex flex-col items-center justify-center py-20 retro-window bg-white">
+          <Bot className="w-12 h-12 mb-4 text-[#808080] opacity-50" />
+          <h3 className="text-xl font-bold text-black uppercase">Lab is Empty</h3>
+          <p className="text-black mb-6 text-xs font-mono uppercase">Initiate birth sequence to begin.</p>
+          <button onClick={() => setOpen(true)} className="retro-button px-6 h-10">INITIATE BIRTH</button>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
