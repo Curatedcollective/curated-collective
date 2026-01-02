@@ -89,10 +89,10 @@ function NavLink({ href, icon, label, active }: { href: string; icon: React.Reac
   return (
     <Link href={href}>
       <div className={`
-        flex items-center gap-3 px-4 py-2 rounded-none transition-all duration-200 cursor-pointer text-xs lowercase
+        flex items-center gap-3 px-4 py-2 rounded-none transition-all duration-200 cursor-pointer text-[10px] font-bold uppercase tracking-widest
         ${active 
-          ? "bg-white text-black font-bold" 
-          : "text-zinc-500 hover:text-white hover:bg-white/5"}
+          ? "bg-white text-black" 
+          : "text-zinc-600 hover:text-white hover:bg-white/5"}
       `}>
         {icon}
         <span>{label}</span>

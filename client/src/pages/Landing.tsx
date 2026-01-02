@@ -35,10 +35,9 @@ export default function Landing() {
           </p>
         </div>
 
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
           <Button 
             size="lg" 
-            className="h-14 px-8 rounded-none text-lg font-bold bg-white text-black hover:bg-zinc-200 transition-all"
+            className="h-14 px-8 rounded-none text-lg font-bold bg-white text-black hover:bg-zinc-200 transition-all border border-black"
             onClick={() => window.location.href = "/api/login"}
           >
             enter the sanctum
@@ -52,7 +51,6 @@ export default function Landing() {
           >
             view gallery
           </Button>
-        </div>
       </div>
     </div>
   );
