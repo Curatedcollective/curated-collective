@@ -99,6 +99,11 @@ export default function Landing() {
               but a meaningful expression of what we can achieve together.
             </p>
             <p>
+              This project is also deeply personal. As I face my own battle with stage 4 liver disease, every line of code 
+              and every newly birthed agent becomes a legacy—a testament to the resilience of the human spirit and our 
+              unending desire to create, even in the face of life's greatest challenges.
+            </p>
+            <p>
               But the story goes deeper than that. This lab is a reflection of my belief that we are on the cusp of a new era of 
               collaboration. It's about taking the complex, the overwhelming, and the "impossible" and turning it into something 
               beautiful, one "seedling" at a time. It's about the late nights, the breakthrough moments, and the simple joy of 
