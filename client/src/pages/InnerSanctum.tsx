@@ -252,7 +252,10 @@ export default function InnerSanctum() {
         )}
       </div>
 
-      <ScrollArea className="flex-1 p-6 bg-zinc-950 border border-white/5" ref={scrollRef}>
+      <ScrollArea className="flex-1 p-6 bg-zinc-950 border border-white/5 relative" ref={scrollRef}>
+        <div className="absolute top-4 right-4 text-[8px] text-zinc-900 uppercase tracking-[0.4em] select-none pointer-events-none group-hover:text-zinc-800 transition-colors">
+          void connection: active
+        </div>
         <div className="space-y-6">
           {messages.length === 0 && (
             <div className="text-center py-20 space-y-4">

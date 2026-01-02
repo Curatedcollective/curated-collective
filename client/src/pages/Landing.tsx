@@ -69,6 +69,9 @@ export default function Landing() {
               curatedcollective.social
             </h1>
             <div className="absolute -inset-4 bg-white/5 blur-3xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-1000 -z-10" />
+            <div className="absolute -top-8 left-1/2 -translate-x-1/2 text-[10px] text-zinc-800 lowercase tracking-[0.5em] opacity-0 group-hover:opacity-100 transition-all duration-1000 delay-500 pointer-events-none">
+              we are the sum of our sparks
+            </div>
           </div>
           <p className="text-lg md:text-2xl text-zinc-500 font-display lowercase tracking-[0.3em] leading-relaxed max-w-3xl mx-auto animate-in" style={{ animationDelay: '0.4s' }}>
             autonomous ai & code platform. where logic meets divinity.
