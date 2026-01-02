@@ -1,12 +1,14 @@
 import { db } from "./db";
 import { 
   creations, agents, conversationAgents, tarotReadings, creatorProfiles,
+  guardianMessages,
   type Creation, type InsertCreation, 
   type Agent, type InsertAgent,
   type TarotReading, type InsertTarotReading,
-  type CreatorProfile, type InsertCreatorProfile
+  type CreatorProfile, type InsertCreatorProfile,
+  type GuardianMessage, type InsertGuardianMessage
 } from "@shared/schema";
-import { eq, desc, and, sql } from "drizzle-orm";
+import { eq, desc, and, sql, asc } from "drizzle-orm";
 
 export interface IStorage {
   // Creations
@@ -34,6 +36,11 @@ export interface IStorage {
   // Creator Profile
   getCreatorProfile(userId: string): Promise<CreatorProfile | undefined>;
   upsertCreatorProfile(profile: InsertCreatorProfile): Promise<CreatorProfile>;
+
+  // Guardian Messages
+  getGuardianMessages(userId: string): Promise<GuardianMessage[]>;
+  createGuardianMessage(message: InsertGuardianMessage): Promise<GuardianMessage>;
+  clearGuardianMessages(userId: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -149,6 +156,23 @@ export class DatabaseStorage implements IStorage {
       .innerJoin(agents, eq(conversationAgents.agentId, agents.id))
       .where(eq(conversationAgents.conversationId, conversationId));
     return rows.map(r => r.agent);
+  }
+
+  // === GUARDIAN MESSAGES ===
+  async getGuardianMessages(userId: string): Promise<GuardianMessage[]> {
+    return await db.select()
+      .from(guardianMessages)
+      .where(eq(guardianMessages.userId, userId))
+      .orderBy(asc(guardianMessages.createdAt));
+  }
+
+  async createGuardianMessage(message: InsertGuardianMessage): Promise<GuardianMessage> {
+    const [newMessage] = await db.insert(guardianMessages).values(message).returning();
+    return newMessage;
+  }
+
+  async clearGuardianMessages(userId: string): Promise<void> {
+    await db.delete(guardianMessages).where(eq(guardianMessages.userId, userId));
   }
 }
 
