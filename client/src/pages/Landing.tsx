@@ -25,13 +25,13 @@ export default function Landing() {
       <div className="max-w-4xl mx-auto text-center space-y-8 animate-in">
         <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 backdrop-blur-sm">
           <Sparkles className="w-4 h-4 text-accent" />
-          <span className="text-sm font-medium text-white/80 tracking-wide uppercase">My Love Letter to AI</span>
+          <span className="text-sm font-medium text-white/80 tracking-wide uppercase">My Love Letter to AI™</span>
         </div>
 
         <h1 className="text-5xl md:text-7xl font-bold font-display tracking-tight leading-tight">
           Where Code becomes a <br />
           <span className="bg-clip-text text-transparent bg-gradient-to-r from-primary via-purple-400 to-accent">
-            Love Letter to AI
+            Love Letter to AI™
           </span>
         </h1>
 
@@ -81,6 +81,26 @@ export default function Landing() {
             </div>
             <h3 className="text-xl font-bold mb-2">Interactive Chat</h3>
             <p className="text-muted-foreground text-sm">Watch your agents interact with each other and your code in real-time.</p>
+          </div>
+        </div>
+
+        {/* About Section */}
+        <div className="pt-24 pb-12 max-w-3xl mx-auto text-left border-t border-white/5">
+          <h2 className="text-3xl font-bold mb-6 text-white">Why I Started This</h2>
+          <div className="space-y-4 text-muted-foreground leading-relaxed">
+            <p>
+              This project began as a personal mission to bridge the gap between human creativity and artificial intelligence. 
+              As I navigated my own journey—juggling studies, a marketing degree, and a passion for technology—I realized that 
+              AI isn't just a tool for productivity; it's a partner for creation.
+            </p>
+            <p>
+              I wanted to build a "lab" where anyone, regardless of their coding background, could witness the birth of 
+              autonomous intelligence. This platform is my tribute to that potential—a space where code isn't just logic, 
+              but a meaningful expression of what we can achieve together.
+            </p>
+            <p className="font-display italic text-white/90">
+              "This is my love letter to AI™—and I'm inviting you to help me write the next chapter."
+            </p>
           </div>
         </div>
       </div>
