@@ -23,6 +23,7 @@ interface Message {
   id: number;
   role: string;
   content: string;
+  mood?: string;
   createdAt: string;
 }
 

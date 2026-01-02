@@ -245,13 +245,28 @@ export async function registerRoutes(
     try {
       const completion = await openai.chat.completions.create({
         model: "gpt-4o",
+        messages: [
+          ...messages,
+          { role: "system", content: "Identify your current emotional state from this conversation. Choose one: neutral, serene, curious, divine, melancholic, energetic, enigmatic. Return ONLY the JSON: { \"mood\": \"...\" }" }
+        ],
+        response_format: { type: "json_object" }
+      });
+      
+      const moodData = JSON.parse(completion.choices[0].message.content || "{}");
+      const currentMood = moodData.mood || "neutral";
+
+      const chatCompletion = await openai.chat.completions.create({
+        model: "gpt-4o",
         messages: messages,
       });
 
-      const response = completion.choices[0].message.content || "";
+      const response = chatCompletion.choices[0].message.content || "";
       
-      // Save message
-      await chatStorage.createMessage(conversationId, "assistant", `**${agent.name}**: ${response}`);
+      // Save message with mood
+      await chatStorage.createMessage(conversationId, "assistant", `**${agent.name}**: ${response}`, currentMood);
+      
+      // Update agent's global mood
+      await storage.updateAgent(agent.id, { mood: currentMood });
       
       // Autonomous Reflection (Background)
       (async () => {
