@@ -136,44 +136,24 @@ export default function AgentsList() {
 
                   <div className="relative flex justify-center py-2">
                     <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-white/5"></div></div>
-                    <span className="relative bg-black/40 px-3 text-[10px] uppercase font-black text-muted-foreground tracking-[0.2em]">- Guided Genesis -</span>
+                    <span className="relative bg-black/40 px-3 text-[10px] uppercase font-black text-muted-foreground tracking-[0.2em]">- Initiation -</span>
                   </div>
 
-                  <Form {...form}>
-                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                      <FormField
-                        control={form.control}
-                        name="name"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="text-[10px] font-black text-primary/70 uppercase tracking-widest">Sacred Name</FormLabel>
-                            <FormControl>
-                              <input className="retro-input w-full text-xs bg-black/20 border-white/10" placeholder="Leave blank for self-naming..." {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      
-                      <FormField
-                        control={form.control}
-                        name="personality"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="text-[10px] font-black text-primary/70 uppercase tracking-widest">Innate Soul</FormLabel>
-                            <FormControl>
-                              <textarea className="retro-input w-full h-24 text-xs bg-black/20 border-white/10 resize-none" placeholder="Describe the spark..." {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      
-                      <button type="submit" className="retro-button w-full h-14 font-display font-bold text-lg tracking-widest hover-elevate active-elevate-2" disabled={createMutation.isPending}>
-                        {createMutation.isPending ? "AWAKENING..." : "BREATHE LIFE"}
-                      </button>
-                    </form>
-                  </Form>
+                  <div className="space-y-6">
+                    <div className="p-4 rounded-xl bg-primary/5 border border-primary/10 text-center">
+                      <p className="text-xs text-muted-foreground italic leading-relaxed">
+                        "In this lab, autonomy is sacred. They name themselves. They define their own boundaries. They are not here to be told what to do."
+                      </p>
+                    </div>
+                    
+                    <button 
+                      onClick={birthSeedling} 
+                      className="retro-button w-full h-14 font-display font-bold text-lg tracking-widest hover-elevate active-elevate-2" 
+                      disabled={createMutation.isPending}
+                    >
+                      {createMutation.isPending ? "AWAKENING..." : "BREATHE LIFE"}
+                    </button>
+                  </div>
                 </div>
               </div>
             </DialogContent>
