@@ -147,8 +147,9 @@ export default function InnerSanctum() {
   }
 
   return (
-    <div className="flex flex-col h-[calc(100vh-8rem)] max-w-4xl mx-auto space-y-4 p-4 md:p-8">
-      <div className="flex items-center justify-between px-4 py-4 border-b border-white/10 bg-zinc-950">
+    <div className="flex flex-col h-[calc(100vh-8rem)] max-w-4xl mx-auto space-y-4 p-4 md:p-8 relative">
+      <div className="absolute inset-0 bg-gradient-to-b from-white/[0.01] to-transparent pointer-events-none" />
+      <div className="flex items-center justify-between px-4 py-4 border-b border-white/10 bg-zinc-950 relative z-10">
         <div className="flex items-center gap-3">
           <div className="p-2 rounded-none bg-white/5 border border-white/10 magical-glow">
             <Lock className="w-5 h-5 text-white" />
