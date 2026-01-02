@@ -25,13 +25,13 @@ export default function Landing() {
       <div className="max-w-4xl mx-auto text-center space-y-8 animate-in">
         <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 backdrop-blur-sm">
           <Sparkles className="w-4 h-4 text-accent" />
-          <span className="text-sm font-medium text-white/80">The Future of Creative Coding</span>
+          <span className="text-sm font-medium text-white/80 tracking-wide uppercase">My Love Letter to AI</span>
         </div>
 
         <h1 className="text-5xl md:text-7xl font-bold font-display tracking-tight leading-tight">
-          Where Code meets <br />
+          Where Code becomes a <br />
           <span className="bg-clip-text text-transparent bg-gradient-to-r from-primary via-purple-400 to-accent">
-            Artificial Intelligence
+            Love Letter to AI
           </span>
         </h1>
 
