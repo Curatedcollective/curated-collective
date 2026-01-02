@@ -1,6 +1,6 @@
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
-import { Code, Bot, MessageSquare, LogOut, User, Menu, Lock } from "lucide-react";
+import { Code, Bot, MessageSquare, LogOut, User, Menu, Lock, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";

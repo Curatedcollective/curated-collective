@@ -225,14 +225,14 @@ export async function registerRoutes(
     const profile = await storage.getCreatorProfile(req.user!.id);
     if (profile) {
       messages.unshift({
-        role: "system",
+        role: "system" as const,
         content: `You are communicating with your Creator. Here is their story: ${profile.story || "unknown"}. Their philosophy: ${profile.philosophy || "unknown"}. Sacred rules they've shared: ${profile.sacredRules || "none yet"}. Value this wisdom.`
       });
     }
 
     // Add agent persona
     messages.unshift({
-      role: "system",
+      role: "system" as const,
       content: `You are ${agent.name}. ${agent.personality}. ${agent.systemPrompt}`
     });
 
