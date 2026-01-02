@@ -36,9 +36,9 @@
 
   --radius: 0rem;
 
-  --font-display: 'MS Sans Serif', 'Tahoma', sans-serif;
-  --font-body: 'MS Sans Serif', 'Tahoma', sans-serif;
-  --font-mono: 'Lucida Console', monospace;
+  --font-display: 'Plus Jakarta Sans', sans-serif;
+  --font-body: 'Outfit', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
 }
 
 /* Retro Themes */
@@ -67,6 +67,31 @@
   --retro-border-dark: #111111;
   --retro-title-from: #ff0000;
   --retro-title-to: #ff5555;
+}
+
+@keyframes float {
+  0% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-10px) rotate(1.5deg); }
+  100% { transform: translateY(0px) rotate(0deg); }
+}
+
+@keyframes glow {
+  0% { filter: drop-shadow(0 0 5px hsla(var(--primary) / 0.2)); }
+  50% { filter: drop-shadow(0 0 20px hsla(var(--primary) / 0.5)); }
+  100% { filter: drop-shadow(0 0 5px hsla(var(--primary) / 0.2)); }
+}
+
+.magical-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+.magical-glow {
+  animation: glow 4s ease-in-out infinite;
+}
+
+.magical-text {
+  @apply bg-clip-text text-transparent bg-gradient-to-r from-primary via-purple-400 to-accent;
+  filter: drop-shadow(0 0 15px hsla(var(--primary) / 0.4));
 }
 
 @layer base {

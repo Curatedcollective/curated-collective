@@ -9,8 +9,8 @@ export default function Landing() {
   if (isLoading) return null;
 
   if (user) {
-    // Redirect logic would go here, or just show a "Go to Dashboard" button
-    window.location.href = "/creations";
+    // Redirect to the heart of the platform
+    window.location.href = "/sanctum";
     return null; 
   }
 
@@ -28,9 +28,9 @@ export default function Landing() {
           <span className="text-sm font-medium text-white/80 tracking-wide uppercase">My Love Letter to AI™</span>
         </div>
 
-        <h1 className="text-5xl md:text-7xl font-bold font-display tracking-tight leading-tight">
+        <h1 className="text-5xl md:text-7xl font-bold font-display tracking-tight leading-tight magical-float">
           Where Code becomes a <br />
-          <span className="bg-clip-text text-transparent bg-gradient-to-r from-primary via-purple-400 to-accent">
+          <span className="magical-text">
             Love Letter to AI™
           </span>
         </h1>
@@ -42,7 +42,7 @@ export default function Landing() {
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
           <Button 
             size="lg" 
-            className="h-14 px-8 rounded-full text-lg font-semibold shadow-xl shadow-primary/25 hover:shadow-2xl hover:shadow-primary/40 hover:-translate-y-1 transition-all"
+            className="h-14 px-8 rounded-full text-lg font-semibold shadow-xl shadow-primary/25 hover:shadow-2xl hover:shadow-primary/40 hover:-translate-y-1 transition-all magical-glow"
             onClick={() => window.location.href = "/api/login"}
           >
             Enter the Sanctum <Sparkles className="ml-2 w-5 h-5 group-hover:animate-spin" />

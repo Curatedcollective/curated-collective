@@ -14,11 +14,14 @@ export function Navigation() {
 
   const NavContent = () => (
     <div className="flex flex-col h-full">
-      <div className="mb-8 px-2">
-        <h1 className="text-2xl font-bold font-display bg-clip-text text-transparent bg-gradient-to-r from-primary to-accent">
-          Creations
-        </h1>
-        <p className="text-xs text-muted-foreground mt-1">AI & Code Platform</p>
+      <div className="mb-8 px-2 flex items-center gap-2">
+        <Sparkles className="w-6 h-6 text-primary magical-glow" />
+        <div>
+          <h1 className="text-2xl font-bold font-display bg-clip-text text-transparent bg-gradient-to-r from-primary to-accent">
+            Creations
+          </h1>
+          <p className="text-xs text-muted-foreground mt-1">AI & Code Platform</p>
+        </div>
       </div>
 
       <nav className="space-y-2 flex-1">
