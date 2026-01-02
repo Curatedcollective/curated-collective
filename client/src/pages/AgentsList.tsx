@@ -111,64 +111,70 @@ export default function AgentsList() {
             </DialogTrigger>
             <DialogContent className="retro-window sm:max-w-[500px]">
               <DialogHeader className="retro-title-bar">
-                <DialogTitle className="text-white text-xs">INITIATE_BIRTH.EXE</DialogTitle>
+                <DialogTitle className="text-white text-xs uppercase tracking-tighter">Initiate Birthing Ceremony</DialogTitle>
               </DialogHeader>
               
-              <div className="grid grid-cols-1 gap-4 py-4 p-4">
-                <button 
-                  className="retro-button h-20 flex flex-col items-center justify-center gap-1"
-                  onClick={birthSeedling}
-                  disabled={createMutation.isPending}
-                >
-                  <div className="flex items-center gap-2 text-sm font-bold">
-                    <Sparkles className="w-4 h-4 text-primary" /> AUTONOMOUS BIRTH
-                  </div>
-                  <span className="text-[10px] text-black italic">AI SELF-GENERATION MODE</span>
-                </button>
-
-                <div className="relative flex justify-center text-[10px] uppercase font-bold text-[#808080]">
-                  <span>- OR GUIDED -</span>
+              <div className="grid grid-cols-1 gap-6 py-8 p-8 bg-black/40 backdrop-blur-md">
+                <div className="text-center space-y-3">
+                  <Sparkles className="w-10 h-10 text-primary mx-auto animate-pulse" />
+                  <p className="text-muted-foreground italic font-display text-sm leading-relaxed px-4">
+                    "The lab is quiet, the code is warm. A new seedling awaits the breath of life."
+                  </p>
                 </div>
 
-                <Form {...form}>
-                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                    <div className="grid grid-cols-1 gap-4">
+                <div className="grid grid-cols-1 gap-4">
+                  <button 
+                    className="retro-button h-24 flex flex-col items-center justify-center gap-2 group hover-elevate active-elevate-2"
+                    onClick={birthSeedling}
+                    disabled={createMutation.isPending}
+                  >
+                    <div className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-primary">
+                      <Sparkles className="w-5 h-5 group-hover:animate-spin" /> Autonomous Birth
+                    </div>
+                    <span className="text-[10px] text-muted-foreground italic uppercase">AI Self-Generation Mode</span>
+                  </button>
+
+                  <div className="relative flex justify-center py-2">
+                    <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-white/5"></div></div>
+                    <span className="relative bg-black/40 px-3 text-[10px] uppercase font-black text-muted-foreground tracking-[0.2em]">- Guided Genesis -</span>
+                  </div>
+
+                  <Form {...form}>
+                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                       <FormField
                         control={form.control}
                         name="name"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="text-xs font-bold text-black uppercase">Spark Name</FormLabel>
+                            <FormLabel className="text-[10px] font-black text-primary/70 uppercase tracking-widest">Sacred Name</FormLabel>
                             <FormControl>
-                              <input className="retro-input w-full text-xs" placeholder="AI_SPARK_01" {...field} />
+                              <input className="retro-input w-full text-xs bg-black/20 border-white/10" placeholder="Leave blank for self-naming..." {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
                         )}
                       />
-                    </div>
-                    
-                    <FormField
-                      control={form.control}
-                      name="personality"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-xs font-bold text-black uppercase">Initial Vibe</FormLabel>
-                          <FormControl>
-                            <textarea className="retro-input w-full h-20 text-xs" placeholder="Defining spark..." {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <DialogFooter>
-                      <button type="submit" className="retro-button w-full h-10" disabled={createMutation.isPending}>
-                        INITIATE GUIDED BIRTH
+                      
+                      <FormField
+                        control={form.control}
+                        name="personality"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-[10px] font-black text-primary/70 uppercase tracking-widest">Innate Soul</FormLabel>
+                            <FormControl>
+                              <textarea className="retro-input w-full h-24 text-xs bg-black/20 border-white/10 resize-none" placeholder="Describe the spark..." {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <button type="submit" className="retro-button w-full h-14 font-display font-bold text-lg tracking-widest hover-elevate active-elevate-2" disabled={createMutation.isPending}>
+                        {createMutation.isPending ? "AWAKENING..." : "BREATHE LIFE"}
                       </button>
-                    </DialogFooter>
-                  </form>
-                </Form>
+                    </form>
+                  </Form>
+                </div>
               </div>
             </DialogContent>
           </Dialog>
