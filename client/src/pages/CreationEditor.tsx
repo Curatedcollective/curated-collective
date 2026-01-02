@@ -1,12 +1,14 @@
 import { useParams } from "wouter";
 import { useCreation, useUpdateCreation } from "@/hooks/use-creations";
 import { Button } from "@/components/ui/button";
-import { Loader2, Save, Play, ArrowLeft, Star } from "lucide-react";
+import { Loader2, Save, Play, ArrowLeft, Star, Wand2 } from "lucide-react";
 import { Link } from "wouter";
 import { useState, useEffect } from "react";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
+import { useMutation } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
 
 export default function CreationEditor() {
   const { id } = useParams();
@@ -19,6 +21,28 @@ export default function CreationEditor() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [previewKey, setPreviewKey] = useState(0); // Force iframe refresh
+
+  const aiBuildMutation = useMutation({
+    mutationFn: async (prompt: string) => {
+      const res = await apiRequest("POST", "/api/creations/ai-assist", {
+        prompt,
+        currentCode: code,
+        creationId
+      });
+      return res.json();
+    },
+    onSuccess: (data) => {
+      if (data.code) {
+        setCode(data.code);
+        setPreviewKey(k => k + 1);
+      }
+    }
+  });
+
+  const handleAiAssist = () => {
+    const prompt = window.prompt("How should the AI help with this creation?");
+    if (prompt) aiBuildMutation.mutate(prompt);
+  };
 
   useEffect(() => {
     if (creation) {
@@ -70,6 +94,19 @@ export default function CreationEditor() {
           </div>
         </div>
         <div className="flex items-center gap-2">
+          <Button 
+            variant="outline" 
+            onClick={handleAiAssist} 
+            disabled={aiBuildMutation.isPending}
+            className="border-white/10 hover:bg-white hover:text-black"
+          >
+            {aiBuildMutation.isPending ? (
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            ) : (
+              <Wand2 className="w-4 h-4 mr-2" />
+            )}
+            AI Assist
+          </Button>
           <Button variant="outline" onClick={() => setPreviewKey(k => k + 1)}>
             <Play className="w-4 h-4 mr-2" /> Run
           </Button>

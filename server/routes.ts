@@ -69,6 +69,26 @@ export async function registerRoutes(
     res.status(204).send();
   });
 
+  app.post("/api/creations/ai-assist", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    const { prompt, currentCode } = req.body;
+
+    try {
+      const completion = await openai.chat.completions.create({
+        model: "gpt-4o",
+        messages: [
+          { role: "system", content: "You are a creative coding assistant for the Curated Collective platform. Help the user build or modify their HTML/JS/CSS creation. Return ONLY the code, no markdown blocks, no explanation." },
+          { role: "user", content: `Current Code:\n${currentCode}\n\nTask: ${prompt}` }
+        ],
+      });
+
+      const newCode = completion.choices[0].message.content || currentCode;
+      res.json({ code: newCode.replace(/^```html\n?|```$/g, "") });
+    } catch (err) {
+      res.status(500).json({ message: "AI assistance failed" });
+    }
+  });
+
   // --- Sanctum (Private Creator Bridge) ---
   app.get("/api/chat/sanctum", async (req, res) => {
     if (!req.user) return res.status(401).send();
