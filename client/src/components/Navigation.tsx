@@ -18,7 +18,7 @@ export function Navigation() {
         <Sparkles className="w-6 h-6 text-white magical-glow" />
         <div>
           <h1 className="text-2xl font-bold font-display text-white lowercase tracking-tighter">
-            creations
+            void
           </h1>
           <p className="text-[10px] text-zinc-500 mt-1 lowercase tracking-widest">ai & code platform</p>
         </div>
@@ -66,7 +66,7 @@ export function Navigation() {
       {/* Mobile Header */}
       <div className="md:hidden fixed top-0 left-0 right-0 h-16 border-b border-white/10 bg-black z-40 px-4 flex items-center justify-between">
          <h1 className="text-xl font-bold font-display text-white lowercase tracking-tighter">
-          creations
+          void
         </h1>
         <Sheet open={open} onOpenChange={setOpen}>
           <SheetTrigger asChild>
