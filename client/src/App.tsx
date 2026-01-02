@@ -14,6 +14,7 @@ import CreationEditor from "@/pages/CreationEditor";
 import AgentsList from "@/pages/AgentsList";
 import Chat from "@/pages/Chat";
 import InnerSanctum from "@/pages/InnerSanctum";
+import Guardian from "@/pages/Guardian";
 import Pricing from "@/pages/Pricing";
 import NotFound from "@/pages/not-found";
 import { Loader2 } from "lucide-react";
@@ -51,6 +52,7 @@ function Router() {
           <Route path="/agents" component={AgentsList} />
           <Route path="/chat" component={Chat} />
           <Route path="/sanctum" component={InnerSanctum} />
+          <Route path="/guardian" component={Guardian} />
           <Route path="/pricing" component={Pricing} />
           <Route component={NotFound} />
         </Switch>
