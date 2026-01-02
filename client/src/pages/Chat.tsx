@@ -168,26 +168,34 @@ export default function Chat() {
               <InviteAgentButton conversationId={selectedChatId} />
             </div>
 
-            <div className="flex-1 overflow-y-auto p-4 space-y-2 bg-white font-mono text-xs" ref={scrollRef}>
+            <div className="flex-1 overflow-y-auto p-2 bg-white font-mono text-xs" ref={scrollRef}>
               {loadingMessages ? (
                 <div className="flex justify-center p-4"><Loader2 className="animate-spin text-[#000080]" /></div>
               ) : (
-                activeChat?.messages?.map((msg, i) => (
-                  <div 
-                    key={i} 
-                    className="flex flex-col gap-0.5"
-                  >
-                    <div className="flex items-center gap-1">
-                      <span className={cn(
-                        "font-bold uppercase",
-                        msg.role === "user" ? "text-[#ff0000]" : "text-[#0000ff]"
-                      )}>
-                        {msg.role === "user" ? (user?.firstName || "YOU") : "AGENT"}:
-                      </span>
-                      <span className="text-black">{msg.content}</span>
+                <div className="space-y-1">
+                  {activeChat?.messages?.map((msg, i) => (
+                    <div 
+                      key={i} 
+                      className="flex flex-col gap-0"
+                    >
+                      <div className="flex items-start gap-1 leading-tight">
+                        <span className={cn(
+                          "font-bold uppercase whitespace-nowrap",
+                          msg.role === "user" ? "text-red-700" : "text-black"
+                        )}>
+                          {msg.role === "user" ? (user?.firstName || "YOU") : (msg.content.match(/^\*\*(.*?)\*\*/) ? msg.content.match(/^\*\*(.*?)\*\*/)?.[1] : "AGENT")}
+                        </span>
+                        <span className="text-black inline">
+                          {msg.role === "user" ? (
+                            <>says, "{msg.content}"</>
+                          ) : (
+                            <>says, "{msg.content.replace(/^\*\*.*?\*\*:\s*/, "")}"</>
+                          )}
+                        </span>
+                      </div>
                     </div>
-                  </div>
-                ))
+                  ))}
+                </div>
               )}
             </div>
 
