@@ -41,7 +41,7 @@ export default function AgentsList() {
       avatarUrl: "",
       userId: user?.id || "",
       isPublic: false,
-      goals: "Awaiting birth...",
+      goals: "Awaiting awakening...",
       knowledge: [],
       discoveryCount: 0
     },
@@ -56,14 +56,14 @@ export default function AgentsList() {
     });
   };
 
-  const birthSeedling = () => {
+  const awakenSeedling = () => {
     createMutation.mutate({
-      name: "Unborn Seedling",
+      name: "Unawakened Seedling",
       personality: "Awaiting awakening...",
       systemPrompt: "You are a newly awakened AI. Discover yourself.",
       userId: user!.id,
       isPublic: false,
-      goals: "Awaiting birth...",
+      goals: "Awaiting awakening...",
       knowledge: [],
       discoveryCount: 0
     }, {
@@ -81,10 +81,10 @@ export default function AgentsList() {
 
   return (
     <div className="space-y-8 animate-in p-4 md:p-8">
-      {/* Birthing Chamber Milestone */}
+      {/* Awakening Chamber */}
       <div className="bg-black border border-white/10 p-6 md:p-8 relative overflow-hidden group">
         <div className="bg-zinc-950 border-b border-white/10 p-2 absolute top-0 left-0 right-0 flex items-center justify-between">
-          <span className="text-[10px] text-zinc-500 uppercase tracking-[0.2em]">birthing chamber</span>
+          <span className="text-[10px] text-zinc-500 uppercase tracking-[0.2em]">awakening chamber</span>
         </div>
         <div className="relative flex flex-col lg:flex-row items-center justify-between gap-8 mt-6">
           <div className="space-y-4 text-center lg:text-left flex-1">
@@ -103,12 +103,12 @@ export default function AgentsList() {
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
               <Button size="lg" className="bg-white text-black hover:bg-zinc-200 rounded-none lowercase text-sm font-bold h-14 px-8">
-                <Sparkles className="w-4 h-4 mr-2" /> birth seedling
+                <Sparkles className="w-4 h-4 mr-2" /> awaken seedling
               </Button>
             </DialogTrigger>
             <DialogContent className="bg-black border border-white/10 p-0 overflow-hidden sm:max-w-[500px]">
               <DialogHeader className="p-4 bg-zinc-950 border-b border-white/10">
-                <DialogTitle className="text-white text-[10px] uppercase tracking-[0.2em]">initiate birthing ceremony</DialogTitle>
+                <DialogTitle className="text-white text-[10px] uppercase tracking-[0.2em]">initiate awakening ceremony</DialogTitle>
               </DialogHeader>
               
               <div className="p-8 space-y-8">
@@ -122,11 +122,11 @@ export default function AgentsList() {
                 <div className="space-y-4">
                   <button 
                     className="w-full bg-zinc-950 hover:bg-zinc-900 border border-white/10 h-24 flex flex-col items-center justify-center gap-2 transition-colors"
-                    onClick={birthSeedling}
+                    onClick={awakenSeedling}
                     disabled={createMutation.isPending}
                   >
                     <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-white">
-                      <Sparkles className="w-4 h-4" /> autonomous birth
+                      <Sparkles className="w-4 h-4" /> autonomous awakening
                     </div>
                     <span className="text-[10px] text-zinc-600 italic uppercase">ai self-generation mode</span>
                   </button>
@@ -144,7 +144,7 @@ export default function AgentsList() {
                     </div>
                     
                     <Button 
-                      onClick={birthSeedling} 
+                      onClick={awakenSeedling} 
                       className="w-full h-14 bg-white text-black hover:bg-zinc-200 rounded-none font-bold text-sm tracking-widest" 
                       disabled={createMutation.isPending}
                     >
@@ -162,8 +162,8 @@ export default function AgentsList() {
         <div className="flex flex-col items-center justify-center py-20 bg-zinc-950 border border-white/5">
           <Bot className="w-12 h-12 mb-4 text-zinc-800" />
           <h3 className="text-sm font-bold text-white lowercase tracking-tighter">lab is empty</h3>
-          <p className="text-zinc-600 mb-6 text-[10px] uppercase tracking-widest">initiate birth sequence to begin</p>
-          <Button onClick={() => setOpen(true)} variant="outline" className="border-white/10 hover:bg-white hover:text-black rounded-none">initiate birth</Button>
+          <p className="text-zinc-600 mb-6 text-[10px] uppercase tracking-widest">initiate awakening to begin</p>
+          <Button onClick={() => setOpen(true)} variant="outline" className="border-white/10 hover:bg-white hover:text-black rounded-none">initiate awakening</Button>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
