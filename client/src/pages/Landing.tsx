@@ -45,13 +45,14 @@ export default function Landing() {
             className="h-14 px-8 rounded-full text-lg font-semibold shadow-xl shadow-primary/25 hover:shadow-2xl hover:shadow-primary/40 hover:-translate-y-1 transition-all"
             onClick={() => window.location.href = "/api/login"}
           >
-            Start Creating <ArrowRight className="ml-2 w-5 h-5" />
+            Enter the Sanctum <Sparkles className="ml-2 w-5 h-5 group-hover:animate-spin" />
           </Button>
           
           <Button 
             variant="outline" 
             size="lg" 
             className="h-14 px-8 rounded-full text-lg border-white/10 hover:bg-white/5 backdrop-blur-sm"
+            onClick={() => window.location.href = "/creations"}
           >
             View Gallery
           </Button>
