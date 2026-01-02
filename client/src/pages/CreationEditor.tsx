@@ -81,7 +81,7 @@ export default function CreationEditor() {
             )}
             Save
           </Button>
-          {user?.username === "admin" && (
+          {user?.firstName === "admin" && (
             <Button 
               variant={creation.isCurated ? "default" : "outline"}
               onClick={() => updateMutation.mutate({ id: creationId, isCurated: !creation.isCurated })}

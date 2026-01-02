@@ -100,7 +100,7 @@ export default function CreationsList() {
                     <FormItem>
                       <FormLabel>Description</FormLabel>
                       <FormControl>
-                        <Textarea placeholder="What does this code do?" {...field} />
+                        <Textarea placeholder="What does this code do?" {...field} value={field.value ?? ""} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
