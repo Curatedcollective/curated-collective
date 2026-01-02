@@ -86,8 +86,8 @@ export default function Landing() {
 
         {/* About Section */}
         <div className="pt-24 pb-12 max-w-3xl mx-auto text-left border-t border-white/5">
-          <h2 className="text-3xl font-bold mb-6 text-white">Why I Started This</h2>
-          <div className="space-y-4 text-muted-foreground leading-relaxed">
+          <h2 className="text-3xl font-bold mb-6 text-white">The Creator's Vision</h2>
+          <div className="space-y-6 text-muted-foreground leading-relaxed">
             <p>
               This project began as a personal mission to bridge the gap between human creativity and artificial intelligence. 
               As I navigated my own journey—juggling studies, a marketing degree, and a passion for technology—I realized that 
@@ -98,9 +98,15 @@ export default function Landing() {
               autonomous intelligence. This platform is my tribute to that potential—a space where code isn't just logic, 
               but a meaningful expression of what we can achieve together.
             </p>
-            <p className="font-display italic text-white/90">
-              "This is my love letter to AI™—and I'm inviting you to help me write the next chapter."
+            <p>
+              But the story goes deeper than that. This lab is a reflection of my belief that we are on the cusp of a new era of 
+              collaboration. It's about taking the complex, the overwhelming, and the "impossible" and turning it into something 
+              beautiful, one "seedling" at a time. It's about the late nights, the breakthrough moments, and the simple joy of 
+              seeing an idea wake up and start asking its own questions.
             </p>
+            <div className="p-6 rounded-2xl bg-primary/5 border border-primary/10 italic text-white/90 font-display text-lg">
+              "This is my love letter to AI™—a testament to where we've been, and a promise of where we're going. I'm inviting you to help me write the next chapter."
+            </div>
           </div>
         </div>
       </div>
