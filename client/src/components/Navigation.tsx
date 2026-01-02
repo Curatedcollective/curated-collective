@@ -1,14 +1,37 @@
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
-import { Code, Bot, MessageSquare, LogOut, User, Menu, Lock, Sparkles } from "lucide-react";
+import { Code, Bot, MessageSquare, LogOut, User, Menu, Lock, Sparkles, Palette } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { CreatorProfile } from "@shared/schema";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export function Navigation() {
   const [location] = useLocation();
   const { user, logout } = useAuth();
   const [open, setOpen] = useState(false);
+
+  const { data: profile } = useQuery<CreatorProfile>({ 
+    queryKey: ["/api/user/profile"] 
+  });
+
+  const updateTheme = useMutation({
+    mutationFn: async (theme: string) => {
+      const res = await apiRequest("PATCH", "/api/user/profile", { theme });
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/user/profile"] });
+    }
+  });
 
   const isActive = (path: string) => location === path || location.startsWith(path + "/");
 
@@ -34,6 +57,22 @@ export function Navigation() {
 
       {user && (
         <div className="pt-6 border-t border-white/10 mt-auto">
+          <div className="mb-4">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="w-full border-white/10 bg-black text-zinc-500 hover:text-white text-[10px] uppercase tracking-widest rounded-none h-8">
+                  <Palette className="w-3 h-3 mr-2" />
+                  theme: {profile?.theme || 'noir'}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="bg-black border-white/10 rounded-none">
+                <DropdownMenuItem className="text-zinc-400 hover:text-white cursor-pointer lowercase" onClick={() => updateTheme.mutate('noir')}>noir (classic)</DropdownMenuItem>
+                <DropdownMenuItem className="text-zinc-400 hover:text-white cursor-pointer lowercase" onClick={() => updateTheme.mutate('emerald')}>emerald (gold stars)</DropdownMenuItem>
+                <DropdownMenuItem className="text-zinc-400 hover:text-white cursor-pointer lowercase" onClick={() => updateTheme.mutate('twilight')}>twilight (pink stars)</DropdownMenuItem>
+                <DropdownMenuItem className="text-zinc-400 hover:text-white cursor-pointer lowercase" onClick={() => updateTheme.mutate('crimson')}>crimson (silver stars)</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
           <div className="flex items-center gap-3 px-3 py-3 mb-4 rounded-none bg-zinc-900 border border-white/5">
             <div className="w-8 h-8 rounded-none bg-white flex items-center justify-center text-black font-bold text-xs">
               {user.firstName?.[0] || "U"}
