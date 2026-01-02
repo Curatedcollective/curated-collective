@@ -41,16 +41,21 @@ export default function Chat() {
 
   const themes = ["theme-2000s", "theme-90s", "theme-8bit"];
 
-  const blastFromThePast = () => {
-    const availableThemes = themes.filter(t => t !== currentTheme);
-    const randomTheme = availableThemes[Math.floor(Math.random() * availableThemes.length)];
-    setCurrentTheme(randomTheme);
+  const setTheme = (theme: string) => {
+    setCurrentTheme(theme);
+    localStorage.setItem("chat-theme", theme);
   };
 
   useEffect(() => {
-    document.body.className = `antialiased font-body ${currentTheme}`;
+    const savedTheme = localStorage.getItem("chat-theme");
+    if (savedTheme) setCurrentTheme(savedTheme);
+  }, []);
+
+  useEffect(() => {
+    document.body.classList.remove("theme-2000s", "theme-90s", "theme-8bit");
+    document.body.classList.add(currentTheme);
     return () => {
-      document.body.className = "antialiased font-body";
+      document.body.classList.remove(currentTheme);
     };
   }, [currentTheme]);
 
@@ -155,15 +160,32 @@ export default function Chat() {
     <div className="flex h-[calc(100vh-2rem)] md:h-[calc(100vh-4rem)] gap-4 animate-in">
       {/* Sidebar List */}
       <div className="w-64 flex flex-col gap-4 border-r border-border pr-4">
-        <div className="flex items-center justify-between">
-          <h2 className="font-bold text-lg">Chats</h2>
-          <div className="flex gap-1">
-            <button className="retro-button px-1 text-[10px]" onClick={blastFromThePast}>
-              BLAST!
-            </button>
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center justify-between">
+            <h2 className="font-bold text-lg">Era Selection</h2>
             <Button size="icon" variant="ghost" onClick={() => createChatMutation.mutate()}>
               <Plus className="w-5 h-5" />
             </Button>
+          </div>
+          <div className="flex gap-1">
+            <button 
+              className={cn("retro-button flex-1 text-[10px]", currentTheme === "theme-2000s" && "ring-2 ring-primary")} 
+              onClick={() => setTheme("theme-2000s")}
+            >
+              2000s TEAL
+            </button>
+            <button 
+              className={cn("retro-button flex-1 text-[10px]", currentTheme === "theme-90s" && "ring-2 ring-primary")} 
+              onClick={() => setTheme("theme-90s")}
+            >
+              90s PURPLE
+            </button>
+            <button 
+              className={cn("retro-button flex-1 text-[10px]", currentTheme === "theme-8bit" && "ring-2 ring-primary")} 
+              onClick={() => setTheme("theme-8bit")}
+            >
+              8-BIT DARK
+            </button>
           </div>
         </div>
         <ScrollArea className="flex-1">
