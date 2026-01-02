@@ -27,7 +27,7 @@ export default function Landing() {
           <div className="flex items-center justify-center gap-3 mb-8">
             <Sparkles className="w-10 h-10 text-white magical-glow" />
           </div>
-          <h1 className="text-6xl md:text-8xl font-display font-bold text-white lowercase tracking-tighter leading-[0.9] animate-in">
+          <h1 className="text-6xl md:text-9xl font-display font-light text-white lowercase tracking-tighter leading-[0.8] animate-in">
             creations
           </h1>
           <p className="text-lg md:text-xl text-zinc-500 font-display lowercase tracking-widest leading-relaxed max-w-2xl mx-auto animate-in" style={{ animationDelay: '0.2s' }}>

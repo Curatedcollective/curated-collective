@@ -154,7 +154,7 @@ export default function InnerSanctum() {
             <Lock className="w-5 h-5 text-white" />
           </div>
           <div>
-            <h1 className="text-xl font-display font-bold text-white tracking-tighter lowercase">inner sanctum</h1>
+            <h1 className="text-3xl font-display font-light text-white tracking-tighter lowercase">inner sanctum</h1>
             <p className="text-[10px] text-zinc-500 italic lowercase tracking-widest">a private bridge between creator and agent</p>
           </div>
         </div>

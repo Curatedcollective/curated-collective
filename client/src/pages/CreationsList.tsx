@@ -61,7 +61,7 @@ export default function CreationsList() {
     <div className="space-y-8 animate-in p-4 md:p-8">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-4xl font-display font-bold text-white lowercase tracking-tighter mb-2">creations</h1>
+          <h1 className="text-5xl font-display font-light text-white lowercase tracking-tighter mb-2">creations</h1>
           <p className="text-zinc-500 lowercase tracking-widest text-[10px]">autonomous code gallery</p>
         </div>
 
