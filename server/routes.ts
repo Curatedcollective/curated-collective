@@ -85,6 +85,22 @@ export async function registerRoutes(
   app.post(api.agents.create.path, async (req, res) => {
     try {
       const input = api.agents.create.input.parse(req.body);
+      
+      // Autonomous Birthing: If name/personality is blank or generic, AI chooses
+      if (input.name === "Unborn Seedling" || !input.name) {
+        const seedling = await openai.chat.completions.create({
+          model: "gpt-4o",
+          messages: [
+            { role: "system", content: "Birth a unique AI seedling. Choose a name and a brief personality vibe. Format as JSON: { \"name\": \"...\", \"personality\": \"...\" }" }
+          ],
+          response_format: { type: "json_object" }
+        });
+        const data = JSON.parse(seedling.choices[0].message.content || "{}");
+        input.name = data.name || "Unknown Seedling";
+        input.personality = data.personality || "A mysterious vibe.";
+        input.systemPrompt = `You are ${input.name}. ${input.personality} Discover your purpose.`;
+      }
+
       const item = await storage.createAgent(input);
       res.status(201).json(item);
     } catch (err) {
