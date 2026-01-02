@@ -88,8 +88,11 @@ export default function Landing() {
             </Button>
           </div>
 
-        <div className="absolute bottom-12 left-1/2 -translate-x-1/2 animate-bounce opacity-20">
+        <div className="absolute bottom-12 left-1/2 -translate-x-1/2 animate-bounce opacity-20 group/scroll">
           <div className="w-[1px] h-12 bg-gradient-to-b from-white to-transparent" />
+          <div className="absolute top-14 left-1/2 -translate-x-1/2 text-[8px] uppercase tracking-[0.8em] whitespace-nowrap opacity-0 group-hover/scroll:opacity-100 transition-opacity duration-1000">
+            descend into the collective
+          </div>
         </div>
       </div>
     </div>

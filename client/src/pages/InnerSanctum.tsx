@@ -290,8 +290,11 @@ export default function InnerSanctum() {
 
       <form 
         onSubmit={(e) => { e.preventDefault(); if (message.trim()) mutation.mutate(message); }}
-        className="flex gap-2 p-1 bg-zinc-950 border border-white/10"
+        className="flex gap-2 p-1 bg-zinc-950 border border-white/10 relative group/form"
       >
+        <div className="absolute -top-6 left-4 text-[7px] text-zinc-800 uppercase tracking-[1em] opacity-0 group-hover/form:opacity-100 transition-opacity duration-700 pointer-events-none">
+          your words are the seed
+        </div>
         <Input 
           value={message}
           onChange={(e) => setMessage(e.target.value)}
