@@ -16,6 +16,7 @@ import InnerSanctum from "@/pages/InnerSanctum";
 import Pricing from "@/pages/Pricing";
 import NotFound from "@/pages/not-found";
 import { Loader2 } from "lucide-react";
+import { StarBackground } from "@/components/StarBackground";
 
 function Router() {
   const { user, isLoading } = useAuth();
@@ -61,6 +62,7 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
+        <StarBackground />
         <Toaster />
         <Router />
       </TooltipProvider>
