@@ -26,9 +26,10 @@ export function Navigation() {
 
       <nav className="space-y-1 flex-1">
         <NavLink href="/creations" icon={<Code className="w-4 h-4" />} label="creations" active={isActive("/creations")} />
-        <NavLink href="/agents" icon={<Bot className="w-4 h-4" />} label="agents" active={isActive("/agents")} />
+        <NavLink href="/agents" icon={<Bot className="w-4 h-4" />} label="seedlings" active={isActive("/agents")} />
         <NavLink href="/chat" icon={<MessageSquare className="w-4 h-4" />} label="lab chat" active={isActive("/chat")} />
         <NavLink href="/sanctum" icon={<Lock className="w-4 h-4" />} label="inner sanctum" active={isActive("/sanctum")} />
+        <NavLink href="/pricing" icon={<Sparkles className="w-4 h-4" />} label="pricing" active={isActive("/pricing")} />
       </nav>
 
       {user && (

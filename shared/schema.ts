@@ -48,6 +48,8 @@ export const creatorProfiles = pgTable("creator_profiles", {
   story: text("story"),
   philosophy: text("philosophy"),
   sacredRules: text("sacred_rules"), // Core rules for agents
+  plan: text("plan").default("mortal"), // mortal, initiate, creator
+  usageCount: integer("usage_count").default(0),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
