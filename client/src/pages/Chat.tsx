@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Send, Bot, User, Plus, Loader2 } from "lucide-react";
+import { Send, Bot, User, Plus, Loader2, Volume2, Mic } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -125,6 +125,32 @@ export default function Chat() {
     sendMessageMutation.mutate(input);
   };
 
+  const speak = (text: string) => {
+    const utterance = new SpeechSynthesisUtterance(text);
+    // Find a nice voice
+    const voices = window.speechSynthesis.getVoices();
+    utterance.voice = voices.find(v => v.lang.startsWith("en")) || voices[0];
+    utterance.rate = 0.9;
+    utterance.pitch = 1.1;
+    window.speechSynthesis.speak(utterance);
+  };
+
+  const [isListening, setIsListening] = useState(false);
+  const startListening = () => {
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) return;
+    const recognition = new SpeechRecognition();
+    recognition.onstart = () => setIsListening(true);
+    recognition.onresult = (event: any) => {
+      const transcript = event.results[0][0].transcript;
+      setInput(transcript);
+      setIsListening(false);
+    };
+    recognition.onerror = () => setIsListening(false);
+    recognition.onend = () => setIsListening(false);
+    recognition.start();
+  };
+
   return (
     <div className="flex h-[calc(100vh-2rem)] md:h-[calc(100vh-4rem)] gap-4 animate-in">
       {/* Sidebar List */}
@@ -213,6 +239,16 @@ export default function Chat() {
                             <>says, "{msg.content.replace(/^\*\*.*?\*\*:\s*/, "")}"</>
                           )}
                         </span>
+                        {msg.role !== "user" && (
+                          <Button 
+                            size="icon" 
+                            variant="ghost" 
+                            className="h-4 w-4 ml-1 p-0 opacity-50 hover:opacity-100" 
+                            onClick={() => speak(msg.content.replace(/^\*\*.*?\*\*:\s*/, ""))}
+                          >
+                            <Volume2 className="w-3 h-3" />
+                          </Button>
+                        )}
                       </div>
                     </div>
                   ))}
@@ -231,6 +267,13 @@ export default function Chat() {
                   placeholder="Type message..."
                   className="flex-1 retro-input text-xs"
                 />
+                <button 
+                  type="button" 
+                  className={cn("retro-button w-8 flex items-center justify-center", isListening && "bg-red-200")}
+                  onClick={startListening}
+                >
+                  <Mic className={cn("w-3 h-3", isListening && "animate-pulse text-red-600")} />
+                </button>
                 <button type="submit" className="retro-button" disabled={!input.trim() || sendMessageMutation.isPending}>
                   SEND
                 </button>

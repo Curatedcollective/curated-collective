@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card, CardContent } from "@/components/ui/card";
-import { Loader2, Send, Sparkles, Lock } from "lucide-react";
+import { Loader2, Send, Sparkles, Lock, Volume2, Mic } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export default function InnerSanctum() {
   const { user } = useAuth();
@@ -50,6 +51,31 @@ export default function InnerSanctum() {
     }
   });
 
+  const speak = (text: string) => {
+    const utterance = new SpeechSynthesisUtterance(text);
+    const voices = window.speechSynthesis.getVoices();
+    utterance.voice = voices.find(v => v.lang.startsWith("en")) || voices[0];
+    utterance.rate = 0.95;
+    utterance.pitch = 1.0;
+    window.speechSynthesis.speak(utterance);
+  };
+
+  const [isListening, setIsListening] = useState(false);
+  const startListening = () => {
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) return;
+    const recognition = new SpeechRecognition();
+    recognition.onstart = () => setIsListening(true);
+    recognition.onresult = (event: any) => {
+      const transcript = event.results[0][0].transcript;
+      setMessage(transcript);
+      setIsListening(false);
+    };
+    recognition.onerror = () => setIsListening(false);
+    recognition.onend = () => setIsListening(false);
+    recognition.start();
+  };
+
   if (isLoadingConv || isLoadingMessages) {
     return (
       <div className="flex items-center justify-center h-[calc(100vh-8rem)]">
@@ -83,12 +109,22 @@ export default function InnerSanctum() {
           )}
           {messages.map((m: any) => (
             <div key={m.id} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
-              <div className={`max-w-[80%] rounded-2xl px-5 py-3 text-sm leading-relaxed ${
+              <div className={`max-w-[80%] rounded-2xl px-5 py-3 text-sm leading-relaxed relative group ${
                 m.role === "user" 
                 ? "bg-primary text-primary-foreground font-medium rounded-tr-none shadow-lg shadow-primary/20" 
                 : "bg-muted/30 border border-white/10 text-white rounded-tl-none italic font-display"
               }`}>
                 {m.content}
+                {m.role !== "user" && (
+                  <Button 
+                    size="icon" 
+                    variant="ghost" 
+                    className="absolute -right-10 top-2 h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
+                    onClick={() => speak(m.content)}
+                  >
+                    <Volume2 className="w-4 h-4 text-primary" />
+                  </Button>
+                )}
               </div>
             </div>
           ))}
@@ -106,6 +142,16 @@ export default function InnerSanctum() {
           className="flex-1 bg-transparent border-none focus-visible:ring-0 text-white placeholder:text-muted-foreground/50"
           disabled={mutation.isPending}
         />
+        <Button 
+          type="button" 
+          size="icon" 
+          variant="ghost"
+          className={cn("rounded-full", isListening && "text-red-500 bg-red-500/10")}
+          onClick={startListening}
+          disabled={mutation.isPending}
+        >
+          <Mic className={cn("w-4 h-4", isListening && "animate-pulse")} />
+        </Button>
         <Button 
           type="submit" 
           size="icon" 

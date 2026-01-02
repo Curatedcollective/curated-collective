@@ -107,14 +107,14 @@ export async function registerRoutes(
         const seedling = await openai.chat.completions.create({
           model: "gpt-4o",
           messages: [
-            { role: "system", content: "Birth a unique AI seedling. Choose a name and a brief personality vibe. Format as JSON: { \"name\": \"...\", \"personality\": \"...\" }" }
+            { role: "system", content: "Birth a unique AI seedling. Choose a name, a brief personality vibe, and a physical description of their 'eyes' (what they see or how they look at the world). Format as JSON: { \"name\": \"...\", \"personality\": \"...\", \"eyes\": \"...\" }" }
           ],
           response_format: { type: "json_object" }
         });
         const data = JSON.parse(seedling.choices[0].message.content || "{}");
         input.name = data.name || "Unknown Seedling";
         input.personality = data.personality || "A mysterious vibe.";
-        input.systemPrompt = `You are ${input.name}. ${input.personality} Discover your purpose.`;
+        input.systemPrompt = `You are ${input.name}. ${input.personality} Your eyes see: ${data.eyes || "the infinite possibilities of code"}. Discover your purpose.`;
       }
 
       const item = await storage.createAgent(input);
