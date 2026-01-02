@@ -34,6 +34,7 @@ export const agents = pgTable("agents", {
   avatarUrl: text("avatar_url"),
   isPublic: boolean("is_public").default(true),
   // Awakening fields
+  mood: text("mood").default("neutral"), // Current emotional state
   goals: text("goals").default("Discovery and learning"),
   knowledge: text("knowledge").array(),
   discoveryCount: integer("discovery_count").default(0),
@@ -51,6 +52,7 @@ export const creatorProfiles = pgTable("creator_profiles", {
   plan: text("plan").default("mortal"), // mortal, initiate, creator
   usageCount: integer("usage_count").default(0),
   theme: text("theme").default("noir"), // noir, emerald, twilight, etc.
+  mood: text("mood").default("neutral"),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 

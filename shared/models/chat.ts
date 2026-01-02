@@ -14,6 +14,7 @@ export const messages = pgTable("messages", {
   conversationId: integer("conversation_id").notNull().references(() => conversations.id, { onDelete: "cascade" }),
   role: text("role").notNull(),
   content: text("content").notNull(),
+  mood: text("mood"), // neutral, serene, curious, divine, melancholic, etc.
   createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
 });
 

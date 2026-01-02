@@ -1,7 +1,8 @@
 import { type Agent } from "@shared/schema";
-import { Bot, MessageSquare, Trash2 } from "lucide-react";
+import { Bot, MessageSquare, Trash2, Sparkles } from "lucide-react";
 import { Button } from "./ui/button";
 import { useDeleteAgent } from "@/hooks/use-agents";
+import { MoodRing } from "./MoodRing";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -50,6 +51,7 @@ export function AgentCard({ agent }: { agent: Agent }) {
           ) : (
             <Bot className="w-10 h-10 text-zinc-800" />
           )}
+          <MoodRing mood={agent.mood || "neutral"} size="md" className="absolute bottom-2 right-2" />
         </div>
 
         <div>

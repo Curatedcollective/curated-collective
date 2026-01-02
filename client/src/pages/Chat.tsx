@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Send, Bot, User, Plus, Loader2, Volume2, Mic } from "lucide-react";
+import { Send, Bot, User, Plus, Loader2, Volume2, Mic, Sparkles } from "lucide-react";
+import { MoodRing } from "@/components/MoodRing";
 import {
   Dialog,
   DialogContent,
@@ -174,7 +175,10 @@ export default function Chat() {
           <>
             <div className="p-4 border-b border-white/10 flex justify-between items-center bg-zinc-950">
               <div className="flex items-center gap-3">
-                <Bot className="w-5 h-5 text-white" />
+                <div className="relative">
+                  <Bot className="w-5 h-5 text-white" />
+                  <MoodRing mood={activeChat?.messages?.findLast(m => m.role === "assistant")?.mood || "neutral"} size="sm" className="absolute -bottom-1 -right-1" />
+                </div>
                 <div>
                   <h3 className="font-bold text-white text-sm lowercase tracking-tighter m-0 p-0">{activeChat?.title}</h3>
                 </div>
