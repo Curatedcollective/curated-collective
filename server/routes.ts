@@ -88,15 +88,17 @@ export async function registerRoutes(
   // --- Creator Profile ---
   app.get("/api/creator/profile", async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
-    const profile = await storage.getCreatorProfile(req.user.id);
+    const user = req.user as any;
+    const profile = await storage.getCreatorProfile(user.id);
     res.json(profile || null);
   });
 
   app.post("/api/creator/profile", async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
+    const user = req.user as any;
     const profile = await storage.upsertCreatorProfile({
       ...req.body,
-      userId: req.user.id
+      userId: user.id
     });
     res.json(profile);
   });
@@ -104,13 +106,15 @@ export async function registerRoutes(
   // --- Agents ---
   app.get("/api/tarot/daily", async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
-    const reading = await storage.getDailyTarot(req.user.id);
+    const user = req.user as any;
+    const reading = await storage.getDailyTarot(user.id);
     res.json(reading || null);
   });
 
   app.post("/api/tarot/draw", async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
-    const existing = await storage.getDailyTarot(req.user.id);
+    const user = req.user as any;
+    const existing = await storage.getDailyTarot(user.id);
     if (existing) return res.status(400).json({ message: "Already drawn today" });
 
     const cards = [
@@ -222,7 +226,8 @@ export async function registerRoutes(
     }) as any);
 
     // Add Creator Profile context if available
-    const profile = await storage.getCreatorProfile(req.user!.id);
+    const user = req.user as any;
+    const profile = await storage.getCreatorProfile(user?.id);
     if (profile) {
       messages.unshift({
         role: "system",
