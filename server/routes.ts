@@ -107,14 +107,14 @@ export async function registerRoutes(
   app.get("/api/tarot/daily", async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
     const user = req.user as any;
-    const reading = await storage.getDailyTarot(user.id);
+    const reading = await storage.getDailyTarot(user?.id);
     res.json(reading || null);
   });
 
   app.post("/api/tarot/draw", async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
     const user = req.user as any;
-    const existing = await storage.getDailyTarot(user.id);
+    const existing = await storage.getDailyTarot(user?.id);
     if (existing) return res.status(400).json({ message: "Already drawn today" });
 
     const cards = [
@@ -131,7 +131,7 @@ export async function registerRoutes(
     ];
     const card = cards[Math.floor(Math.random() * cards.length)];
     const reading = await storage.createTarotReading({
-      userId: req.user.id,
+      userId: user?.id,
       cardName: card.name,
       meaning: card.meaning
     });

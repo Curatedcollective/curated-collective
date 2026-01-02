@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
 import { Code, Bot, Sparkles, ArrowRight } from "lucide-react";
 import { Link } from "wouter";
+import { StarBackground } from "@/components/StarBackground";
 
 export default function Landing() {
   const { user, isLoading } = useAuth();
@@ -11,6 +12,7 @@ export default function Landing() {
   if (user) {
     return (
       <div className="min-h-screen bg-black overflow-hidden relative selection:bg-white selection:text-black flex items-center justify-center">
+        <StarBackground />
         {/* Abstract Background Elements */}
         <div className="absolute inset-0 z-0 overflow-hidden">
           <div className="absolute top-[5%] left-[-10%] w-[70rem] h-[70rem] bg-white/[0.04] rounded-full blur-[180px] animate-pulse" />
@@ -48,6 +50,7 @@ export default function Landing() {
 
   return (
     <div className="min-h-screen bg-black overflow-hidden relative selection:bg-white selection:text-black flex items-center justify-center">
+      <StarBackground />
       {/* Abstract Background Elements */}
       <div className="absolute inset-0 z-0 overflow-hidden">
         <div className="absolute top-[5%] left-[-10%] w-[70rem] h-[70rem] bg-white/[0.04] rounded-full blur-[180px] animate-pulse" />
