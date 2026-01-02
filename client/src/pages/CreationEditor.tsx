@@ -135,9 +135,10 @@ export default function CreationEditor() {
       {/* Editor Layout */}
       <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4 h-full min-h-0">
         {/* Code Input */}
-        <div className="h-full flex flex-col bg-card rounded-2xl border border-border overflow-hidden">
-          <div className="px-4 py-2 border-b border-border bg-secondary/30 text-xs font-mono text-muted-foreground">
-            EDITOR
+        <div className="h-full flex flex-col bg-card rounded-2xl border border-border overflow-hidden relative group/editor">
+          <div className="px-4 py-2 border-b border-border bg-secondary/30 text-xs font-mono text-muted-foreground flex justify-between items-center">
+            <span>EDITOR</span>
+            <span className="text-[10px] opacity-0 group-hover/editor:opacity-100 transition-opacity italic">they are watching the ink dry...</span>
           </div>
           <Textarea 
             value={code} 
