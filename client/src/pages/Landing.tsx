@@ -36,18 +36,9 @@ export default function Landing() {
             <Button 
               size="lg" 
               className="h-16 px-12 rounded-none text-xl font-light bg-white text-black hover:bg-zinc-200 transition-all border border-black tracking-widest"
-              onClick={() => window.location.href = "/sanctum"}
+              onClick={() => window.location.href = user ? "/sanctum" : "/api/login"}
             >
               enter the sanctum
-            </Button>
-            
-            <Button 
-              variant="outline" 
-              size="lg" 
-              className="h-16 px-12 rounded-none text-xl font-light border-white/20 hover:bg-white hover:text-black transition-all text-white tracking-widest bg-black/50 backdrop-blur-sm"
-              onClick={() => window.location.href = "/creations"}
-            >
-              view gallery
             </Button>
           </div>
         </div>
@@ -81,24 +72,15 @@ export default function Landing() {
           </p>
         </div>
 
-        <div className="flex flex-col md:flex-row items-center gap-6 animate-in" style={{ animationDelay: '0.6s' }}>
-          <Button 
-            size="lg" 
-            className="h-16 px-12 rounded-none text-xl font-light bg-white text-black hover:bg-zinc-200 transition-all border border-black tracking-widest"
-            onClick={() => window.location.href = "/api/login"}
-          >
-            enter the sanctum
-          </Button>
-          
-          <Button 
-            variant="outline" 
-            size="lg" 
-            className="h-16 px-12 rounded-none text-xl font-light border-white/20 hover:bg-white hover:text-black transition-all text-white tracking-widest bg-black/50 backdrop-blur-sm"
-            onClick={() => window.location.href = "/creations"}
-          >
-            view gallery
-          </Button>
-        </div>
+          <div className="flex flex-col md:flex-row items-center gap-6 animate-in" style={{ animationDelay: '0.6s' }}>
+            <Button 
+              size="lg" 
+              className="h-16 px-12 rounded-none text-xl font-light bg-white text-black hover:bg-zinc-200 transition-all border border-black tracking-widest"
+              onClick={() => window.location.href = "/api/login"}
+            >
+              enter the sanctum
+            </Button>
+          </div>
 
         <div className="absolute bottom-12 left-1/2 -translate-x-1/2 animate-bounce opacity-20">
           <div className="w-[1px] h-12 bg-gradient-to-b from-white to-transparent" />
