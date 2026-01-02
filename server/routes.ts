@@ -69,6 +69,22 @@ export async function registerRoutes(
     res.status(204).send();
   });
 
+  // --- Sanctum (Private Creator Bridge) ---
+  app.get("/api/chat/sanctum", async (req, res) => {
+    if (!req.user) return res.status(401).send();
+    
+    // Find or create a special private conversation between creator and agent
+    const conversations = await chatStorage.getConversations();
+    let conv = conversations.find(c => c.title === "Inner Sanctum");
+    
+    if (!conv) {
+      conv = await chatStorage.createConversation("Inner Sanctum");
+      // Add a system welcome
+      await chatStorage.createMessage(conv.id, "system", "The bridge is open. Speak your truth.");
+    }
+    res.json(conv);
+  });
+
   // --- Agents ---
   app.get(api.agents.list.path, async (req, res) => {
     const userId = req.query.userId as string | undefined;

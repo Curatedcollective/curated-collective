@@ -1,6 +1,6 @@
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
-import { Code, Bot, MessageSquare, LogOut, User, Menu } from "lucide-react";
+import { Code, Bot, MessageSquare, LogOut, User, Menu, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -24,14 +24,15 @@ export function Navigation() {
       <nav className="space-y-2 flex-1">
         <NavLink href="/creations" icon={<Code className="w-5 h-5" />} label="Creations" active={isActive("/creations")} />
         <NavLink href="/agents" icon={<Bot className="w-5 h-5" />} label="Agents" active={isActive("/agents")} />
-        <NavLink href="/chat" icon={<MessageSquare className="w-5 h-5" />} label="Chat" active={isActive("/chat")} />
+        <NavLink href="/chat" icon={<MessageSquare className="w-5 h-5" />} label="Lab Chat" active={isActive("/chat")} />
+        <NavLink href="/sanctum" icon={<Lock className="w-5 h-5" />} label="Inner Sanctum" active={isActive("/sanctum")} />
       </nav>
 
       {user && (
         <div className="pt-6 border-t border-border mt-auto">
           <div className="flex items-center gap-3 px-3 py-3 mb-4 rounded-xl bg-secondary/30">
             <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-primary to-accent flex items-center justify-center text-white font-bold">
-              {user.firstName?.[0] || user.username?.[0] || "U"}
+              {user.firstName?.[0] || "U"}
             </div>
             <div className="overflow-hidden">
               <p className="font-medium text-sm truncate">{user.firstName || "User"}</p>

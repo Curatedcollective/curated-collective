@@ -12,6 +12,7 @@ import CreationsList from "@/pages/CreationsList";
 import CreationEditor from "@/pages/CreationEditor";
 import AgentsList from "@/pages/AgentsList";
 import Chat from "@/pages/Chat";
+import InnerSanctum from "@/pages/InnerSanctum";
 import NotFound from "@/pages/not-found";
 import { Loader2 } from "lucide-react";
 
@@ -46,6 +47,7 @@ function Router() {
           <Route path="/creations/:id" component={CreationEditor} />
           <Route path="/agents" component={AgentsList} />
           <Route path="/chat" component={Chat} />
+          <Route path="/sanctum" component={InnerSanctum} />
           <Route component={NotFound} />
         </Switch>
       </main>
