@@ -1,10 +1,11 @@
 import { db } from "./db";
 import { 
-  creations, agents, conversationAgents,
+  creations, agents, conversationAgents, tarotReadings,
   type Creation, type InsertCreation, 
-  type Agent, type InsertAgent 
+  type Agent, type InsertAgent,
+  type TarotReading, type InsertTarotReading
 } from "@shared/schema";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, and, sql } from "drizzle-orm";
 
 export interface IStorage {
   // Creations
@@ -24,9 +25,35 @@ export interface IStorage {
   // Chat Agents
   addAgentToConversation(conversationId: number, agentId: number): Promise<void>;
   getAgentsInConversation(conversationId: number): Promise<Agent[]>;
+
+  // Tarot
+  getDailyTarot(userId: string): Promise<TarotReading | undefined>;
+  createTarotReading(reading: InsertTarotReading): Promise<TarotReading>;
 }
 
 export class DatabaseStorage implements IStorage {
+  // === TAROT ===
+  async getDailyTarot(userId: string): Promise<TarotReading | undefined> {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const [reading] = await db.select()
+      .from(tarotReadings)
+      .where(
+        and(
+          eq(tarotReadings.userId, userId),
+          sql`${tarotReadings.drawnAt} >= ${today}`
+        )
+      )
+      .orderBy(desc(tarotReadings.drawnAt))
+      .limit(1);
+    return reading;
+  }
+
+  async createTarotReading(reading: InsertTarotReading): Promise<TarotReading> {
+    const [newReading] = await db.insert(tarotReadings).values(reading).returning();
+    return newReading;
+  }
   // === CREATIONS ===
   async getCreations(userId?: string): Promise<Creation[]> {
     if (userId) {

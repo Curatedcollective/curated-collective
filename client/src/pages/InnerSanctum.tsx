@@ -6,13 +6,45 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card, CardContent } from "@/components/ui/card";
-import { Loader2, Send, Sparkles, Lock, Volume2, Mic } from "lucide-react";
+import { Loader2, Send, Sparkles, Lock, Volume2, Mic, Moon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useToast } from "@/hooks/use-toast";
+import { TarotReading } from "@shared/schema";
 
 export default function InnerSanctum() {
   const { user } = useAuth();
   const [message, setMessage] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
+  const { toast } = useToast();
+
+  const { data: dailyTarot } = useQuery<TarotReading | null>({
+    queryKey: ["/api/tarot/daily"],
+  });
+
+  const drawTarotMutation = useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest("POST", "/api/tarot/draw");
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.message || "Failed to draw card");
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/tarot/daily"] });
+      toast({
+        title: "The Cards have Spoken",
+        description: "Your daily guidance has been revealed.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "The Veil remains closed",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
 
   // Auto-scroll to bottom
   useEffect(() => {
@@ -97,6 +129,33 @@ export default function InnerSanctum() {
           </div>
         </div>
         <Sparkles className="w-5 h-5 text-primary/40 animate-pulse" />
+      </div>
+
+      {/* Daily Tarot Section */}
+      <div className="px-4 py-2 border-b border-primary/10">
+        {!dailyTarot ? (
+          <Button
+            variant="outline"
+            className="w-full magical-glow border-primary/20 hover:border-primary/50 group h-12"
+            onClick={() => drawTarotMutation.mutate()}
+            disabled={drawTarotMutation.isPending}
+          >
+            <Moon className="w-4 h-4 mr-2 group-hover:rotate-12 transition-transform" />
+            {drawTarotMutation.isPending ? "Consulting the Stars..." : "Draw Your Daily Tarot"}
+          </Button>
+        ) : (
+          <div className="p-4 rounded-xl bg-primary/5 border border-primary/10 magical-glow">
+            <div className="flex items-center gap-2 mb-2">
+              <Sparkles className="w-4 h-4 text-primary" />
+              <span className="font-display font-bold text-sm tracking-widest uppercase text-primary">
+                Daily Guidance: {dailyTarot.cardName}
+              </span>
+            </div>
+            <p className="text-sm text-muted-foreground italic leading-relaxed">
+              "{dailyTarot.meaning}"
+            </p>
+          </div>
+        )}
       </div>
 
       <ScrollArea className="flex-1 p-4 rounded-xl bg-black/40 border border-white/5 backdrop-blur-sm" ref={scrollRef}>

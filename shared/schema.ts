@@ -49,13 +49,32 @@ export const conversationAgents = pgTable("conversation_agents", {
   agentId: integer("agent_id").notNull().references(() => agents.id, { onDelete: "cascade" }),
 });
 
+// === TAROT READINGS ===
+export const tarotReadings = pgTable("tarot_readings", {
+  id: serial("id").primaryKey(),
+  userId: text("user_id").notNull(), // Foreign key to auth.users.id
+  cardName: text("card_name").notNull(),
+  meaning: text("meaning").notNull(),
+  drawnAt: timestamp("drawn_at").defaultNow().notNull(),
+});
+
 // === RELATIONS ===
-export const creationsRelations = relations(creations, ({ one }) => ({
-  author: one(users, {
-    fields: [creations.userId],
+export const tarotReadingsRelations = relations(tarotReadings, ({ one }) => ({
+  user: one(users, {
+    fields: [tarotReadings.userId],
     references: [users.id],
   }),
 }));
+
+// === ZOD SCHEMAS ===
+export const insertTarotSchema = createInsertSchema(tarotReadings).omit({ 
+  id: true, 
+  drawnAt: true 
+});
+
+// === TYPES ===
+export type TarotReading = typeof tarotReadings.$inferSelect;
+export type InsertTarotReading = z.infer<typeof insertTarotSchema>;
 
 export const agentsRelations = relations(agents, ({ one, many }) => ({
   creator: one(users, {
