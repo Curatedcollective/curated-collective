@@ -151,7 +151,7 @@ export async function registerRoutes(
     ];
     const card = cards[Math.floor(Math.random() * cards.length)];
     const reading = await storage.createTarotReading({
-      userId: user?.id,
+      userId: user.id,
       cardName: card.name,
       meaning: card.meaning
     });
