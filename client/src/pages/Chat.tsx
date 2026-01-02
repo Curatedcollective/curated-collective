@@ -36,7 +36,23 @@ export default function Chat() {
   const queryClient = useQueryClient();
   const [selectedChatId, setSelectedChatId] = useState<number | null>(null);
   const [input, setInput] = useState("");
+  const [currentTheme, setCurrentTheme] = useState("theme-2000s");
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  const themes = ["theme-2000s", "theme-90s", "theme-8bit"];
+
+  const blastFromThePast = () => {
+    const availableThemes = themes.filter(t => t !== currentTheme);
+    const randomTheme = availableThemes[Math.floor(Math.random() * availableThemes.length)];
+    setCurrentTheme(randomTheme);
+  };
+
+  useEffect(() => {
+    document.body.className = `antialiased font-body ${currentTheme}`;
+    return () => {
+      document.body.className = "antialiased font-body";
+    };
+  }, [currentTheme]);
 
   // Fetch Conversations
   const { data: conversations, isLoading: loadingConvos } = useQuery<Conversation[]>({
@@ -115,9 +131,14 @@ export default function Chat() {
       <div className="w-64 flex flex-col gap-4 border-r border-border pr-4">
         <div className="flex items-center justify-between">
           <h2 className="font-bold text-lg">Chats</h2>
-          <Button size="icon" variant="ghost" onClick={() => createChatMutation.mutate()}>
-            <Plus className="w-5 h-5" />
-          </Button>
+          <div className="flex gap-1">
+            <button className="retro-button px-1 text-[10px]" onClick={blastFromThePast}>
+              BLAST!
+            </button>
+            <Button size="icon" variant="ghost" onClick={() => createChatMutation.mutate()}>
+              <Plus className="w-5 h-5" />
+            </Button>
+          </div>
         </div>
         <ScrollArea className="flex-1">
           <div className="space-y-2">

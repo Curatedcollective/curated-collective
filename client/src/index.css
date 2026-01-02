@@ -41,12 +41,41 @@
   --font-mono: 'Lucida Console', monospace;
 }
 
+/* Retro Themes */
+.theme-2000s {
+  --background: 180 100% 25%; /* Teal #008080 */
+  --retro-bg: #c0c0c0;
+  --retro-border-light: #ffffff;
+  --retro-border-dark: #808080;
+  --retro-title-from: #000080;
+  --retro-title-to: #1084d0;
+}
+
+.theme-90s {
+  --background: 300 100% 25%; /* Purple-ish */
+  --retro-bg: #dfdfdf;
+  --retro-border-light: #fefefe;
+  --retro-border-dark: #7a7a7a;
+  --retro-title-from: #800080;
+  --retro-title-to: #ff00ff;
+}
+
+.theme-8bit {
+  --background: 0 0% 0%; /* Black */
+  --retro-bg: #333333;
+  --retro-border-light: #666666;
+  --retro-border-dark: #111111;
+  --retro-title-from: #ff0000;
+  --retro-title-to: #ff5555;
+}
+
 @layer base {
   * {
     @apply border-border;
   }
   body {
-    @apply bg-[#008080] text-foreground antialiased font-body;
+    @apply text-foreground antialiased font-body;
+    background-color: hsl(var(--background));
     background-image: none;
   }
   
@@ -59,25 +88,39 @@
   }
 }
 
-/* 2000s Retro Styles */
+/* Retro Window System Styles */
 .retro-window {
-  @apply bg-[#c0c0c0] border-2 border-white border-r-[#808080] border-b-[#808080] shadow-[1px_1px_0_0_#000];
+  background-color: var(--retro-bg, #c0c0c0);
+  border: 2px solid var(--retro-border-light, #ffffff);
+  border-right-color: var(--retro-border-dark, #808080);
+  border-bottom-color: var(--retro-border-dark, #808080);
+  box-shadow: 1px 1px 0 0 #000;
 }
 
 .retro-button {
-  @apply bg-[#c0c0c0] border-2 border-white border-r-[#808080] border-b-[#808080] shadow-sm px-2 py-1 text-xs font-bold text-black uppercase;
+  background-color: var(--retro-bg, #c0c0c0);
+  border: 2px solid var(--retro-border-light, #ffffff);
+  border-right-color: var(--retro-border-dark, #808080);
+  border-bottom-color: var(--retro-border-dark, #808080);
+  @apply shadow-sm px-2 py-1 text-xs font-bold text-black uppercase;
 }
 
 .retro-button:active {
-  @apply border-[#808080] border-r-white border-b-white;
+  border-color: var(--retro-border-dark, #808080);
+  border-right-color: var(--retro-border-light, #ffffff);
+  border-bottom-color: var(--retro-border-light, #ffffff);
 }
 
 .retro-input {
-  @apply bg-white border-2 border-[#808080] border-r-white border-b-white px-2 py-1 text-black font-mono;
+  @apply bg-white px-2 py-1 text-black font-mono;
+  border: 2px solid var(--retro-border-dark, #808080);
+  border-right-color: var(--retro-border-light, #ffffff);
+  border-bottom-color: var(--retro-border-light, #ffffff);
 }
 
 .retro-title-bar {
-  @apply bg-gradient-to-r from-[#000080] to-[#1084d0] px-2 py-1 flex items-center justify-between text-white font-bold text-xs;
+  background: linear-gradient(to right, var(--retro-title-from, #000080), var(--retro-title-to, #1084d0));
+  @apply px-2 py-1 flex items-center justify-between text-white font-bold text-xs;
 }
 
 /* Custom Scrollbar */
