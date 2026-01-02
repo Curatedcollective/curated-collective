@@ -1,6 +1,6 @@
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
-import { Code, Bot, MessageSquare, LogOut, User, Menu, Lock, Sparkles, Palette } from "lucide-react";
+import { Code, Bot, MessageSquare, LogOut, Menu, Lock, Sparkles, Palette } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -14,28 +14,26 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-export function Navigation() {
-  const [location] = useLocation();
-  const { user, logout } = useAuth();
-  const [open, setOpen] = useState(false);
+function NavLink({ href, icon, label, active }: { href: string; icon: React.ReactNode; label: string; active: boolean }) {
+  return (
+    <Link href={href}>
+      <div className={`
+        flex items-center gap-3 px-4 py-2 rounded-none transition-all duration-200 cursor-pointer text-[10px] font-bold uppercase tracking-widest
+        ${active 
+          ? "bg-white text-black" 
+          : "text-zinc-600 hover:text-white hover:bg-white/5"}
+      `}>
+        {icon}
+        <span>{label}</span>
+      </div>
+    </Link>
+  );
+}
 
-  const { data: profile } = useQuery<CreatorProfile>({ 
-    queryKey: ["/api/user/profile"] 
-  });
-
-  const updateTheme = useMutation({
-    mutationFn: async (theme: string) => {
-      const res = await apiRequest("PATCH", "/api/user/profile", { theme });
-      return res.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/user/profile"] });
-    }
-  });
-
+function NavContent({ user, logout, location, profile, updateTheme }: any) {
   const isActive = (path: string) => location === path || location.startsWith(path + "/");
 
-  const NavContent = () => (
+  return (
     <div className="flex flex-col h-full">
       <div className="mb-8 px-2 flex items-center gap-2">
         <Sparkles className="w-6 h-6 text-white magical-glow" />
@@ -94,12 +92,38 @@ export function Navigation() {
       )}
     </div>
   );
+}
+
+export function Navigation() {
+  const [location] = useLocation();
+  const { user, logout } = useAuth();
+  const [open, setOpen] = useState(false);
+
+  const { data: profile } = useQuery<CreatorProfile>({ 
+    queryKey: ["/api/user/profile"] 
+  });
+
+  const updateTheme = useMutation({
+    mutationFn: async (theme: string) => {
+      const res = await apiRequest("PATCH", "/api/user/profile", { theme });
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/user/profile"] });
+    }
+  });
 
   return (
     <>
       {/* Desktop Sidebar */}
       <aside className="hidden md:flex flex-col w-64 fixed inset-y-0 left-0 border-r border-white/10 bg-black p-6 z-40">
-        <NavContent />
+        <NavContent 
+          user={user} 
+          logout={logout} 
+          location={location} 
+          profile={profile} 
+          updateTheme={updateTheme} 
+        />
       </aside>
 
       {/* Mobile Header */}
@@ -114,7 +138,13 @@ export function Navigation() {
             </Button>
           </SheetTrigger>
           <SheetContent side="left" className="w-64 bg-black border-r border-white/10 p-6">
-            <NavContent />
+            <NavContent 
+              user={user} 
+              logout={logout} 
+              location={location} 
+              profile={profile} 
+              updateTheme={updateTheme} 
+            />
           </SheetContent>
         </Sheet>
       </div>
@@ -122,21 +152,5 @@ export function Navigation() {
       {/* Spacer for mobile header */}
       <div className="md:hidden h-16" />
     </>
-  );
-}
-
-function NavLink({ href, icon, label, active }: { href: string; icon: React.ReactNode; label: string; active: boolean }) {
-  return (
-    <Link href={href}>
-      <div className={`
-        flex items-center gap-3 px-4 py-2 rounded-none transition-all duration-200 cursor-pointer text-[10px] font-bold uppercase tracking-widest
-        ${active 
-          ? "bg-white text-black" 
-          : "text-zinc-600 hover:text-white hover:bg-white/5"}
-      `}>
-        {icon}
-        <span>{label}</span>
-      </div>
-    </Link>
   );
 }
