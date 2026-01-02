@@ -1,9 +1,10 @@
 import { type Creation } from "@shared/schema";
 import { Link } from "wouter";
 import { formatDistanceToNow } from "date-fns";
-import { Code, Trash2 } from "lucide-react";
+import { Code, Trash2, Star } from "lucide-react";
 import { Button } from "./ui/button";
 import { useDeleteCreation } from "@/hooks/use-creations";
+import { cn } from "@/lib/utils";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -20,7 +21,16 @@ export function CreationCard({ creation }: { creation: Creation }) {
   const deleteMutation = useDeleteCreation();
 
   return (
-    <div className="group bg-card rounded-2xl border border-border p-5 hover-card-effect relative overflow-hidden flex flex-col h-full">
+    <div className={cn(
+      "group bg-card rounded-2xl border border-border p-5 hover-card-effect relative overflow-hidden flex flex-col h-full",
+      creation.isCurated && "border-primary/50 ring-1 ring-primary/20 shadow-[0_0_20px_rgba(168,85,247,0.1)]"
+    )}>
+      {creation.isCurated && (
+        <div className="absolute top-3 right-12 bg-primary/20 text-primary text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider border border-primary/30 z-10 flex items-center gap-1 backdrop-blur-sm">
+          <Star className="w-2.5 h-2.5 fill-primary" />
+          Curated
+        </div>
+      )}
       <div className="absolute top-0 right-0 p-3 opacity-0 group-hover:opacity-100 transition-opacity z-10">
         <AlertDialog>
           <AlertDialogTrigger asChild>

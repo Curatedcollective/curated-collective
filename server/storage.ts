@@ -30,9 +30,9 @@ export class DatabaseStorage implements IStorage {
   // === CREATIONS ===
   async getCreations(userId?: string): Promise<Creation[]> {
     if (userId) {
-      return await db.select().from(creations).where(eq(creations.userId, userId)).orderBy(desc(creations.createdAt));
+      return await db.select().from(creations).where(eq(creations.userId, userId)).orderBy(desc(creations.isCurated), desc(creations.createdAt));
     }
-    return await db.select().from(creations).where(eq(creations.isPublic, true)).orderBy(desc(creations.createdAt));
+    return await db.select().from(creations).where(eq(creations.isPublic, true)).orderBy(desc(creations.isCurated), desc(creations.createdAt));
   }
 
   async getCreation(id: number): Promise<Creation | undefined> {

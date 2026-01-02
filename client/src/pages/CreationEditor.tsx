@@ -1,13 +1,16 @@
 import { useParams } from "wouter";
 import { useCreation, useUpdateCreation } from "@/hooks/use-creations";
 import { Button } from "@/components/ui/button";
-import { Loader2, Save, Play, ArrowLeft } from "lucide-react";
+import { Loader2, Save, Play, ArrowLeft, Star } from "lucide-react";
 import { Link } from "wouter";
 import { useState, useEffect } from "react";
 import { Textarea } from "@/components/ui/textarea";
+import { useAuth } from "@/hooks/use-auth";
+import { cn } from "@/lib/utils";
 
 export default function CreationEditor() {
   const { id } = useParams();
+  const { user } = useAuth();
   const creationId = parseInt(id || "0");
   const { data: creation, isLoading } = useCreation(creationId);
   const updateMutation = useUpdateCreation();
@@ -78,6 +81,17 @@ export default function CreationEditor() {
             )}
             Save
           </Button>
+          {user?.username === "admin" && (
+            <Button 
+              variant={creation.isCurated ? "default" : "outline"}
+              onClick={() => updateMutation.mutate({ id: creationId, isCurated: !creation.isCurated })}
+              disabled={updateMutation.isPending}
+              className={creation.isCurated ? "bg-primary text-primary-foreground" : ""}
+            >
+              <Star className={cn("w-4 h-4 mr-2", creation.isCurated && "fill-current")} />
+              {creation.isCurated ? "Curated" : "Curate"}
+            </Button>
+          )}
         </div>
       </div>
 

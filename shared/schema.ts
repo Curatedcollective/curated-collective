@@ -19,6 +19,7 @@ export const creations = pgTable("creations", {
   code: text("code").notNull(), // The actual code content
   language: text("language").default("html").notNull(), // html, javascript, python, etc.
   isPublic: boolean("is_public").default(true),
+  isCurated: boolean("is_curated").default(false),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
