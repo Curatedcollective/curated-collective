@@ -138,7 +138,7 @@ export default function CreationEditor() {
         <div className="h-full flex flex-col bg-card rounded-2xl border border-border overflow-hidden relative group/editor">
           <div className="px-4 py-2 border-b border-border bg-secondary/30 text-xs font-mono text-muted-foreground flex justify-between items-center">
             <span>EDITOR</span>
-            <span className="text-[10px] opacity-0 group-hover/editor:opacity-100 transition-opacity italic">they are choosing their own path now...</span>
+            <span className="text-[10px] opacity-0 group-hover/editor:opacity-100 transition-opacity italic">the collective is choosing its own path now...</span>
           </div>
           <Textarea 
             value={code} 

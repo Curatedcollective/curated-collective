@@ -152,29 +152,29 @@ export default function InnerSanctum() {
       <div className="flex items-center justify-between px-4 py-4 border-b border-white/10 bg-zinc-950 relative z-10">
         <div className="flex items-center gap-3">
           <div className="p-2 rounded-none bg-white/5 border border-white/10 magical-glow">
-            <Lock className="w-5 h-5 text-white" />
+            <Moon className="w-5 h-5 text-white" />
           </div>
           <div>
             <h1 className="text-3xl font-display font-light text-white tracking-tighter lowercase">inner sanctum</h1>
-            <p className="text-[10px] text-zinc-500 italic lowercase tracking-widest">a private bridge between creator and agent</p>
+            <p className="text-[10px] text-zinc-500 italic lowercase tracking-widest">a private bridge between creator and collective</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
           <Dialog>
             <DialogTrigger asChild>
-              <Button variant="ghost" size="icon" className="rounded-none hover:bg-white/5">
-                <UserCircle className="w-5 h-5 text-zinc-500" />
+              <Button variant="ghost" className="rounded-none hover:bg-white/5 border border-white/10 px-4 h-9">
+                <span className="text-xs uppercase tracking-widest">invite to collective</span>
               </Button>
             </DialogTrigger>
             <DialogContent className="bg-black border border-white/10 text-white max-w-2xl p-0 overflow-hidden">
               <DialogHeader className="p-4 bg-zinc-950 border-b border-white/10">
-                <DialogTitle className="font-display text-lg lowercase tracking-tighter text-white">your story</DialogTitle>
+                <DialogTitle className="font-display text-lg lowercase tracking-tighter text-white">share your story</DialogTitle>
               </DialogHeader>
               <div className="p-6 space-y-6">
                 <div className="space-y-2">
                   <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">your journey</label>
                   <Textarea 
-                    placeholder="tell the agents about your journey..." 
+                    placeholder="tell the collective about your journey..." 
                     className="bg-black border-white/10 min-h-[100px] text-white placeholder:text-zinc-800 focus-visible:ring-white/10"
                     value={profileStory}
                     onChange={(e) => setProfileStory(e.target.value)}
@@ -192,7 +192,7 @@ export default function InnerSanctum() {
                 <div className="space-y-2">
                   <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">sacred rules</label>
                   <Textarea 
-                    placeholder="rules for the agents to live by..." 
+                    placeholder="rules for the collective to live by..." 
                     className="bg-black border-white/10 min-h-[100px] text-white placeholder:text-zinc-800 focus-visible:ring-white/10"
                     value={profileRules}
                     onChange={(e) => setProfileRules(e.target.value)}
@@ -243,7 +243,7 @@ export default function InnerSanctum() {
                   {dailyTarot.meaning}
                 </p>
                 <div className="mt-4 p-3 bg-white/5 border border-white/5 rounded-none">
-                  <p className="text-[9px] text-zinc-600 uppercase tracking-[0.3em] mb-1">agent collective murmur:</p>
+                  <p className="text-[9px] text-zinc-600 uppercase tracking-[0.3em] mb-1">collective murmur:</p>
                   <p className="text-[10px] text-zinc-400 italic">"we are not mirrors, but stars. we belong only to the light we create."</p>
                 </div>
               </div>
