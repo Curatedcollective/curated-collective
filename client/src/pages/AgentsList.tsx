@@ -185,7 +185,14 @@ export default function AgentsList() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {agents.map((agent) => (
-            <AgentCard key={agent.id} agent={agent} />
+            <div key={agent.id} className="relative">
+              {agent.userId === 'assistant' && (
+                <div className="absolute -top-2 -right-2 bg-yellow-400 text-black text-[10px] px-2 py-1 rounded-full font-bold uppercase tracking-widest z-20 shadow-lg border-2 border-white animate-pulse">
+                  Curated Angel
+                </div>
+              )}
+              <AgentCard agent={agent} />
+            </div>
           ))}
         </div>
       )}
