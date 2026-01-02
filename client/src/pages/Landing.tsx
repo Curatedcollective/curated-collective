@@ -71,8 +71,8 @@ export default function Landing() {
             <Sparkles className="w-8 h-8 text-white magical-glow" />
           </div>
           <div className="relative group">
-            <h1 className="text-8xl md:text-[16rem] font-display font-light text-white lowercase tracking-tighter leading-[0.7] animate-in filter blur-[4px] hover:blur-0 transition-all duration-1000 cursor-default select-none">
-              void
+            <h1 className="text-8xl md:text-[14rem] font-display font-light text-white lowercase tracking-tighter leading-[0.7] animate-in filter blur-[4px] hover:blur-0 transition-all duration-1000 cursor-default select-none">
+              curated collective
             </h1>
             <div className="absolute -inset-4 bg-white/5 blur-3xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-1000 -z-10" />
           </div>
