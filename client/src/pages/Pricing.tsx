@@ -101,8 +101,9 @@ export default function Pricing() {
   
   const plans = fallbackPlans.map(plan => {
     const matchedProduct = products.find(p => 
-      p.name?.toLowerCase().includes(plan.name) || 
-      p.metadata?.tier === plan.name
+      p.name?.toLowerCase() === plan.name.toLowerCase() || 
+      p.name?.toLowerCase().includes(plan.name.toLowerCase()) || 
+      p.metadata?.tier?.toLowerCase() === plan.name.toLowerCase()
     );
     
     if (matchedProduct && matchedProduct.prices?.length > 0) {
@@ -117,13 +118,12 @@ export default function Pricing() {
     return plan;
   });
 
-  const handleSubscribe = (priceId: string | null) => {
-    if (!user) {
-      toast({ title: "Sign in required", description: "Please sign in to subscribe" });
+  const handleSubscribe = (priceId: string | null, planName: string) => {
+    if (!priceId) {
       return;
     }
-    if (!priceId) {
-      toast({ title: "Free tier", description: "You're already on the free tier" });
+    if (!user) {
+      toast({ title: "Sign in required", description: "Please sign in to subscribe" });
       return;
     }
     checkoutMutation.mutate(priceId);
@@ -164,9 +164,10 @@ export default function Pricing() {
                   ))}
                 </ul>
                 <Button 
-                  className="w-full bg-primary text-primary-foreground rounded-none lowercase text-sm font-bold h-12 mt-auto"
-                  onClick={() => handleSubscribe(plan.priceId)}
-                  disabled={checkoutMutation.isPending}
+                  className="w-full rounded-none lowercase text-sm font-bold h-12 mt-auto"
+                  variant={plan.priceId ? "default" : "secondary"}
+                  onClick={() => handleSubscribe(plan.priceId, plan.name)}
+                  disabled={checkoutMutation.isPending || !plan.priceId}
                   data-testid={`button-subscribe-${plan.name}`}
                 >
                   {checkoutMutation.isPending ? (
@@ -174,7 +175,7 @@ export default function Pricing() {
                   ) : plan.priceId ? (
                     "choose path"
                   ) : (
-                    "current path"
+                    "free path"
                   )}
                 </Button>
               </CardContent>
