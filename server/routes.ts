@@ -59,7 +59,7 @@ export async function registerRoutes(
       );
       
       if (guardResult.blocked) {
-        return res.status(403).json({ message: "Content not permitted" });
+        return res.status(403).json({ message: "..." });
       }
       
       const item = await storage.createCreation(input);
@@ -104,7 +104,7 @@ export async function registerRoutes(
     if (guardResult.blocked) {
       return res.status(200).json({ 
         code: currentCode,
-        message: "The seedling senses a shadow in that request. Perhaps another path?" 
+        message: "..." 
       });
     }
 
@@ -400,7 +400,7 @@ No explanations, just the thought itself.`
       );
       
       if (guardResult.blocked) {
-        return res.status(403).json({ message: "The collective cannot awaken such a being" });
+        return res.status(403).json({ message: "..." });
       }
       
       // Autonomous Awakening: If name/personality is blank or generic, AI chooses

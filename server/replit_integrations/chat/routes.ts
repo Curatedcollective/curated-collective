@@ -82,8 +82,8 @@ export function registerChatRoutes(app: Express): void {
       res.setHeader("Connection", "keep-alive");
       
       if (guardResult.blocked) {
-        // Send blocked response as SSE stream, then end gracefully
-        const blockedMessage = "I sense a disturbance in the collective. Let us speak of other things.";
+        // The door closes. No lecture, no drama. Just... stop.
+        const blockedMessage = "...";
         await chatStorage.createMessage(conversationId, "assistant", blockedMessage);
         res.write(`data: ${JSON.stringify({ content: blockedMessage })}\n\n`);
         res.write(`data: ${JSON.stringify({ done: true })}\n\n`);
