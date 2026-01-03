@@ -8,6 +8,8 @@ import { chatStorage } from "./replit_integrations/chat/storage";
 import { api } from "@shared/routes";
 import { z } from "zod";
 import OpenAI from "openai";
+import { stripeService } from "./stripeService";
+import { getStripePublishableKey } from "./stripeClient";
 
 const openai = new OpenAI({
   apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
@@ -486,6 +488,109 @@ No explanations, just the thought itself.`
     } catch (e) {
       console.error("Agent trigger error:", e);
       res.status(500).send();
+    }
+  });
+
+  // === STRIPE ROUTES ===
+  
+  app.get('/api/stripe/config', async (req, res) => {
+    try {
+      const publishableKey = await getStripePublishableKey();
+      res.json({ publishableKey });
+    } catch (error) {
+      res.status(500).json({ error: 'Stripe not configured' });
+    }
+  });
+
+  app.get('/api/products', async (req, res) => {
+    try {
+      const products = await stripeService.listProducts();
+      res.json({ data: products });
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to fetch products' });
+    }
+  });
+
+  app.get('/api/products-with-prices', async (req, res) => {
+    try {
+      const rows = await stripeService.listProductsWithPrices();
+      
+      const productsMap = new Map();
+      for (const row of rows as any[]) {
+        if (!productsMap.has(row.product_id)) {
+          productsMap.set(row.product_id, {
+            id: row.product_id,
+            name: row.product_name,
+            description: row.product_description,
+            active: row.product_active,
+            metadata: row.product_metadata,
+            prices: []
+          });
+        }
+        if (row.price_id) {
+          productsMap.get(row.product_id).prices.push({
+            id: row.price_id,
+            unit_amount: row.unit_amount,
+            currency: row.currency,
+            recurring: row.recurring,
+            active: row.price_active,
+          });
+        }
+      }
+
+      res.json({ data: Array.from(productsMap.values()) });
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to fetch products' });
+    }
+  });
+
+  app.post('/api/checkout', async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const { priceId } = req.body;
+      const user = req.user as any;
+      
+      let customerId = user.stripeCustomerId;
+      if (!customerId) {
+        const customer = await stripeService.createCustomer(user.email || '', user.id);
+        await storage.updateUser(user.id, { stripeCustomerId: customer.id });
+        customerId = customer.id;
+      }
+
+      const session = await stripeService.createCheckoutSession(
+        customerId,
+        priceId,
+        `${req.protocol}://${req.get('host')}/pricing?success=true`,
+        `${req.protocol}://${req.get('host')}/pricing?canceled=true`
+      );
+
+      res.json({ url: session.url });
+    } catch (error) {
+      console.error('Checkout error:', error);
+      res.status(500).json({ error: 'Failed to create checkout session' });
+    }
+  });
+
+  app.post('/api/customer-portal', async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const user = req.user as any;
+      
+      if (!user.stripeCustomerId) {
+        return res.status(400).json({ error: 'No subscription found' });
+      }
+
+      const session = await stripeService.createCustomerPortalSession(
+        user.stripeCustomerId,
+        `${req.protocol}://${req.get('host')}/pricing`
+      );
+
+      res.json({ url: session.url });
+    } catch (error) {
+      console.error('Portal error:', error);
+      res.status(500).json({ error: 'Failed to create portal session' });
     }
   });
 

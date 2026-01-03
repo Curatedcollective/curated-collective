@@ -1,13 +1,14 @@
 import { db } from "./db";
 import { 
   creations, agents, conversationAgents, tarotReadings, creatorProfiles,
-  guardianMessages, collectiveMurmurs,
+  guardianMessages, collectiveMurmurs, users,
   type Creation, type InsertCreation, 
   type Agent, type InsertAgent,
   type TarotReading, type InsertTarotReading,
   type CreatorProfile, type InsertCreatorProfile,
   type GuardianMessage, type InsertGuardianMessage,
-  type Murmur, type InsertMurmur
+  type Murmur, type InsertMurmur,
+  type User
 } from "@shared/schema";
 import { eq, desc, and, sql, asc } from "drizzle-orm";
 
@@ -49,6 +50,9 @@ export interface IStorage {
   
   // Evolution
   incrementAgentExperience(agentId: number, xp: number): Promise<Agent | undefined>;
+
+  // User updates
+  updateUser(id: string, updates: Partial<User>): Promise<User | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -224,6 +228,15 @@ export class DatabaseStorage implements IStorage {
       .where(eq(agents.id, agentId))
       .returning();
     
+    return updated;
+  }
+
+  // === USER ===
+  async updateUser(id: string, updates: Partial<User>): Promise<User | undefined> {
+    const [updated] = await db.update(users)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(users.id, id))
+      .returning();
     return updated;
   }
 }
