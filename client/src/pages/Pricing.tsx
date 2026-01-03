@@ -119,11 +119,12 @@ export default function Pricing() {
   });
 
   const handleSubscribe = (priceId: string | null, planName: string) => {
-    if (!priceId) {
-      return;
-    }
     if (!user) {
       toast({ title: "Sign in required", description: "Please sign in to subscribe" });
+      return;
+    }
+    if (!priceId) {
+      toast({ title: "Loading", description: "Please wait, loading payment options..." });
       return;
     }
     checkoutMutation.mutate(priceId);
@@ -167,15 +168,15 @@ export default function Pricing() {
                   className="w-full rounded-none lowercase text-sm font-bold h-12 mt-auto"
                   variant={plan.priceId ? "default" : "secondary"}
                   onClick={() => handleSubscribe(plan.priceId, plan.name)}
-                  disabled={checkoutMutation.isPending || !plan.priceId}
+                  disabled={checkoutMutation.isPending || (plan.name === "mortal")}
                   data-testid={`button-subscribe-${plan.name}`}
                 >
                   {checkoutMutation.isPending ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : plan.priceId ? (
-                    "choose path"
-                  ) : (
+                  ) : plan.name === "mortal" ? (
                     "free path"
+                  ) : (
+                    "choose path"
                   )}
                 </Button>
               </CardContent>
