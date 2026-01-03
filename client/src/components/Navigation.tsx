@@ -11,6 +11,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { SiFacebook, SiInstagram, SiX, SiTiktok } from "react-icons/si";
 
 function NavLink({ href, icon, label, active }: { href: string; icon: React.ReactNode; label: string; active: boolean }) {
   return (
@@ -50,6 +51,22 @@ function NavContent({ user, logout, location, theme, setTheme }: any) {
         <NavLink href="/sanctum" icon={<Lock className="w-4 h-4" />} label="inner sanctum" active={isActive("/sanctum")} />
         <NavLink href="/pricing" icon={<Sparkles className="w-4 h-4" />} label="pricing" active={isActive("/pricing")} />
       </nav>
+
+      {/* Social Links */}
+      <div className="flex items-center justify-center gap-4 py-4 border-t border-border">
+        <a href="https://facebook.com/curatedcollective" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground transition-colors">
+          <SiFacebook className="w-4 h-4" />
+        </a>
+        <a href="https://instagram.com/curatedcollective" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground transition-colors">
+          <SiInstagram className="w-4 h-4" />
+        </a>
+        <a href="https://x.com/curatedcollect" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground transition-colors">
+          <SiX className="w-4 h-4" />
+        </a>
+        <a href="https://tiktok.com/@curatedcollective" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground transition-colors">
+          <SiTiktok className="w-4 h-4" />
+        </a>
+      </div>
 
       {user && (
         <div className="pt-6 border-t border-border mt-auto">
