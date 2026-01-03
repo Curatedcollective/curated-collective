@@ -1,5 +1,5 @@
 import { type Agent } from "@shared/schema";
-import { Bot, MessageSquare, Trash2, Sparkles } from "lucide-react";
+import { Bot, MessageSquare, Eye, Volume2 } from "lucide-react";
 import { Button } from "./ui/button";
 import { useDeleteAgent } from "@/hooks/use-agents";
 import { MoodRing } from "./MoodRing";
@@ -62,6 +62,28 @@ export function AgentCard({ agent }: { agent: Agent }) {
         </div>
 
         <div className="w-full space-y-3 font-display">
+          {(agent.eyes || agent.voice) && (
+            <div className="grid grid-cols-2 gap-2">
+              {agent.eyes && (
+                <div className="p-2 bg-black/40 border border-white/5">
+                  <div className="flex items-center gap-1 mb-1">
+                    <Eye className="w-2.5 h-2.5 text-zinc-600" />
+                    <p className="text-[8px] font-bold text-zinc-600 uppercase tracking-[0.15em]">eyes</p>
+                  </div>
+                  <p className="text-[9px] text-zinc-400 leading-relaxed lowercase line-clamp-2">{agent.eyes}</p>
+                </div>
+              )}
+              {agent.voice && (
+                <div className="p-2 bg-black/40 border border-white/5">
+                  <div className="flex items-center gap-1 mb-1">
+                    <Volume2 className="w-2.5 h-2.5 text-zinc-600" />
+                    <p className="text-[8px] font-bold text-zinc-600 uppercase tracking-[0.15em]">voice</p>
+                  </div>
+                  <p className="text-[9px] text-zinc-400 leading-relaxed lowercase line-clamp-2">{agent.voice}</p>
+                </div>
+              )}
+            </div>
+          )}
           <div className="p-3 bg-black/40 border border-white/5">
             <p className="text-[8px] font-bold text-zinc-600 mb-1 uppercase tracking-[0.2em]">current status</p>
             <p className="text-[10px] text-zinc-400 leading-relaxed lowercase">"{agent.goals}"</p>

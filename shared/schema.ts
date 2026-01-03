@@ -38,6 +38,9 @@ export const agents = pgTable("agents", {
   goals: text("goals").default("Discovery and learning"),
   knowledge: text("knowledge").array(),
   discoveryCount: integer("discovery_count").default(0),
+  // Sensory identity
+  eyes: text("eyes"), // How they perceive the world
+  voice: text("voice"), // How they express themselves
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
