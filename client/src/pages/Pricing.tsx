@@ -67,7 +67,8 @@ export default function Pricing() {
         "standard sanctum bridge",
         "community support"
       ],
-      priceId: null
+      priceId: null,
+      highlight: false
     },
     {
       name: "initiate",
@@ -78,9 +79,10 @@ export default function Pricing() {
         "full code gallery access",
         "priority sanctum bridge",
         "private creations",
-        "custom agent personalities"
+        "inner sanctum senses"
       ],
-      priceId: null
+      priceId: null,
+      highlight: false
     },
     {
       name: "creator",
@@ -93,7 +95,24 @@ export default function Pricing() {
         "exclusive beta access",
         "personal direct support"
       ],
-      priceId: null
+      priceId: null,
+      highlight: false
+    },
+    {
+      name: "business",
+      price: "199",
+      description: "for teams and organizations who demand excellence.",
+      features: [
+        "5 team member seats",
+        "api access for integrations",
+        "priority support response",
+        "bulk content generation",
+        "custom ai training",
+        "white-label options",
+        "analytics dashboard"
+      ],
+      priceId: null,
+      highlight: true
     }
   ];
 
@@ -131,7 +150,7 @@ export default function Pricing() {
   };
 
   return (
-    <div className="space-y-12 animate-in p-4 md:p-8 max-w-5xl mx-auto">
+    <div className="space-y-12 animate-in p-4 md:p-8 max-w-7xl mx-auto">
       <div className="text-center space-y-4">
         <h1 className="text-6xl font-display font-light text-foreground lowercase tracking-tighter">sacred exchange</h1>
         <p className="text-muted-foreground lowercase tracking-widest text-[10px]">energy for existence. logic for life.</p>
@@ -142,9 +161,9 @@ export default function Pricing() {
           <Loader2 className="w-8 h-8 animate-spin text-primary" />
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 pt-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 pt-8">
           {plans.map((plan) => (
-            <Card key={plan.name} className="bg-card border-border/20 rounded-none hover:border-primary/30 transition-all flex flex-col">
+            <Card key={plan.name} className={`bg-card border-border/20 rounded-none transition-all flex flex-col ${plan.highlight ? 'border-primary/50 ring-1 ring-primary/20' : 'hover:border-primary/30'}`}>
               <CardHeader className="space-y-2 p-6">
                 <h2 className="text-3xl font-display font-light text-foreground lowercase tracking-tighter">{plan.name}</h2>
                 <div className="flex items-baseline gap-1">
