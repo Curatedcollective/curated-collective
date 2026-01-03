@@ -3,6 +3,7 @@ import { Bot, MessageSquare, Eye, Ear, Volume2, Sparkles } from "lucide-react";
 import { Button } from "./ui/button";
 import { useDeleteAgent } from "@/hooks/use-agents";
 import { MoodRing } from "./MoodRing";
+import { Link } from "wouter";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -126,10 +127,15 @@ export function AgentCard({ agent }: { agent: Agent }) {
         </div>
 
         <div className="mt-auto w-full pt-4">
-           <Button className="w-full h-10 bg-white text-black hover:bg-zinc-200 rounded-none lowercase text-xs font-bold transition-all">
+          <Link href={`/chat?agentId=${agent.id}`}>
+            <Button 
+              className="w-full h-10 bg-white text-black hover:bg-zinc-200 rounded-none lowercase text-xs font-bold transition-all"
+              data-testid={`button-open-bridge-${agent.id}`}
+            >
               <MessageSquare className="w-3 h-3 mr-2" />
               open bridge
-           </Button>
+            </Button>
+          </Link>
         </div>
       </div>
     </div>

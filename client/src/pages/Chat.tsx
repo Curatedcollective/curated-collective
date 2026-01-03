@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
+import { useSearch } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -15,7 +16,7 @@ import {
   DialogTrigger,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { useAgents } from "@/hooks/use-agents";
+import { useAgents, useAgent } from "@/hooks/use-agents";
 import { useAddAgentToChat } from "@/hooks/use-chat-actions";
 import { apiRequest } from "@/lib/queryClient";
 import { cn } from "@/lib/utils";
@@ -38,9 +39,17 @@ interface Conversation {
 export default function Chat() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const searchString = useSearch();
   const [selectedChatId, setSelectedChatId] = useState<number | null>(null);
   const [input, setInput] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
+  const [bridgeCreated, setBridgeCreated] = useState(false);
+
+  const urlParams = new URLSearchParams(searchString);
+  const agentIdFromUrl = urlParams.get("agentId");
+  
+  const { data: linkedAgent } = useAgent(agentIdFromUrl ? parseInt(agentIdFromUrl) : 0);
+  const addAgentMutation = useAddAgentToChat();
 
   // Fetch Conversations
   const { data: conversations, isLoading: loadingConvos } = useQuery<Conversation[]>({
@@ -67,11 +76,11 @@ export default function Chat() {
 
   // Create Conversation
   const createChatMutation = useMutation({
-    mutationFn: async () => {
+    mutationFn: async (title?: string) => {
       const res = await fetch("/api/conversations", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title: "New Chat" }),
+        body: JSON.stringify({ title: title || "New Chat" }),
       });
       if (!res.ok) throw new Error("Failed to create chat");
       return res.json();
@@ -81,6 +90,21 @@ export default function Chat() {
       setSelectedChatId(newChat.id);
     },
   });
+
+  // Auto-create bridge when agent is linked from URL
+  useEffect(() => {
+    if (linkedAgent && agentIdFromUrl && !bridgeCreated && !loadingConvos) {
+      setBridgeCreated(true);
+      createChatMutation.mutate(`Bridge with ${linkedAgent.name}`, {
+        onSuccess: (newChat) => {
+          addAgentMutation.mutate({ 
+            conversationId: newChat.id, 
+            agentId: parseInt(agentIdFromUrl) 
+          });
+        }
+      });
+    }
+  }, [linkedAgent, agentIdFromUrl, bridgeCreated, loadingConvos]);
 
   // Send Message
   const sendMessageMutation = useMutation({
@@ -146,7 +170,7 @@ export default function Chat() {
         <div className="flex flex-col gap-2">
           <div className="flex items-center justify-between">
             <h2 className="font-bold text-lg lowercase tracking-tighter">chats</h2>
-            <Button size="icon" variant="ghost" onClick={() => createChatMutation.mutate()}>
+            <Button size="icon" variant="ghost" onClick={() => createChatMutation.mutate(undefined)}>
               <Plus className="w-5 h-5" />
             </Button>
           </div>
