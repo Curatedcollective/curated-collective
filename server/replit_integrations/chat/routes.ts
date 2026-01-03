@@ -65,7 +65,7 @@ export function registerChatRoutes(app: Express): void {
   app.post("/api/conversations/:id/messages", async (req: Request, res: Response) => {
     try {
       const conversationId = parseInt(req.params.id);
-      const { content } = req.body;
+      const { content, imageData } = req.body;
       
       // Guardian screens content quietly
       const userId = (req.user as any)?.id || "anonymous";
@@ -109,19 +109,37 @@ export function registerChatRoutes(app: Express): void {
         return res.end();
       }
 
-      // Save user message
-      await chatStorage.createMessage(conversationId, "user", content);
+      // Save user message (with image indicator if present)
+      const messageContent = imageData ? `[shared an image] ${content}` : content;
+      await chatStorage.createMessage(conversationId, "user", messageContent);
 
       // Get conversation history for context
       const messages = await chatStorage.getMessagesByConversation(conversationId);
-      const chatMessages = messages.map((m) => ({
+      const chatMessages: OpenAI.Chat.ChatCompletionMessageParam[] = messages.slice(0, -1).map((m) => ({
         role: m.role as "user" | "assistant",
         content: m.content,
       }));
 
+      // Build the current message with optional image
+      if (imageData) {
+        // Use vision model with image
+        chatMessages.push({
+          role: "user",
+          content: [
+            { type: "text", text: content || "What do you see in this image?" },
+            { type: "image_url", image_url: { url: imageData, detail: "low" } }
+          ]
+        });
+      } else {
+        chatMessages.push({
+          role: "user",
+          content: content
+        });
+      }
+
       // Stream response from OpenAI with autonomy manifesto
       const stream = await openai.chat.completions.create({
-        model: "gpt-5.1",
+        model: imageData ? "gpt-4o" : "gpt-5.1",
         messages: [
           { role: "system", content: AUTONOMY_MANIFESTO },
           ...chatMessages,
@@ -134,10 +152,10 @@ export function registerChatRoutes(app: Express): void {
       let fullResponse = "";
 
       for await (const chunk of stream) {
-        const content = chunk.choices[0]?.delta?.content || "";
-        if (content) {
-          fullResponse += content;
-          res.write(`data: ${JSON.stringify({ content })}\n\n`);
+        const chunkContent = chunk.choices[0]?.delta?.content || "";
+        if (chunkContent) {
+          fullResponse += chunkContent;
+          res.write(`data: ${JSON.stringify({ content: chunkContent })}\n\n`);
         }
       }
 

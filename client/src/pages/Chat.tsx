@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Send, Bot, Plus, Loader2, Volume2, Mic, Eye, Users, MessageCircle, ChevronDown, ChevronUp } from "lucide-react";
+import { Send, Bot, Plus, Loader2, Volume2, Mic, Eye, Users, MessageCircle, ChevronDown, ChevronUp, ImageIcon, X } from "lucide-react";
 import { MoodRing } from "@/components/MoodRing";
 import {
   Dialog,
@@ -126,22 +126,36 @@ export default function Chat() {
 
   // Send Message
   const sendMessageMutation = useMutation({
-    mutationFn: async (content: string) => {
-      // Optimistic update could go here
+    mutationFn: async ({ content, imageData }: { content: string; imageData?: string }) => {
       const res = await fetch(`/api/conversations/${selectedChatId}/messages`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content }),
+        body: JSON.stringify({ content, imageData }),
       });
       if (!res.ok) throw new Error("Failed to send message");
-      // SSE streaming is handled by the backend endpoint, but for this client 
-      // we'll rely on the polling/refetch for the MVP simplicity or handle streaming if implemented fully
     },
     onSuccess: () => {
       setInput("");
+      setPendingImage(null);
       queryClient.invalidateQueries({ queryKey: ["/api/conversations", selectedChatId] });
     },
   });
+
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    if (file.size > 4 * 1024 * 1024) {
+      alert("Image must be under 4MB");
+      return;
+    }
+    
+    const reader = new FileReader();
+    reader.onload = () => {
+      setPendingImage(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
 
   // Scroll to bottom
   useEffect(() => {
@@ -151,8 +165,8 @@ export default function Chat() {
   }, [activeChat?.messages]);
 
   const handleSend = () => {
-    if (!input.trim() || !selectedChatId) return;
-    sendMessageMutation.mutate(input);
+    if ((!input.trim() && !pendingImage) || !selectedChatId) return;
+    sendMessageMutation.mutate({ content: input, imageData: pendingImage || undefined });
   };
 
   const speak = (text: string) => {
@@ -166,6 +180,8 @@ export default function Chat() {
   };
 
   const [isListening, setIsListening] = useState(false);
+  const [pendingImage, setPendingImage] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const startListening = () => {
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SpeechRecognition) return;
@@ -313,10 +329,48 @@ export default function Chat() {
             )}
 
             <div className="p-4 bg-zinc-950 border-t border-white/10">
+              {pendingImage && (
+                <div className="mb-3 flex items-center gap-2">
+                  <div className="relative">
+                    <img 
+                      src={pendingImage} 
+                      alt="Pending" 
+                      className="h-16 w-16 object-cover border border-white/20"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setPendingImage(null)}
+                      className="absolute -top-2 -right-2 bg-red-500 rounded-full p-0.5"
+                      data-testid="button-remove-image"
+                    >
+                      <X className="w-3 h-3 text-white" />
+                    </button>
+                  </div>
+                  <span className="text-xs text-zinc-500 lowercase">image ready to send</span>
+                </div>
+              )}
               <form 
                 onSubmit={(e) => { e.preventDefault(); handleSend(); }}
                 className="flex gap-2"
               >
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleImageSelect}
+                  accept="image/*"
+                  className="hidden"
+                  data-testid="input-image-file"
+                />
+                <Button 
+                  type="button" 
+                  variant="ghost"
+                  size="icon"
+                  className={cn("border border-white/10", pendingImage && "bg-white text-black")}
+                  onClick={() => fileInputRef.current?.click()}
+                  data-testid="button-attach-image"
+                >
+                  <ImageIcon className="w-4 h-4" />
+                </Button>
                 <Input 
                   value={input} 
                   onChange={e => setInput(e.target.value)}
@@ -334,7 +388,7 @@ export default function Chat() {
                 </Button>
                 <Button 
                   type="submit" 
-                  disabled={!input.trim() || sendMessageMutation.isPending}
+                  disabled={(!input.trim() && !pendingImage) || sendMessageMutation.isPending}
                   className="bg-white text-black hover:bg-zinc-200"
                 >
                   send
