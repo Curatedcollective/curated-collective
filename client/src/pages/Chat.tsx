@@ -44,7 +44,9 @@ export default function Chat() {
   const searchString = useSearch();
   const [selectedChatId, setSelectedChatId] = useState<number | null>(null);
   const [input, setInput] = useState("");
+  const [pendingImage, setPendingImage] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [bridgeCreated, setBridgeCreated] = useState(false);
 
   const urlParams = new URLSearchParams(searchString);
@@ -180,8 +182,6 @@ export default function Chat() {
   };
 
   const [isListening, setIsListening] = useState(false);
-  const [pendingImage, setPendingImage] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const startListening = () => {
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SpeechRecognition) return;
