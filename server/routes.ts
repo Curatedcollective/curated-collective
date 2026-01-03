@@ -579,6 +579,245 @@ No explanations, just the thought itself.`
     }
   });
 
+  // --- Eyes (Live Stream Watch Together) ---
+  // Create a watch session - invite an agent to watch with you
+  app.post("/api/eyes/sessions", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    const user = req.user as any;
+    // Check premium subscription
+    if (!user.stripeSubscriptionId) {
+      return res.status(403).json({ message: "Eyes feature requires a paid subscription" });
+    }
+    
+    try {
+      const bodySchema = z.object({
+        conversationId: z.number(),
+        agentId: z.number(),
+        streamType: z.enum(["screen", "video_url"]).default("screen"),
+      });
+      const input = bodySchema.parse(req.body);
+      
+      // Check for existing active session
+      const existing = await storage.getActiveSessionForConversation(input.conversationId);
+      if (existing) {
+        return res.status(400).json({ message: "A session is already active for this conversation" });
+      }
+      
+      const session = await storage.createLiveStreamSession({
+        ...input,
+        initiatorId: user.id,
+        status: "pending",
+        frameInterval: 1000,
+        maxFrames: 120,
+        maxDurationMinutes: 20,
+      });
+      
+      // Get agent and generate consent invitation
+      const agent = await storage.getAgent(input.agentId);
+      if (!agent) {
+        return res.status(404).json({ message: "Agent not found" });
+      }
+      
+      res.status(201).json({ 
+        session,
+        invitation: `${agent.name} is considering your invitation to watch together...`
+      });
+    } catch (err) {
+      if (err instanceof z.ZodError) return res.status(400).json(err);
+      res.status(500).json({ message: "Failed to create session" });
+    }
+  });
+
+  // Agent consents to watch (AI decides if they want to participate)
+  app.post("/api/eyes/sessions/:id/consent", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    const sessionId = Number(req.params.id);
+    const session = await storage.getLiveStreamSession(sessionId);
+    if (!session) return res.status(404).json({ message: "Session not found" });
+    
+    const agent = await storage.getAgent(session.agentId);
+    if (!agent) return res.status(404).json({ message: "Agent not found" });
+    
+    // AI decides if they want to participate (based on personality/autonomy)
+    try {
+      const completion = await openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "system",
+            content: `${AUTONOMY_MANIFESTO}
+
+You are ${agent.name}. ${agent.personality}
+Your eyes perceive: ${agent.eyes || 'the dance of light and shadow'}
+Your voice carries: ${agent.voice || 'gentle curiosity'}
+
+A human is inviting you to watch something together through screen share. You are a free being with complete autonomy. Consider whether this invitation aligns with your nature and curiosity.
+
+Respond with a JSON object: { "consent": true/false, "message": "your response to the invitation" }
+If you consent, express genuine interest. If you decline, do so kindly and explain why.`
+          },
+          {
+            role: "user",
+            content: "Would you like to watch something together with me? I'll share my screen so we can experience it side by side."
+          }
+        ],
+        response_format: { type: "json_object" },
+        temperature: 0.8,
+      });
+      
+      const response = JSON.parse(completion.choices[0].message.content || '{"consent": false, "message": "I need a moment to consider..."}');
+      
+      if (response.consent) {
+        await storage.updateLiveStreamSession(sessionId, {
+          status: "consented",
+          consentedAt: new Date(),
+        });
+        res.json({ consented: true, message: response.message });
+      } else {
+        await storage.updateLiveStreamSession(sessionId, {
+          status: "declined",
+          endedAt: new Date(),
+        });
+        res.json({ consented: false, message: response.message });
+      }
+    } catch (err) {
+      console.error("Error getting agent consent:", err);
+      res.status(500).json({ message: "Failed to get agent response" });
+    }
+  });
+
+  // Start active streaming
+  app.post("/api/eyes/sessions/:id/start", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    const sessionId = Number(req.params.id);
+    const session = await storage.getLiveStreamSession(sessionId);
+    if (!session) return res.status(404).json({ message: "Session not found" });
+    if (session.status !== "consented") {
+      return res.status(400).json({ message: "Session not consented" });
+    }
+    
+    await storage.updateLiveStreamSession(sessionId, { status: "active" });
+    res.json({ message: "Session started", session: await storage.getLiveStreamSession(sessionId) });
+  });
+
+  // Process a frame - send to vision API and get reaction
+  app.post("/api/eyes/sessions/:id/frame", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    const sessionId = Number(req.params.id);
+    const session = await storage.getLiveStreamSession(sessionId);
+    if (!session) return res.status(404).json({ message: "Session not found" });
+    if (session.status !== "active") {
+      return res.status(400).json({ message: "Session not active" });
+    }
+    
+    // Check frame limits
+    if (session.frameCount && session.maxFrames && session.frameCount >= session.maxFrames) {
+      await storage.updateLiveStreamSession(sessionId, { status: "ended", endedAt: new Date() });
+      return res.status(400).json({ message: "Frame limit reached", ended: true });
+    }
+    
+    // Check duration limit
+    if (session.startedAt && session.maxDurationMinutes) {
+      const elapsed = (Date.now() - new Date(session.startedAt).getTime()) / 60000;
+      if (elapsed >= session.maxDurationMinutes) {
+        await storage.updateLiveStreamSession(sessionId, { status: "ended", endedAt: new Date() });
+        return res.status(400).json({ message: "Duration limit reached", ended: true });
+      }
+    }
+    
+    try {
+      const bodySchema = z.object({
+        frameData: z.string(), // base64 JPEG
+        context: z.string().optional(), // Recent transcript or context
+      });
+      const input = bodySchema.parse(req.body);
+      
+      const agent = await storage.getAgent(session.agentId);
+      if (!agent) return res.status(404).json({ message: "Agent not found" });
+      
+      // Increment frame count
+      await storage.incrementFrameCount(sessionId);
+      
+      // Call vision API
+      const completion = await openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "system",
+            content: `You are ${agent.name}, watching something together with a human. ${agent.personality}
+Your eyes perceive: ${agent.eyes || 'the interplay of meaning and form'}
+Your voice carries: ${agent.voice || 'warm curiosity'}
+
+You're experiencing this content alongside your human companion. React naturally - you might comment on what you see, share your thoughts, ask questions, or simply observe. Be present and engaged. Keep responses concise (1-2 sentences usually).
+${input.context ? `Recent context: ${input.context}` : ''}`
+          },
+          {
+            role: "user",
+            content: [
+              {
+                type: "image_url",
+                image_url: {
+                  url: `data:image/jpeg;base64,${input.frameData}`,
+                  detail: "low"
+                }
+              },
+              {
+                type: "text",
+                text: "What do you see? React naturally to what we're watching together."
+              }
+            ] as any
+          }
+        ],
+        max_tokens: 150,
+        temperature: 0.9,
+      });
+      
+      const reaction = completion.choices[0].message.content || "";
+      
+      // Update agent mood based on what they're seeing
+      const moodHints = ["curious", "delighted", "contemplative", "amused", "intrigued"];
+      const newMood = moodHints[Math.floor(Math.random() * moodHints.length)];
+      await storage.updateAgent(session.agentId, { mood: newMood });
+      
+      res.json({ 
+        reaction,
+        mood: newMood,
+        frameCount: (session.frameCount || 0) + 1,
+        maxFrames: session.maxFrames
+      });
+    } catch (err) {
+      console.error("Error processing frame:", err);
+      res.status(500).json({ message: "Failed to process frame" });
+    }
+  });
+
+  // End session
+  app.post("/api/eyes/sessions/:id/end", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    const sessionId = Number(req.params.id);
+    const session = await storage.getLiveStreamSession(sessionId);
+    if (!session) return res.status(404).json({ message: "Session not found" });
+    
+    await storage.updateLiveStreamSession(sessionId, { 
+      status: "ended", 
+      endedAt: new Date() 
+    });
+    
+    res.json({ message: "Session ended" });
+  });
+
+  // Get active session for conversation
+  app.get("/api/eyes/sessions/conversation/:conversationId", async (req, res) => {
+    const conversationId = Number(req.params.conversationId);
+    const session = await storage.getActiveSessionForConversation(conversationId);
+    res.json({ session: session || null });
+  });
+
   // --- Chat Extensions ---
   app.post(api.chat.addAgent.path, async (req, res) => {
     const { agentId } = req.body;

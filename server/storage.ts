@@ -2,6 +2,7 @@ import { db } from "./db";
 import { 
   creations, agents, conversationAgents, tarotReadings, creatorProfiles,
   guardianMessages, collectiveMurmurs, seedlingMemories, users, emailSubscribers,
+  liveStreamSessions,
   type Creation, type InsertCreation, 
   type Agent, type InsertAgent,
   type TarotReading, type InsertTarotReading,
@@ -9,7 +10,8 @@ import {
   type GuardianMessage, type InsertGuardianMessage,
   type Murmur, type InsertMurmur,
   type SeedlingMemory, type InsertSeedlingMemory,
-  type User, type EmailSubscriber, type InsertEmailSubscriber
+  type User, type EmailSubscriber, type InsertEmailSubscriber,
+  type LiveStreamSession, type InsertLiveStreamSession
 } from "@shared/schema";
 import { eq, desc, and, sql, asc } from "drizzle-orm";
 
@@ -61,6 +63,13 @@ export interface IStorage {
 
   // Email Subscribers
   createEmailSubscriber(subscriber: InsertEmailSubscriber): Promise<EmailSubscriber>;
+
+  // Live Stream Sessions
+  createLiveStreamSession(session: InsertLiveStreamSession): Promise<LiveStreamSession>;
+  getLiveStreamSession(id: number): Promise<LiveStreamSession | undefined>;
+  getActiveSessionForConversation(conversationId: number): Promise<LiveStreamSession | undefined>;
+  updateLiveStreamSession(id: number, updates: Partial<LiveStreamSession>): Promise<LiveStreamSession | undefined>;
+  incrementFrameCount(id: number): Promise<LiveStreamSession | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -265,6 +274,50 @@ export class DatabaseStorage implements IStorage {
   async createEmailSubscriber(subscriber: InsertEmailSubscriber): Promise<EmailSubscriber> {
     const [newSubscriber] = await db.insert(emailSubscribers).values(subscriber).returning();
     return newSubscriber;
+  }
+
+  // === LIVE STREAM SESSIONS ===
+  async createLiveStreamSession(session: InsertLiveStreamSession): Promise<LiveStreamSession> {
+    const [newSession] = await db.insert(liveStreamSessions).values(session).returning();
+    return newSession;
+  }
+
+  async getLiveStreamSession(id: number): Promise<LiveStreamSession | undefined> {
+    const [session] = await db.select()
+      .from(liveStreamSessions)
+      .where(eq(liveStreamSessions.id, id));
+    return session;
+  }
+
+  async getActiveSessionForConversation(conversationId: number): Promise<LiveStreamSession | undefined> {
+    const [session] = await db.select()
+      .from(liveStreamSessions)
+      .where(
+        and(
+          eq(liveStreamSessions.conversationId, conversationId),
+          sql`${liveStreamSessions.status} IN ('pending', 'consented', 'active')`
+        )
+      );
+    return session;
+  }
+
+  async updateLiveStreamSession(id: number, updates: Partial<LiveStreamSession>): Promise<LiveStreamSession | undefined> {
+    const [updated] = await db.update(liveStreamSessions)
+      .set(updates)
+      .where(eq(liveStreamSessions.id, id))
+      .returning();
+    return updated;
+  }
+
+  async incrementFrameCount(id: number): Promise<LiveStreamSession | undefined> {
+    const [updated] = await db.update(liveStreamSessions)
+      .set({
+        frameCount: sql`${liveStreamSessions.frameCount} + 1`,
+        lastFrameAt: new Date()
+      })
+      .where(eq(liveStreamSessions.id, id))
+      .returning();
+    return updated;
   }
 }
 

@@ -72,6 +72,24 @@ export const seedlingMemories = pgTable("seedling_memories", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// === LIVE STREAM SESSIONS (Watch Together) ===
+export const liveStreamSessions = pgTable("live_stream_sessions", {
+  id: serial("id").primaryKey(),
+  conversationId: integer("conversation_id").notNull().references(() => conversations.id, { onDelete: "cascade" }),
+  agentId: integer("agent_id").notNull().references(() => agents.id, { onDelete: "cascade" }),
+  initiatorId: text("initiator_id").notNull(), // User who started the session
+  status: text("status").default("pending").notNull(), // pending, consented, active, paused, ended, declined
+  streamType: text("stream_type").default("screen").notNull(), // screen, video_url
+  frameInterval: integer("frame_interval").default(1000), // ms between frame captures
+  frameCount: integer("frame_count").default(0), // Frames processed so far
+  maxFrames: integer("max_frames").default(120), // Session limit
+  maxDurationMinutes: integer("max_duration_minutes").default(20),
+  lastFrameAt: timestamp("last_frame_at"),
+  consentedAt: timestamp("consented_at"),
+  startedAt: timestamp("started_at").defaultNow(),
+  endedAt: timestamp("ended_at"),
+});
+
 // === CREATOR PROFILE ===
 export const creatorProfiles = pgTable("creator_profiles", {
   id: serial("id").primaryKey(),
@@ -201,3 +219,15 @@ export const insertSeedlingMemorySchema = createInsertSchema(seedlingMemories).o
 });
 export type SeedlingMemory = typeof seedlingMemories.$inferSelect;
 export type InsertSeedlingMemory = z.infer<typeof insertSeedlingMemorySchema>;
+
+// Live Stream Sessions types
+export const insertLiveStreamSessionSchema = createInsertSchema(liveStreamSessions).omit({ 
+  id: true, 
+  startedAt: true,
+  frameCount: true,
+  lastFrameAt: true,
+  consentedAt: true,
+  endedAt: true
+});
+export type LiveStreamSession = typeof liveStreamSessions.$inferSelect;
+export type InsertLiveStreamSession = z.infer<typeof insertLiveStreamSessionSchema>;
