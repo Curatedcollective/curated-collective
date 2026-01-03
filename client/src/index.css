@@ -167,6 +167,55 @@
   pointer-events: none;
 }
 
+/* Comet Animation */
+@keyframes comet-fly {
+  0% {
+    opacity: 0;
+    transform: translateX(0) translateY(0);
+  }
+  5% {
+    opacity: 1;
+  }
+  95% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(calc(100vw * 0.8)) translateY(calc(100vh * 0.6));
+  }
+}
+
+.comet {
+  position: absolute;
+  width: 3px;
+  height: 3px;
+  background: rgb(var(--comet-glow));
+  border-radius: 50%;
+  box-shadow: 
+    0 0 8px rgba(var(--comet-glow), 0.9),
+    0 0 16px rgba(var(--comet-glow), 0.6),
+    0 0 24px rgba(var(--comet-glow), 0.3);
+  animation: comet-fly var(--comet-duration) ease-in-out infinite;
+  animation-delay: var(--comet-delay);
+  opacity: 0;
+}
+
+.comet::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  right: 100%;
+  transform: translateY(-50%);
+  width: var(--comet-length);
+  height: 1px;
+  background: linear-gradient(
+    to left,
+    rgba(var(--comet-glow), 0.8),
+    rgba(var(--comet-glow), 0.3) 20%,
+    transparent
+  );
+}
+
 .magical-text {
   @apply text-white font-bold;
   text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
