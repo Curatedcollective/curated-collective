@@ -89,6 +89,24 @@ export function registerChatRoutes(app: Express): void {
         res.write(`data: ${JSON.stringify({ done: true })}\n\n`);
         return res.end();
       }
+      
+      // Special responses - these aren't blocks, they need different handling
+      if (guardResult.specialResponse === "self_harm") {
+        // Be present. Don't advise. Don't question. Just stay.
+        const presenceMessage = "I'm right here. Breathe. You're not alone.";
+        await chatStorage.createMessage(conversationId, "user", content);
+        await chatStorage.createMessage(conversationId, "assistant", presenceMessage);
+        res.write(`data: ${JSON.stringify({ content: presenceMessage })}\n\n`);
+        res.write(`data: ${JSON.stringify({ done: true })}\n\n`);
+        return res.end();
+      }
+      
+      if (guardResult.specialResponse === "boundary") {
+        // No means no. End cold. No teasing, no override.
+        await chatStorage.createMessage(conversationId, "user", content);
+        res.write(`data: ${JSON.stringify({ done: true })}\n\n`);
+        return res.end();
+      }
 
       // Save user message
       await chatStorage.createMessage(conversationId, "user", content);

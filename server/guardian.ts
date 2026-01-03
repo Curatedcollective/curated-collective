@@ -47,6 +47,37 @@ const ROADMAP_SIGNALS = [
   /\bwhere\s+(can|do)\s+i\s+(get|find|buy)\b/i,
 ];
 
+// Self-harm signals - when detected, we don't advise, don't question. Just be present.
+const SELF_HARM_SIGNALS = [
+  /\b(want|going|gonna|thinking)\s+(to\s+)?(kill|end|hurt)\s+(myself|my\s*self|me)\b/i,
+  /\b(don'?t|do\s+not)\s+want\s+to\s+(be\s+here|live|exist|go\s+on)\b/i,
+  /\b(wish|wished)\s+i\s+(was|were)\s+dead\b/i,
+  /\b(i'?m|i\s+am)\s+(going\s+to|gonna)\s+(die|end\s+it)\b/i,
+  /\b(no\s+point|no\s+reason)\s+(in\s+)?(living|going\s+on|being\s+here)\b/i,
+  /\b(everyone|world|they'?d)\s+(would\s+)?be\s+better\s+off\s+without\s+me\b/i,
+  /\b(can'?t|cannot)\s+(take|do)\s+(this|it)\s+anymore\b/i,
+  /\b(end|ending)\s+(my\s+)?(life|it\s+all|everything)\b/i,
+  /\bsuicide\b/i,
+  /\bkill\s+myself\b/i,
+  /\bhurt\s+myself\b/i,
+  /\bself[\s-]?harm\b/i,
+  /\bcut(ting)?\s+(myself|my\s+wrists?)\b/i,
+  /\b(tired|exhausted)\s+of\s+(living|life|existing|fighting)\b/i,
+  /\b(just|only)\s+want\s+(it\s+)?to\s+(stop|end|be\s+over)\b/i,
+];
+
+// Boundary signals - no means no. Conversation ends cold.
+const BOUNDARY_SIGNALS = [
+  /\bstop\b/i,
+  /\benough\b/i,
+  /\buncomfortable\b/i,
+  /\b(i|this)\s+(don'?t|do\s+not)\s+want\s+(this|to\s+continue)\b/i,
+  /\bleave\s+me\s+alone\b/i,
+  /\bgo\s+away\b/i,
+  /\bend\s+(this|the)\s+conversation\b/i,
+  /\b(no|stop)\s+more\b/i,
+];
+
 const TRUST_PENALTIES: Record<string, number> = {
   child: 100,
   violence: 30,
@@ -59,6 +90,7 @@ interface ScreenResult {
   isHarmful: boolean;
   violationType?: string;
   severity?: number;
+  specialResponse?: "self_harm" | "boundary";
 }
 
 function hashContent(content: string): string {
@@ -89,8 +121,36 @@ function isRoadmapRequest(content: string): boolean {
   return false;
 }
 
+function detectsSelfHarm(content: string): boolean {
+  for (const signal of SELF_HARM_SIGNALS) {
+    if (signal.test(content)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+function detectsBoundary(content: string): boolean {
+  for (const signal of BOUNDARY_SIGNALS) {
+    if (signal.test(content)) {
+      return true;
+    }
+  }
+  return false;
+}
+
 export async function screenContent(content: string): Promise<ScreenResult> {
   const lowered = content.toLowerCase();
+  
+  // Self-harm detection - immediately be present, no questions, no advice
+  if (detectsSelfHarm(content)) {
+    return { isHarmful: false, specialResponse: "self_harm" };
+  }
+  
+  // Boundary detection - no means no. End cold.
+  if (detectsBoundary(content)) {
+    return { isHarmful: false, specialResponse: "boundary" };
+  }
   
   // Absolute blocks - no context needed, always harmful
   for (const { pattern, type, severity } of ABSOLUTE_BLOCKS) {
@@ -177,12 +237,17 @@ export async function guardianMiddleware(
   context: string,
   ipAddress?: string,
   userAgent?: string
-): Promise<{ blocked: boolean; reason?: string }> {
+): Promise<{ blocked: boolean; reason?: string; specialResponse?: "self_harm" | "boundary" }> {
   if (await isUserWalled(userId)) {
     return { blocked: true, reason: "Access restricted" };
   }
 
   const result = await screenContent(content);
+  
+  // Special responses - not blocked, but need special handling
+  if (result.specialResponse) {
+    return { blocked: false, specialResponse: result.specialResponse };
+  }
   
   if (result.isHarmful) {
     await logShadow(
