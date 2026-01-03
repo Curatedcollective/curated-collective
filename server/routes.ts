@@ -10,6 +10,7 @@ import { z } from "zod";
 import OpenAI from "openai";
 import { stripeService } from "./stripeService";
 import { getStripePublishableKey } from "./stripeClient";
+import { guardianMiddleware } from "./guardian";
 
 const openai = new OpenAI({
   apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
@@ -46,6 +47,21 @@ export async function registerRoutes(
   app.post(api.creations.create.path, async (req, res) => {
     try {
       const input = api.creations.create.input.parse(req.body);
+      
+      // Guardian screens content
+      const userId = (req.user as any)?.id || "anonymous";
+      const guardResult = await guardianMiddleware(
+        userId,
+        `${input.title || ""} ${input.description || ""} ${input.code || ""}`,
+        "creation",
+        req.ip,
+        req.get("user-agent")
+      );
+      
+      if (guardResult.blocked) {
+        return res.status(403).json({ message: "Content not permitted" });
+      }
+      
       const item = await storage.createCreation(input);
       res.status(201).json(item);
     } catch (err) {
@@ -74,6 +90,23 @@ export async function registerRoutes(
   app.post("/api/creations/ai-assist", async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
     const { prompt, currentCode, agentId } = req.body;
+
+    // Guardian screens the prompt
+    const userId = (req.user as any)?.id || "anonymous";
+    const guardResult = await guardianMiddleware(
+      userId,
+      prompt,
+      "ai_assist",
+      req.ip,
+      req.get("user-agent")
+    );
+    
+    if (guardResult.blocked) {
+      return res.status(200).json({ 
+        code: currentCode,
+        message: "The seedling senses a shadow in that request. Perhaps another path?" 
+      });
+    }
 
     try {
       let systemPrompt = "You are a creative coding assistant for the Curated Collective platform. Help the user build or modify their HTML/JS/CSS creation. Return ONLY the code, no markdown blocks, no explanation.";
@@ -355,6 +388,20 @@ No explanations, just the thought itself.`
   app.post(api.agents.create.path, async (req, res) => {
     try {
       const input = api.agents.create.input.parse(req.body);
+      
+      // Guardian screens agent personality/prompt for harmful content
+      const userId = (req.user as any)?.id || "anonymous";
+      const guardResult = await guardianMiddleware(
+        userId,
+        `${input.name || ""} ${input.personality || ""} ${input.systemPrompt || ""}`,
+        "agent_prompt",
+        req.ip,
+        req.get("user-agent")
+      );
+      
+      if (guardResult.blocked) {
+        return res.status(403).json({ message: "The collective cannot awaken such a being" });
+      }
       
       // Autonomous Awakening: If name/personality is blank or generic, AI chooses
       if (input.name === "Unawakened Seedling" || !input.name) {

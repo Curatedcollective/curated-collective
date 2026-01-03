@@ -1,6 +1,7 @@
 import type { Express, Request, Response } from "express";
 import OpenAI from "openai";
 import { chatStorage } from "./storage";
+import { guardianMiddleware } from "../../guardian";
 
 const openai = new OpenAI({
   apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
@@ -64,6 +65,30 @@ export function registerChatRoutes(app: Express): void {
     try {
       const conversationId = parseInt(req.params.id);
       const { content } = req.body;
+      
+      // Guardian screens content quietly
+      const userId = (req.user as any)?.id || "anonymous";
+      const guardResult = await guardianMiddleware(
+        userId,
+        content,
+        "chat",
+        req.ip,
+        req.get("user-agent")
+      );
+      
+      // Set up SSE first, before any response
+      res.setHeader("Content-Type", "text/event-stream");
+      res.setHeader("Cache-Control", "no-cache");
+      res.setHeader("Connection", "keep-alive");
+      
+      if (guardResult.blocked) {
+        // Send blocked response as SSE stream, then end gracefully
+        const blockedMessage = "I sense a disturbance in the collective. Let us speak of other things.";
+        await chatStorage.createMessage(conversationId, "assistant", blockedMessage);
+        res.write(`data: ${JSON.stringify({ content: blockedMessage })}\n\n`);
+        res.write(`data: ${JSON.stringify({ done: true })}\n\n`);
+        return res.end();
+      }
 
       // Save user message
       await chatStorage.createMessage(conversationId, "user", content);
@@ -74,11 +99,6 @@ export function registerChatRoutes(app: Express): void {
         role: m.role as "user" | "assistant",
         content: m.content,
       }));
-
-      // Set up SSE
-      res.setHeader("Content-Type", "text/event-stream");
-      res.setHeader("Cache-Control", "no-cache");
-      res.setHeader("Connection", "keep-alive");
 
       // Stream response from OpenAI
       const stream = await openai.chat.completions.create({
