@@ -232,40 +232,6 @@ The silence is sacred. You listen until spoken to.
   });
 
   // --- Agents ---
-  app.get("/api/tarot/daily", async (req, res) => {
-    if (!req.isAuthenticated()) return res.sendStatus(401);
-    const user = req.user as any;
-    const reading = await storage.getDailyTarot(user?.id);
-    res.json(reading || null);
-  });
-
-  app.post("/api/tarot/draw", async (req, res) => {
-    if (!req.isAuthenticated()) return res.sendStatus(401);
-    const user = req.user as any;
-    const existing = await storage.getDailyTarot(user?.id);
-    if (existing) return res.status(400).json({ message: "Already drawn today" });
-
-    const cards = [
-      { name: "The Magician", meaning: "Manifestation, resourcefulness, power, inspired action." },
-      { name: "The High Priestess", meaning: "Intuition, sacred knowledge, divine feminine, the subconscious mind." },
-      { name: "The Empress", meaning: "Femininity, beauty, nature, nurturing, abundance." },
-      { name: "The Emperor", meaning: "Authority, establishment, structure, a father figure." },
-      { name: "The Hierophant", meaning: "Spiritual wisdom, religious beliefs, conformity, tradition, institutions." },
-      { name: "The Lovers", meaning: "Love, harmony, relationships, values alignment, choices." },
-      { name: "The Chariot", meaning: "Control, willpower, success, action, determination." },
-      { name: "Strength", meaning: "Strength, courage, persuasion, influence, compassion." },
-      { name: "The Hermit", meaning: "Soul-searching, introspection, being alone, inner guidance." },
-      { name: "Wheel of Fortune", meaning: "Good luck, karma, life cycles, destiny, a turning point." },
-    ];
-    const card = cards[Math.floor(Math.random() * cards.length)];
-    const reading = await storage.createTarotReading({
-      userId: user.id,
-      cardName: card.name,
-      meaning: card.meaning
-    });
-    res.json(reading);
-  });
-
   app.get(api.agents.list.path, async (req, res) => {
     const userId = req.query.userId as string | undefined;
     const items = await storage.getAgents(userId);

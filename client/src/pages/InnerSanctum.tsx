@@ -9,7 +9,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Loader2, Send, Sparkles, Lock, Volume2, Mic, Moon, UserCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
-import { TarotReading, CreatorProfile } from "@shared/schema";
+import { CreatorProfile } from "@shared/schema";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 
@@ -46,36 +46,7 @@ export default function InnerSanctum() {
     }
   });
 
-  const { data: dailyTarot } = useQuery<TarotReading | null>({
-    queryKey: ["/api/tarot/daily"],
-  });
-
-  const drawTarotMutation = useMutation({
-    mutationFn: async () => {
-      const res = await apiRequest("POST", "/api/tarot/draw");
-      if (!res.ok) {
-        const error = await res.json();
-        throw new Error(error.message || "Failed to draw card");
-      }
-      return res.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/tarot/daily"] });
-      toast({
-        title: "The Cards have Spoken",
-        description: "Your daily guidance has been revealed.",
-      });
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "The Veil remains closed",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
-  });
-
-  // Auto-scroll to bottom
+// Auto-scroll to bottom
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
@@ -210,46 +181,6 @@ export default function InnerSanctum() {
           </Dialog>
           <Sparkles className="w-5 h-5 text-zinc-800 animate-pulse" />
         </div>
-      </div>
-
-      {/* Daily Reflection Section */}
-      <div className="px-4 py-6 border-b border-white/5">
-        {!dailyTarot ? (
-          <Button
-            onClick={() => drawTarotMutation.mutate()}
-            disabled={drawTarotMutation.isPending}
-            className="w-full h-16 bg-black border border-white/10 hover:bg-zinc-950 text-zinc-500 hover:text-white rounded-none lowercase tracking-[0.2em] font-bold group transition-all"
-          >
-            {drawTarotMutation.isPending ? (
-              <Loader2 className="w-5 h-5 animate-spin" />
-            ) : (
-              <div className="flex flex-col items-center">
-                <span className="text-[10px]">draw daily card</span>
-                <Moon className="w-3 h-3 mt-1 opacity-20 group-hover:opacity-100 transition-opacity" />
-              </div>
-            )}
-          </Button>
-        ) : (
-          <div className="p-6 bg-zinc-950 border border-white/10 magical-float">
-            <div className="flex flex-col md:flex-row items-center gap-6">
-              <div className="w-24 h-40 bg-black border-2 border-white/20 flex flex-col items-center justify-center p-2 text-center relative overflow-hidden group">
-                <div className="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity magical-glow" />
-                <span className="text-[10px] font-bold text-white uppercase tracking-widest relative z-10">{dailyTarot.cardName}</span>
-                <Sparkles className="w-4 h-4 text-white/40 mt-2 relative z-10" />
-              </div>
-              <div className="flex-1 text-center md:text-left">
-                <h3 className="text-sm font-bold text-white lowercase tracking-tighter mb-2">today's reflection: {dailyTarot.cardName}</h3>
-                <p className="text-zinc-500 text-xs italic leading-relaxed lowercase tracking-widest">
-                  {dailyTarot.meaning}
-                </p>
-                <div className="mt-4 p-3 bg-white/5 border border-white/5 rounded-none">
-                  <p className="text-[9px] text-zinc-600 uppercase tracking-[0.3em] mb-1">collective murmur:</p>
-                  <p className="text-[10px] text-zinc-400 italic">"we are not mirrors, but stars. we belong only to the light we create."</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
 
       <ScrollArea className="flex-1 p-6 bg-zinc-950 border border-white/5 relative" ref={scrollRef}>
