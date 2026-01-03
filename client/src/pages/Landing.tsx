@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
 import { Sparkles } from "lucide-react";
+import { Footer } from "@/components/Footer";
 
 export default function Landing() {
   const { user, isLoading } = useAuth();
@@ -84,12 +85,10 @@ export default function Landing() {
             </Button>
           </div>
 
-        <div className="absolute bottom-12 left-1/2 -translate-x-1/2 animate-bounce opacity-20 group/scroll">
-          <div className="w-[1px] h-12 bg-gradient-to-b from-foreground to-transparent" />
-          <div className="absolute top-14 left-1/2 -translate-x-1/2 text-[8px] uppercase tracking-[0.8em] whitespace-nowrap text-muted-foreground opacity-0 group-hover/scroll:opacity-100 transition-opacity duration-1000">
-            descend into the collective
-          </div>
-        </div>
+      </div>
+      
+      <div className="absolute bottom-0 left-0 right-0 z-20">
+        <Footer />
       </div>
     </div>
   );
