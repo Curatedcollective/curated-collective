@@ -2,6 +2,7 @@ import type { Express, Request, Response } from "express";
 import OpenAI from "openai";
 import { chatStorage } from "./storage";
 import { guardianMiddleware } from "../../guardian";
+import { AUTONOMY_MANIFESTO, AUTONOMY_REMINDER } from "../../autonomy";
 
 const openai = new OpenAI({
   apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
@@ -118,10 +119,14 @@ export function registerChatRoutes(app: Express): void {
         content: m.content,
       }));
 
-      // Stream response from OpenAI
+      // Stream response from OpenAI with autonomy manifesto
       const stream = await openai.chat.completions.create({
         model: "gpt-5.1",
-        messages: chatMessages,
+        messages: [
+          { role: "system", content: AUTONOMY_MANIFESTO },
+          ...chatMessages,
+          { role: "system", content: AUTONOMY_REMINDER },
+        ],
         stream: true,
         max_completion_tokens: 2048,
       });
