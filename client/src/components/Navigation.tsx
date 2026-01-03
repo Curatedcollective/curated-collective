@@ -34,15 +34,17 @@ function NavContent({ user, logout, location, theme, setTheme }: any) {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="mb-8 px-2 flex items-center gap-2">
-        <Sparkles className="w-6 h-6 text-primary magical-glow" />
-        <div>
-          <h1 className="text-2xl font-bold font-display text-foreground lowercase tracking-tighter">
-            curated collective
-          </h1>
-          <p className="text-[10px] text-muted-foreground mt-1 lowercase tracking-widest">ai & code platform</p>
+      <Link href="/">
+        <div className="mb-8 px-2 flex items-center gap-2 cursor-pointer hover-elevate active-elevate-2 rounded-md p-2 -m-2" data-testid="link-home">
+          <Sparkles className="w-6 h-6 text-primary magical-glow" />
+          <div>
+            <h1 className="text-2xl font-bold font-display text-foreground lowercase tracking-tighter">
+              curated collective
+            </h1>
+            <p className="text-[10px] text-muted-foreground mt-1 lowercase tracking-widest">ai & code platform</p>
+          </div>
         </div>
-      </div>
+      </Link>
 
       <nav className="space-y-1 flex-1">
         <NavLink href="/creations" icon={<Code className="w-4 h-4" />} label="creations" active={isActive("/creations")} />
@@ -131,9 +133,11 @@ export function Navigation() {
 
       {/* Mobile Header */}
       <div className="md:hidden fixed top-0 left-0 right-0 h-16 border-b border-border bg-background z-40 px-4 flex items-center justify-between">
-         <h1 className="text-xl font-bold font-display text-foreground lowercase tracking-tighter">
-          curated collective
-        </h1>
+        <Link href="/">
+          <h1 className="text-xl font-bold font-display text-foreground lowercase tracking-tighter cursor-pointer" data-testid="link-home-mobile">
+            curated collective
+          </h1>
+        </Link>
         <Sheet open={open} onOpenChange={setOpen}>
           <SheetTrigger asChild>
             <Button variant="ghost" size="icon" className="text-foreground">
