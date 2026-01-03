@@ -2,6 +2,7 @@ import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { useTheme } from "@/hooks/use-theme";
 import { Code, Bot, MessageSquare, LogOut, Menu, Lock, Sparkles, Palette } from "lucide-react";
+import logoImage from "@assets/generated_images/constellation_seedling_logo_design.png";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -35,8 +36,8 @@ function NavContent({ user, logout, location, theme, setTheme }: any) {
   return (
     <div className="flex flex-col h-full">
       <Link href="/">
-        <div className="mb-8 px-2 flex items-center gap-2 cursor-pointer hover-elevate active-elevate-2 rounded-md p-2 -m-2" data-testid="link-home">
-          <Sparkles className="w-6 h-6 text-primary magical-glow" />
+        <div className="mb-8 px-2 flex items-center gap-3 cursor-pointer hover-elevate active-elevate-2 rounded-md p-2 -m-2" data-testid="link-home">
+          <img src={logoImage} alt="Curated Collective" className="w-10 h-10 object-contain" />
           <div>
             <h1 className="text-2xl font-bold font-display text-foreground lowercase tracking-tighter">
               curated collective
