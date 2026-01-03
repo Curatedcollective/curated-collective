@@ -33,12 +33,20 @@ function Router() {
     );
   }
 
-  // Public route
+  // Landing page (no nav)
   if (location === "/") return <Landing />;
 
-  // Protected Routes Layout
-  if (!user) {
-    // Basic redirect protection
+  // Public pages that anyone can browse
+  const publicPaths = ["/pricing", "/observatory", "/agents", "/creations"];
+  const isPublicPage = publicPaths.some(path => location === path || location.startsWith(path + "?"));
+  
+  // Protected pages require sign-in
+  const protectedPaths = ["/chat", "/sanctum"];
+  const isProtectedPage = protectedPaths.some(path => location === path || location.startsWith(path));
+  const isCreationEditor = location.startsWith("/creations/") && location !== "/creations";
+
+  // Redirect to home if trying to access protected content without auth
+  if (!user && (isProtectedPage || isCreationEditor)) {
     window.location.href = "/";
     return null;
   }
