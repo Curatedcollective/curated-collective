@@ -80,14 +80,15 @@ export const liveStreamSessions = pgTable("live_stream_sessions", {
   initiatorId: text("initiator_id").notNull(), // User who started the session
   status: text("status").default("pending").notNull(), // pending, consented, active, paused, ended, declined
   streamType: text("stream_type").default("screen").notNull(), // screen, video_url
-  frameInterval: integer("frame_interval").default(1000), // ms between frame captures
+  frameInterval: integer("frame_interval").default(2000), // ms between frame captures
   frameCount: integer("frame_count").default(0), // Frames processed so far
   maxFrames: integer("max_frames").default(120), // Session limit
   maxDurationMinutes: integer("max_duration_minutes").default(20),
   lastFrameAt: timestamp("last_frame_at"),
   consentedAt: timestamp("consented_at"),
-  startedAt: timestamp("started_at").defaultNow(),
+  startedAt: timestamp("started_at"), // Set when streaming actually begins
   endedAt: timestamp("ended_at"),
+  createdAt: timestamp("created_at").defaultNow(),
 });
 
 // === CREATOR PROFILE ===

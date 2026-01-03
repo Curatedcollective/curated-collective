@@ -2,9 +2,8 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Monitor, Play, Square, Eye, Loader2, Sparkles } from "lucide-react";
+import { Monitor, Play, Square, Eye, Loader2, Sparkles, ChevronDown, ChevronUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 
@@ -87,14 +86,19 @@ export default function WatchTogether({ conversationId, agentId, agentName, isPr
     }
   });
 
+  const [frameInterval, setFrameInterval] = useState(2000);
+
   const startSessionMutation = useMutation({
     mutationFn: async () => {
       const res = await apiRequest("POST", `/api/eyes/sessions/${sessionId}/start`);
       return res.json();
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       setSessionStatus("active");
-      startScreenShare();
+      if (data.session?.frameInterval) {
+        setFrameInterval(data.session.frameInterval);
+      }
+      startScreenShare(data.session?.frameInterval || 2000);
     }
   });
 
@@ -128,7 +132,7 @@ export default function WatchTogether({ conversationId, agentId, agentName, isPr
     }
   });
 
-  const startScreenShare = async () => {
+  const startScreenShare = async (interval: number = 2000) => {
     try {
       const stream = await navigator.mediaDevices.getDisplayMedia({
         video: { width: 1280, height: 720 },
@@ -146,7 +150,7 @@ export default function WatchTogether({ conversationId, agentId, agentName, isPr
 
       intervalRef.current = setInterval(() => {
         captureAndSendFrame();
-      }, 2000);
+      }, interval);
 
     } catch (err) {
       console.error("Screen share failed:", err);

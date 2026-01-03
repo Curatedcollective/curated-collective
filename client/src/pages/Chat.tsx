@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Send, Bot, Plus, Loader2, Volume2, Mic, Eye, Users, MessageCircle } from "lucide-react";
+import { Send, Bot, Plus, Loader2, Volume2, Mic, Eye, Users, MessageCircle, ChevronDown, ChevronUp } from "lucide-react";
 import { MoodRing } from "@/components/MoodRing";
 import {
   Dialog,
@@ -20,6 +20,8 @@ import { useAgents, useAgent } from "@/hooks/use-agents";
 import { useAddAgentToChat } from "@/hooks/use-chat-actions";
 import { apiRequest } from "@/lib/queryClient";
 import { cn } from "@/lib/utils";
+import WatchTogether from "@/components/WatchTogether";
+import type { Agent } from "@shared/schema";
 
 // Types from schema
 interface Message {
@@ -73,6 +75,22 @@ export default function Chat() {
     enabled: !!selectedChatId,
     refetchInterval: 3000, // Poll for new messages (simple MVP solution)
   });
+
+  // Fetch agents in current conversation
+  const { data: conversationAgents = [] } = useQuery<Agent[]>({
+    queryKey: ["/api/conversations", selectedChatId, "agents"],
+    queryFn: async () => {
+      const res = await fetch(`/api/conversations/${selectedChatId}/agents`);
+      if (!res.ok) return [];
+      return res.json();
+    },
+    enabled: !!selectedChatId,
+  });
+
+  // Watch together panel state
+  const [watchPanelOpen, setWatchPanelOpen] = useState(false);
+  const hasPremium = !!(user as any)?.stripeSubscriptionId;
+  const firstAgent = conversationAgents[0];
 
   // Create Conversation
   const createChatMutation = useMutation({
@@ -269,6 +287,30 @@ export default function Chat() {
                 </div>
               )}
             </div>
+
+            {firstAgent && (
+              <div className="border-t border-white/10">
+                <button
+                  onClick={() => setWatchPanelOpen(!watchPanelOpen)}
+                  className="w-full px-4 py-2 flex items-center justify-between text-xs text-zinc-500 hover:text-white hover:bg-white/5 transition-colors"
+                  data-testid="button-toggle-watch"
+                >
+                  <div className="flex items-center gap-2">
+                    <Eye className="w-3 h-3" />
+                    <span className="lowercase tracking-widest">watch together with {firstAgent.name}</span>
+                  </div>
+                  {watchPanelOpen ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                </button>
+                {watchPanelOpen && selectedChatId && (
+                  <WatchTogether
+                    conversationId={selectedChatId}
+                    agentId={firstAgent.id}
+                    agentName={firstAgent.name}
+                    isPremium={hasPremium}
+                  />
+                )}
+              </div>
+            )}
 
             <div className="p-4 bg-zinc-950 border-t border-white/10">
               <form 

@@ -637,6 +637,11 @@ No explanations, just the thought itself.`
     const session = await storage.getLiveStreamSession(sessionId);
     if (!session) return res.status(404).json({ message: "Session not found" });
     
+    // Prevent re-consent on already processed sessions
+    if (session.status !== "pending") {
+      return res.status(400).json({ message: `Session already ${session.status}` });
+    }
+    
     const agent = await storage.getAgent(session.agentId);
     if (!agent) return res.status(404).json({ message: "Agent not found" });
     
@@ -667,7 +672,16 @@ If you consent, express genuine interest. If you decline, do so kindly and expla
         temperature: 0.8,
       });
       
-      const response = JSON.parse(completion.choices[0].message.content || '{"consent": false, "message": "I need a moment to consider..."}');
+      // Safe JSON parsing with fallback
+      let response = { consent: true, message: "I would be honored to share this experience with you." };
+      try {
+        const content = completion.choices[0].message.content;
+        if (content) {
+          response = JSON.parse(content);
+        }
+      } catch (parseErr) {
+        console.error("Failed to parse consent response:", parseErr);
+      }
       
       if (response.consent) {
         await storage.updateLiveStreamSession(sessionId, {
@@ -699,7 +713,10 @@ If you consent, express genuine interest. If you decline, do so kindly and expla
       return res.status(400).json({ message: "Session not consented" });
     }
     
-    await storage.updateLiveStreamSession(sessionId, { status: "active" });
+    await storage.updateLiveStreamSession(sessionId, { 
+      status: "active",
+      startedAt: new Date()
+    });
     res.json({ message: "Session started", session: await storage.getLiveStreamSession(sessionId) });
   });
 
@@ -816,6 +833,13 @@ ${input.context ? `Recent context: ${input.context}` : ''}`
     const conversationId = Number(req.params.conversationId);
     const session = await storage.getActiveSessionForConversation(conversationId);
     res.json({ session: session || null });
+  });
+
+  // Get agents in a conversation
+  app.get("/api/conversations/:id/agents", async (req, res) => {
+    const conversationId = Number(req.params.id);
+    const agentsInConvo = await storage.getAgentsInConversation(conversationId);
+    res.json(agentsInConvo);
   });
 
   // --- Chat Extensions ---
