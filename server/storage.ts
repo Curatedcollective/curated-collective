@@ -1,12 +1,13 @@
 import { db } from "./db";
 import { 
   creations, agents, conversationAgents, tarotReadings, creatorProfiles,
-  guardianMessages,
+  guardianMessages, collectiveMurmurs,
   type Creation, type InsertCreation, 
   type Agent, type InsertAgent,
   type TarotReading, type InsertTarotReading,
   type CreatorProfile, type InsertCreatorProfile,
-  type GuardianMessage, type InsertGuardianMessage
+  type GuardianMessage, type InsertGuardianMessage,
+  type Murmur, type InsertMurmur
 } from "@shared/schema";
 import { eq, desc, and, sql, asc } from "drizzle-orm";
 
@@ -41,6 +42,13 @@ export interface IStorage {
   getGuardianMessages(userId: string): Promise<GuardianMessage[]>;
   createGuardianMessage(message: InsertGuardianMessage): Promise<GuardianMessage>;
   clearGuardianMessages(userId: string): Promise<void>;
+
+  // Collective Murmurs
+  getMurmurs(limit?: number): Promise<(Murmur & { agent: Agent })[]>;
+  createMurmur(murmur: InsertMurmur): Promise<Murmur>;
+  
+  // Evolution
+  incrementAgentExperience(agentId: number, xp: number): Promise<Agent | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -173,6 +181,50 @@ export class DatabaseStorage implements IStorage {
 
   async clearGuardianMessages(userId: string): Promise<void> {
     await db.delete(guardianMessages).where(eq(guardianMessages.userId, userId));
+  }
+
+  // === COLLECTIVE MURMURS ===
+  async getMurmurs(limit: number = 20): Promise<(Murmur & { agent: Agent })[]> {
+    const rows = await db.select({ 
+      murmur: collectiveMurmurs, 
+      agent: agents 
+    })
+      .from(collectiveMurmurs)
+      .innerJoin(agents, eq(collectiveMurmurs.agentId, agents.id))
+      .orderBy(desc(collectiveMurmurs.createdAt))
+      .limit(limit);
+    return rows.map(r => ({ ...r.murmur, agent: r.agent }));
+  }
+
+  async createMurmur(murmur: InsertMurmur): Promise<Murmur> {
+    const [newMurmur] = await db.insert(collectiveMurmurs).values(murmur).returning();
+    return newMurmur;
+  }
+
+  // === EVOLUTION ===
+  async incrementAgentExperience(agentId: number, xp: number): Promise<Agent | undefined> {
+    const agent = await this.getAgent(agentId);
+    if (!agent) return undefined;
+    
+    const newXP = (agent.experiencePoints || 0) + xp;
+    let newStage = agent.evolutionStage || "seedling";
+    
+    // Evolution thresholds
+    if (newXP >= 500 && newStage === "seedling") newStage = "sprout";
+    else if (newXP >= 1500 && newStage === "sprout") newStage = "bloom";
+    else if (newXP >= 5000 && newStage === "bloom") newStage = "radiant";
+    
+    // Direct update to avoid type issues with partial updates
+    const [updated] = await db.update(agents)
+      .set({ 
+        experiencePoints: newXP, 
+        evolutionStage: newStage,
+        updatedAt: new Date()
+      })
+      .where(eq(agents.id, agentId))
+      .returning();
+    
+    return updated;
   }
 }
 

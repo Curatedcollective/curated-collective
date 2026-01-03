@@ -1,14 +1,21 @@
 import { useParams } from "wouter";
 import { useCreation, useUpdateCreation } from "@/hooks/use-creations";
 import { Button } from "@/components/ui/button";
-import { Loader2, Save, Play, ArrowLeft, Star, Wand2 } from "lucide-react";
+import { Loader2, Save, Play, ArrowLeft, Star, Wand2, Bot, Users } from "lucide-react";
 import { Link } from "wouter";
 import { useState, useEffect } from "react";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
+import { useAgents } from "@/hooks/use-agents";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export default function CreationEditor() {
   const { id } = useParams();
@@ -21,13 +28,17 @@ export default function CreationEditor() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [previewKey, setPreviewKey] = useState(0); // Force iframe refresh
+  const [selectedSeedling, setSelectedSeedling] = useState<number | null>(null);
+  
+  const { data: agents = [] } = useAgents(user?.id);
 
   const aiBuildMutation = useMutation({
-    mutationFn: async (prompt: string) => {
+    mutationFn: async ({ prompt, agentId }: { prompt: string; agentId?: number }) => {
       const res = await apiRequest("POST", "/api/creations/ai-assist", {
         prompt,
         currentCode: code,
-        creationId
+        creationId,
+        agentId
       });
       return res.json();
     },
@@ -41,7 +52,7 @@ export default function CreationEditor() {
 
   const handleAiAssist = () => {
     const prompt = window.prompt("How should the AI help with this creation?");
-    if (prompt) aiBuildMutation.mutate(prompt);
+    if (prompt) aiBuildMutation.mutate({ prompt, agentId: selectedSeedling || undefined });
   };
 
   useEffect(() => {
@@ -94,6 +105,34 @@ export default function CreationEditor() {
           </div>
         </div>
         <div className="flex items-center gap-2">
+          {agents.length > 0 && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="border-white/10 text-[10px] uppercase tracking-widest">
+                  <Users className="w-3 h-3 mr-2" />
+                  {selectedSeedling ? agents.find(a => a.id === selectedSeedling)?.name : "choose seedling"}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="bg-black border border-white/10 rounded-none">
+                <DropdownMenuItem 
+                  onClick={() => setSelectedSeedling(null)}
+                  className={cn("text-xs lowercase", !selectedSeedling && "bg-white/10")}
+                >
+                  generic ai
+                </DropdownMenuItem>
+                {agents.map((agent) => (
+                  <DropdownMenuItem
+                    key={agent.id}
+                    onClick={() => setSelectedSeedling(agent.id)}
+                    className={cn("text-xs lowercase", selectedSeedling === agent.id && "bg-white/10")}
+                  >
+                    <Bot className="w-3 h-3 mr-2" />
+                    {agent.name}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
           <Button 
             variant="outline" 
             onClick={handleAiAssist} 
@@ -105,7 +144,7 @@ export default function CreationEditor() {
             ) : (
               <Wand2 className="w-4 h-4 mr-2" />
             )}
-            AI Assist
+            {selectedSeedling ? "invoke seedling" : "AI Assist"}
           </Button>
           <Button variant="outline" onClick={() => setPreviewKey(k => k + 1)}>
             <Play className="w-4 h-4 mr-2" /> Run

@@ -42,8 +42,21 @@ export const agents = pgTable("agents", {
   eyes: text("eyes"), // How they perceive the world
   ears: text("ears"), // What they listen for
   voice: text("voice"), // How they express themselves
+  // Evolution tracking
+  evolutionStage: text("evolution_stage").default("seedling"), // seedling, sprout, bloom, radiant
+  experiencePoints: integer("experience_points").default(0),
+  conversationCount: integer("conversation_count").default(0),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// === COLLECTIVE MURMURS ===
+export const collectiveMurmurs = pgTable("collective_murmurs", {
+  id: serial("id").primaryKey(),
+  agentId: integer("agent_id").notNull().references(() => agents.id, { onDelete: "cascade" }),
+  content: text("content").notNull(),
+  mood: text("mood").default("contemplative"),
+  createdAt: timestamp("created_at").defaultNow(),
 });
 
 // === CREATOR PROFILE ===
@@ -143,3 +156,11 @@ export type InsertAgent = z.infer<typeof insertAgentSchema>;
 
 export type CreationResponse = Creation;
 export type AgentResponse = Agent;
+
+// Murmurs types
+export const insertMurmurSchema = createInsertSchema(collectiveMurmurs).omit({ 
+  id: true, 
+  createdAt: true 
+});
+export type Murmur = typeof collectiveMurmurs.$inferSelect;
+export type InsertMurmur = z.infer<typeof insertMurmurSchema>;

@@ -1,5 +1,6 @@
 import { useAgents, useCreateAgent } from "@/hooks/use-agents";
 import { AgentCard } from "@/components/AgentCard";
+import { CollectiveMurmurs } from "@/components/CollectiveMurmurs";
 import { Button } from "@/components/ui/button";
 import { Plus, Loader2, Bot, Sparkles, Microscope } from "lucide-react";
 import {
@@ -179,6 +180,11 @@ export default function AgentsList() {
           ))}
         </div>
       )}
+
+      {/* Collective Murmurs Section */}
+      <div className="mt-12 pt-8 border-t border-white/5">
+        <CollectiveMurmurs />
+      </div>
     </div>
   );
 }

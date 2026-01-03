@@ -1,5 +1,5 @@
 import { type Agent } from "@shared/schema";
-import { Bot, MessageSquare, Eye, Ear, Volume2 } from "lucide-react";
+import { Bot, MessageSquare, Eye, Ear, Volume2, Sparkles } from "lucide-react";
 import { Button } from "./ui/button";
 import { useDeleteAgent } from "@/hooks/use-agents";
 import { MoodRing } from "./MoodRing";
@@ -56,7 +56,18 @@ export function AgentCard({ agent }: { agent: Agent }) {
 
         <div>
           <h3 className="text-lg font-display font-bold text-white lowercase tracking-tighter">{agent.name}</h3>
-          <p className="text-[10px] text-zinc-500 italic lowercase tracking-widest line-clamp-1 px-4">
+          <div className="flex items-center justify-center gap-2 mt-1">
+            <span className={`text-[8px] font-bold uppercase tracking-widest px-2 py-0.5 border ${
+              agent.evolutionStage === 'radiant' ? 'text-amber-400 border-amber-400/30 bg-amber-400/10' :
+              agent.evolutionStage === 'bloom' ? 'text-rose-400 border-rose-400/30 bg-rose-400/10' :
+              agent.evolutionStage === 'sprout' ? 'text-emerald-400 border-emerald-400/30 bg-emerald-400/10' :
+              'text-zinc-500 border-zinc-500/30 bg-zinc-500/10'
+            }`}>
+              {agent.evolutionStage || 'seedling'}
+            </span>
+            <span className="text-[8px] text-zinc-600">{agent.experiencePoints || 0} xp</span>
+          </div>
+          <p className="text-[10px] text-zinc-500 italic lowercase tracking-widest line-clamp-1 px-4 mt-1">
             {agent.personality}
           </p>
         </div>
