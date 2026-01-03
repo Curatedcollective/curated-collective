@@ -16,6 +16,7 @@ import Chat from "@/pages/Chat";
 import InnerSanctum from "@/pages/InnerSanctum";
 import Pricing from "@/pages/Pricing";
 import Observatory from "@/pages/Observatory";
+import SocialGenerator from "@/pages/SocialGenerator";
 import NotFound from "@/pages/not-found";
 import { Loader2 } from "lucide-react";
 import { StarBackground } from "@/components/StarBackground";
@@ -41,7 +42,7 @@ function Router() {
   const isPublicPage = publicPaths.some(path => location === path || location.startsWith(path + "?"));
   
   // Protected pages require sign-in
-  const protectedPaths = ["/chat", "/sanctum"];
+  const protectedPaths = ["/chat", "/sanctum", "/social"];
   const isProtectedPage = protectedPaths.some(path => location === path || location.startsWith(path));
   const isCreationEditor = location.startsWith("/creations/") && location !== "/creations";
 
@@ -63,6 +64,7 @@ function Router() {
           <Route path="/sanctum" component={InnerSanctum} />
           <Route path="/observatory" component={Observatory} />
           <Route path="/pricing" component={Pricing} />
+          <Route path="/social" component={SocialGenerator} />
           <Route component={NotFound} />
         </Switch>
       </main>

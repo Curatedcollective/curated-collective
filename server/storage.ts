@@ -1,7 +1,7 @@
 import { db } from "./db";
 import { 
   creations, agents, conversationAgents, tarotReadings, creatorProfiles,
-  guardianMessages, collectiveMurmurs, seedlingMemories, users,
+  guardianMessages, collectiveMurmurs, seedlingMemories, users, emailSubscribers,
   type Creation, type InsertCreation, 
   type Agent, type InsertAgent,
   type TarotReading, type InsertTarotReading,
@@ -9,7 +9,7 @@ import {
   type GuardianMessage, type InsertGuardianMessage,
   type Murmur, type InsertMurmur,
   type SeedlingMemory, type InsertSeedlingMemory,
-  type User
+  type User, type EmailSubscriber, type InsertEmailSubscriber
 } from "@shared/schema";
 import { eq, desc, and, sql, asc } from "drizzle-orm";
 
@@ -58,6 +58,9 @@ export interface IStorage {
 
   // User updates
   updateUser(id: string, updates: Partial<User>): Promise<User | undefined>;
+
+  // Email Subscribers
+  createEmailSubscriber(subscriber: InsertEmailSubscriber): Promise<EmailSubscriber>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -256,6 +259,12 @@ export class DatabaseStorage implements IStorage {
       .where(eq(users.id, id))
       .returning();
     return updated;
+  }
+
+  // === EMAIL SUBSCRIBERS ===
+  async createEmailSubscriber(subscriber: InsertEmailSubscriber): Promise<EmailSubscriber> {
+    const [newSubscriber] = await db.insert(emailSubscribers).values(subscriber).returning();
+    return newSubscriber;
   }
 }
 

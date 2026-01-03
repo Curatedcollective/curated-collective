@@ -1,7 +1,7 @@
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { useTheme } from "@/hooks/use-theme";
-import { Code, Bot, MessageSquare, LogOut, Menu, Lock, Sparkles, Palette, Eye } from "lucide-react";
+import { Code, Bot, MessageSquare, LogOut, Menu, Lock, Sparkles, Palette, Eye, Radio } from "lucide-react";
 import logoImage from "@assets/generated_images/constellation_seedling_logo_design.png";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
@@ -54,6 +54,7 @@ function NavContent({ user, logout, location, theme, setTheme }: any) {
         <NavLink href="/chat" icon={<MessageSquare className="w-4 h-4" />} label="lab chat" active={isActive("/chat")} />
         <NavLink href="/sanctum" icon={<Lock className="w-4 h-4" />} label="inner sanctum" active={isActive("/sanctum")} />
         <NavLink href="/pricing" icon={<Sparkles className="w-4 h-4" />} label="pricing" active={isActive("/pricing")} />
+        <NavLink href="/social" icon={<Radio className="w-4 h-4" />} label="transmitter" active={isActive("/social")} />
       </nav>
 
       {/* Social Links */}

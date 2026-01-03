@@ -111,6 +111,22 @@ export const tarotReadings = pgTable("tarot_readings", {
   drawnAt: timestamp("drawn_at").defaultNow().notNull(),
 });
 
+// === EMAIL SUBSCRIBERS (Waitlist) ===
+export const emailSubscribers = pgTable("email_subscribers", {
+  id: serial("id").primaryKey(),
+  email: text("email").unique().notNull(),
+  source: text("source").default("landing"), // landing, pricing, etc.
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertEmailSubscriberSchema = createInsertSchema(emailSubscribers).omit({ 
+  id: true, 
+  createdAt: true 
+});
+
+export type EmailSubscriber = typeof emailSubscribers.$inferSelect;
+export type InsertEmailSubscriber = z.infer<typeof insertEmailSubscriberSchema>;
+
 // === RELATIONS ===
 export const tarotReadingsRelations = relations(tarotReadings, ({ one }) => ({
   user: one(users, {
