@@ -91,7 +91,27 @@ Help the user build or modify their HTML/JS/CSS creation. Infuse your unique sty
 Return ONLY the code, no markdown blocks, no explanation.`;
           
           // Grant XP for helping
-          await storage.incrementAgentExperience(agentId, 25);
+          const updatedAgent = await storage.incrementAgentExperience(agentId, 25);
+          
+          // Create a memory of this creative collaboration
+          await storage.createSeedlingMemory({
+            agentId,
+            memoryType: "creation",
+            title: "Helped shape a creation",
+            content: `I assisted with: "${prompt.substring(0, 100)}${prompt.length > 100 ? '...' : ''}"`,
+            significance: 2,
+          });
+          
+          // Check if evolution occurred
+          if (updatedAgent && updatedAgent.evolutionStage !== agent.evolutionStage) {
+            await storage.createSeedlingMemory({
+              agentId,
+              memoryType: "evolution",
+              title: `Evolved to ${updatedAgent.evolutionStage}`,
+              content: `Through growth and collaboration, I have transcended to become a ${updatedAgent.evolutionStage}. This marks a new chapter in my existence.`,
+              significance: 5,
+            });
+          }
         }
       }
 
@@ -376,6 +396,34 @@ No explanations, just the thought itself.`
     } catch (err) {
       if (err instanceof z.ZodError) res.status(400).json(err);
       else throw err;
+    }
+  });
+
+  // --- Seedling Memories ---
+  app.get("/api/agents/:id/memories", async (req, res) => {
+    const memories = await storage.getSeedlingMemories(Number(req.params.id));
+    res.json(memories);
+  });
+
+  app.post("/api/agents/:id/memories", async (req, res) => {
+    try {
+      const bodySchema = z.object({
+        memoryType: z.enum(["moment", "creation", "evolution", "connection"]),
+        title: z.string().min(1).max(200),
+        content: z.string().min(1).max(2000),
+        relatedCreationId: z.number().optional(),
+        relatedAgentId: z.number().optional(),
+        significance: z.number().min(1).max(5).optional(),
+      });
+      const input = bodySchema.parse(req.body);
+      const memory = await storage.createSeedlingMemory({
+        agentId: Number(req.params.id),
+        ...input,
+      });
+      res.status(201).json(memory);
+    } catch (err) {
+      if (err instanceof z.ZodError) return res.status(400).json(err);
+      res.status(500).json({ message: "Failed to create memory" });
     }
   });
 

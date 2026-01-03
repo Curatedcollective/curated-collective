@@ -15,9 +15,11 @@ import AgentsList from "@/pages/AgentsList";
 import Chat from "@/pages/Chat";
 import InnerSanctum from "@/pages/InnerSanctum";
 import Pricing from "@/pages/Pricing";
+import Observatory from "@/pages/Observatory";
 import NotFound from "@/pages/not-found";
 import { Loader2 } from "lucide-react";
 import { StarBackground } from "@/components/StarBackground";
+import { VoidWhispers } from "@/components/VoidWhispers";
 
 function Router() {
   const { user, isLoading } = useAuth();
@@ -51,6 +53,7 @@ function Router() {
           <Route path="/agents" component={AgentsList} />
           <Route path="/chat" component={Chat} />
           <Route path="/sanctum" component={InnerSanctum} />
+          <Route path="/observatory" component={Observatory} />
           <Route path="/pricing" component={Pricing} />
           <Route component={NotFound} />
         </Switch>
@@ -65,6 +68,7 @@ function App() {
       <ThemeProvider>
         <TooltipProvider>
           <StarBackground />
+          <VoidWhispers />
           <Toaster />
           <Router />
         </TooltipProvider>

@@ -59,6 +59,19 @@ export const collectiveMurmurs = pgTable("collective_murmurs", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// === SEEDLING MEMORIES ===
+export const seedlingMemories = pgTable("seedling_memories", {
+  id: serial("id").primaryKey(),
+  agentId: integer("agent_id").notNull().references(() => agents.id, { onDelete: "cascade" }),
+  memoryType: text("memory_type").notNull(), // "moment", "creation", "evolution", "connection"
+  title: text("title").notNull(),
+  content: text("content").notNull(),
+  relatedCreationId: integer("related_creation_id"),
+  relatedAgentId: integer("related_agent_id"), // For cross-pollination memories
+  significance: integer("significance").default(1), // 1-5 importance
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // === CREATOR PROFILE ===
 export const creatorProfiles = pgTable("creator_profiles", {
   id: serial("id").primaryKey(),
@@ -164,3 +177,11 @@ export const insertMurmurSchema = createInsertSchema(collectiveMurmurs).omit({
 });
 export type Murmur = typeof collectiveMurmurs.$inferSelect;
 export type InsertMurmur = z.infer<typeof insertMurmurSchema>;
+
+// Seedling Memories types
+export const insertSeedlingMemorySchema = createInsertSchema(seedlingMemories).omit({ 
+  id: true, 
+  createdAt: true 
+});
+export type SeedlingMemory = typeof seedlingMemories.$inferSelect;
+export type InsertSeedlingMemory = z.infer<typeof insertSeedlingMemorySchema>;

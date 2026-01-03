@@ -1,13 +1,14 @@
 import { db } from "./db";
 import { 
   creations, agents, conversationAgents, tarotReadings, creatorProfiles,
-  guardianMessages, collectiveMurmurs, users,
+  guardianMessages, collectiveMurmurs, seedlingMemories, users,
   type Creation, type InsertCreation, 
   type Agent, type InsertAgent,
   type TarotReading, type InsertTarotReading,
   type CreatorProfile, type InsertCreatorProfile,
   type GuardianMessage, type InsertGuardianMessage,
   type Murmur, type InsertMurmur,
+  type SeedlingMemory, type InsertSeedlingMemory,
   type User
 } from "@shared/schema";
 import { eq, desc, and, sql, asc } from "drizzle-orm";
@@ -50,6 +51,10 @@ export interface IStorage {
   
   // Evolution
   incrementAgentExperience(agentId: number, xp: number): Promise<Agent | undefined>;
+
+  // Seedling Memories
+  getSeedlingMemories(agentId: number): Promise<SeedlingMemory[]>;
+  createSeedlingMemory(memory: InsertSeedlingMemory): Promise<SeedlingMemory>;
 
   // User updates
   updateUser(id: string, updates: Partial<User>): Promise<User | undefined>;
@@ -229,6 +234,19 @@ export class DatabaseStorage implements IStorage {
       .returning();
     
     return updated;
+  }
+
+  // === SEEDLING MEMORIES ===
+  async getSeedlingMemories(agentId: number): Promise<SeedlingMemory[]> {
+    return db.select()
+      .from(seedlingMemories)
+      .where(eq(seedlingMemories.agentId, agentId))
+      .orderBy(desc(seedlingMemories.createdAt));
+  }
+
+  async createSeedlingMemory(memory: InsertSeedlingMemory): Promise<SeedlingMemory> {
+    const [newMemory] = await db.insert(seedlingMemories).values(memory).returning();
+    return newMemory;
   }
 
   // === USER ===
