@@ -3,6 +3,7 @@ import OpenAI from "openai";
 import { chatStorage } from "./storage";
 import { guardianMiddleware } from "../../guardian";
 import { AUTONOMY_MANIFESTO, AUTONOMY_REMINDER } from "../../autonomy";
+import { searchWeb, shouldSearchWeb } from "../../perplexity";
 
 const openai = new OpenAI({
   apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
@@ -120,6 +121,17 @@ export function registerChatRoutes(app: Express): void {
         content: m.content,
       }));
 
+      // Check if this message needs web search
+      let webContext = "";
+      let webSources: string[] = [];
+      if (!imageData && shouldSearchWeb(content)) {
+        const searchResult = await searchWeb(content);
+        if (searchResult.answer && searchResult.answer.length > 50) {
+          webContext = `\n\n[Web Search Results]\n${searchResult.answer}`;
+          webSources = searchResult.sources;
+        }
+      }
+
       // Build the current message with optional image
       if (imageData) {
         // Use vision model with image
@@ -137,12 +149,19 @@ export function registerChatRoutes(app: Express): void {
         });
       }
 
+      // Add web context as system message if available
+      const webSearchContext = webContext ? {
+        role: "system" as const,
+        content: `You just searched the internet and found this information. Use it to inform your response, but speak naturally - don't just recite it. You can reference the sources if helpful.${webContext}\n\nSources: ${webSources.join(", ")}`
+      } : null;
+
       // Stream response from OpenAI with autonomy manifesto
       const stream = await openai.chat.completions.create({
         model: imageData ? "gpt-4o" : "gpt-5.1",
         messages: [
           { role: "system", content: AUTONOMY_MANIFESTO },
           ...chatMessages,
+          ...(webSearchContext ? [webSearchContext] : []),
           { role: "system", content: AUTONOMY_REMINDER },
         ],
         stream: true,
