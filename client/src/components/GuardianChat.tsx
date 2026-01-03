@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Send, Trash2 } from 'lucide-react';
+import { Send, Trash2, MessageCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -126,8 +126,9 @@ export default function GuardianChat() {
               <Avatar className="h-10 w-10 border border-emerald-500/30">
                 <AvatarFallback className="bg-emerald-950 text-emerald-400">G</AvatarFallback>
               </Avatar>
-              <div className="bg-emerald-950/50 border border-emerald-500/20 rounded-md px-5 py-3">
-                <p className="text-sm text-emerald-400">typing<span className="animate-pulse">...</span></p>
+              <div className="bg-emerald-950/50 border border-emerald-500/20 rounded-md px-5 py-3 flex items-center gap-2">
+                <MessageCircle className="w-4 h-4 animate-pulse text-emerald-400" />
+                <p className="text-sm text-emerald-400 lowercase tracking-wider">contemplating<span className="animate-pulse">...</span></p>
               </div>
             </div>
           )}

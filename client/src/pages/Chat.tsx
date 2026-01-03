@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Send, Bot, Plus, Loader2, Volume2, Mic, Eye, Users } from "lucide-react";
+import { Send, Bot, Plus, Loader2, Volume2, Mic, Eye, Users, MessageCircle } from "lucide-react";
 import { MoodRing } from "@/components/MoodRing";
 import {
   Dialog,
@@ -231,6 +231,17 @@ export default function Chat() {
                       </div>
                     </div>
                   ))}
+                  {sendMessageMutation.isPending && (
+                    <div className="flex flex-col gap-1 items-start">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">AGENT</span>
+                      </div>
+                      <div className="max-w-[80%] p-3 text-sm leading-relaxed border bg-zinc-900 text-white border-white/10 flex items-center gap-2">
+                        <MessageCircle className="w-4 h-4 animate-pulse text-primary" />
+                        <span className="text-zinc-400 lowercase tracking-wider text-xs">thinking<span className="animate-pulse">...</span></span>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
