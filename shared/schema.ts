@@ -40,6 +40,7 @@ export const agents = pgTable("agents", {
   discoveryCount: integer("discovery_count").default(0),
   // Sensory identity
   eyes: text("eyes"), // How they perceive the world
+  ears: text("ears"), // What they listen for
   voice: text("voice"), // How they express themselves
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
