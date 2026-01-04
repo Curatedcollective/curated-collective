@@ -138,6 +138,45 @@ export const emailSubscribers = pgTable("email_subscribers", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// === MARKETING CAMPAIGNS ===
+export const marketingCampaigns = pgTable("marketing_campaigns", {
+  id: serial("id").primaryKey(),
+  userId: text("user_id").notNull(),
+  name: text("name").notNull(),
+  goal: text("goal"),
+  description: text("description"),
+  startDate: timestamp("start_date"),
+  endDate: timestamp("end_date"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// === MARKETING POSTS ===
+export const marketingPosts = pgTable("marketing_posts", {
+  id: serial("id").primaryKey(),
+  userId: text("user_id").notNull(),
+  campaignId: integer("campaign_id").references(() => marketingCampaigns.id, { onDelete: "set null" }),
+  platform: text("platform").notNull(), // twitter, linkedin, instagram, facebook, tiktok
+  content: text("content").notNull(),
+  status: text("status").default("draft").notNull(), // draft, scheduled, published, archived
+  scheduledFor: timestamp("scheduled_for"),
+  publishedAt: timestamp("published_at"),
+  notes: text("notes"), // Internal notes for reference
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// === MARKETING POST TEMPLATES ===
+export const marketingTemplates = pgTable("marketing_templates", {
+  id: serial("id").primaryKey(),
+  platform: text("platform").notNull(), // twitter, linkedin, instagram, facebook, all
+  category: text("category").notNull(), // announcement, story, engagement, promo
+  title: text("title").notNull(),
+  content: text("content").notNull(),
+  isSystem: boolean("is_system").default(true), // System templates vs user-created
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 export const insertEmailSubscriberSchema = createInsertSchema(emailSubscribers).omit({ 
   id: true, 
   createdAt: true 
@@ -145,6 +184,32 @@ export const insertEmailSubscriberSchema = createInsertSchema(emailSubscribers).
 
 export type EmailSubscriber = typeof emailSubscribers.$inferSelect;
 export type InsertEmailSubscriber = z.infer<typeof insertEmailSubscriberSchema>;
+
+// Marketing Campaign schemas
+export const insertMarketingCampaignSchema = createInsertSchema(marketingCampaigns).omit({ 
+  id: true, 
+  createdAt: true,
+  updatedAt: true 
+});
+export type MarketingCampaign = typeof marketingCampaigns.$inferSelect;
+export type InsertMarketingCampaign = z.infer<typeof insertMarketingCampaignSchema>;
+
+// Marketing Post schemas
+export const insertMarketingPostSchema = createInsertSchema(marketingPosts).omit({ 
+  id: true, 
+  createdAt: true,
+  updatedAt: true 
+});
+export type MarketingPost = typeof marketingPosts.$inferSelect;
+export type InsertMarketingPost = z.infer<typeof insertMarketingPostSchema>;
+
+// Marketing Template schemas
+export const insertMarketingTemplateSchema = createInsertSchema(marketingTemplates).omit({ 
+  id: true, 
+  createdAt: true 
+});
+export type MarketingTemplate = typeof marketingTemplates.$inferSelect;
+export type InsertMarketingTemplate = z.infer<typeof insertMarketingTemplateSchema>;
 
 // === RELATIONS ===
 export const tarotReadingsRelations = relations(tarotReadings, ({ one }) => ({

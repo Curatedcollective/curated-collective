@@ -1111,6 +1111,116 @@ Write ONLY the post content. No quotation marks. No "here's a post" intro. Just 
     }
   });
 
+  // --- Marketing Hub: Posts CRUD ---
+  app.get('/api/marketing/posts', async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    try {
+      const userId = (req.user as any)?.id;
+      const { status, platform } = req.query;
+      const posts = await storage.getMarketingPosts(userId, status as string, platform as string);
+      res.json(posts);
+    } catch (error) {
+      console.error('Get marketing posts error:', error);
+      res.status(500).json({ error: 'Failed to fetch posts' });
+    }
+  });
+
+  app.post('/api/marketing/posts', async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    try {
+      const userId = (req.user as any)?.id;
+      const { platform, content, status, scheduledFor, notes, campaignId } = req.body;
+      
+      if (!platform || !content) {
+        return res.status(400).json({ error: 'Platform and content are required' });
+      }
+      
+      const post = await storage.createMarketingPost({
+        userId,
+        platform,
+        content,
+        status: status || 'draft',
+        scheduledFor: scheduledFor ? new Date(scheduledFor) : null,
+        notes,
+        campaignId: campaignId || null
+      });
+      res.status(201).json(post);
+    } catch (error) {
+      console.error('Create marketing post error:', error);
+      res.status(500).json({ error: 'Failed to create post' });
+    }
+  });
+
+  app.patch('/api/marketing/posts/:id', async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    try {
+      const userId = (req.user as any)?.id;
+      const postId = parseInt(req.params.id);
+      const updates = req.body;
+      
+      // Convert scheduledFor to Date if provided
+      if (updates.scheduledFor) {
+        updates.scheduledFor = new Date(updates.scheduledFor);
+      }
+      // Set publishedAt if marking as published
+      if (updates.status === 'published' && !updates.publishedAt) {
+        updates.publishedAt = new Date();
+      }
+      
+      const post = await storage.updateMarketingPost(postId, userId, updates);
+      if (!post) {
+        return res.status(404).json({ error: 'Post not found' });
+      }
+      res.json(post);
+    } catch (error) {
+      console.error('Update marketing post error:', error);
+      res.status(500).json({ error: 'Failed to update post' });
+    }
+  });
+
+  app.delete('/api/marketing/posts/:id', async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    try {
+      const userId = (req.user as any)?.id;
+      const postId = parseInt(req.params.id);
+      await storage.deleteMarketingPost(postId, userId);
+      res.sendStatus(204);
+    } catch (error) {
+      console.error('Delete marketing post error:', error);
+      res.status(500).json({ error: 'Failed to delete post' });
+    }
+  });
+
+  // --- Marketing Hub: Templates ---
+  app.get('/api/marketing/templates', async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    try {
+      const { platform, category } = req.query;
+      const templates = await storage.getMarketingTemplates(platform as string, category as string);
+      res.json(templates);
+    } catch (error) {
+      console.error('Get templates error:', error);
+      res.status(500).json({ error: 'Failed to fetch templates' });
+    }
+  });
+
+  // --- Marketing Hub: Calendar View ---
+  app.get('/api/marketing/calendar', async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    try {
+      const userId = (req.user as any)?.id;
+      const { start, end } = req.query;
+      const startDate = start ? new Date(start as string) : new Date();
+      const endDate = end ? new Date(end as string) : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+      
+      const posts = await storage.getMarketingPostsInRange(userId, startDate, endDate);
+      res.json(posts);
+    } catch (error) {
+      console.error('Get calendar posts error:', error);
+      res.status(500).json({ error: 'Failed to fetch calendar' });
+    }
+  });
+
   // --- Email Subscribers (Waitlist) ---
   app.post('/api/subscribe', async (req, res) => {
     try {
@@ -1153,6 +1263,7 @@ Write ONLY the post content. No quotation marks. No "here's a post" intro. Just 
   });
 
   await seedDatabase();
+  await storage.seedMarketingTemplates();
 
   return httpServer;
 }
