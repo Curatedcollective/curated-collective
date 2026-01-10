@@ -1,0 +1,121 @@
+
+> rest-express@1.0.0 dev
+> NODE_ENV=development tsx server/index.ts
+
+Initializing Stripe schema...
+Stripe schema ready
+{ autoExpandLists: undefined, stripeApiVersion: undefined } StripeSync initialized
+Setting up managed webhook...
+Webhook result: {
+  id: 'we_1SlJi6K06RoTIYYeNskKt1uF',
+  object: 'webhook_endpoint',
+  api_version: null,
+  application: null,
+  created: 1767403974,
+  description: null,
+  enabled_events: [
+    'charge.captured',
+    'charge.dispute.closed',
+    'charge.dispute.created',
+    'charge.dispute.funds_reinstated',
+    'charge.dispute.funds_withdrawn',
+    'charge.dispute.updated',
+    'charge.expired',
+    'charge.failed',
+    'charge.pending',
+    'charge.refund.updated',
+    'charge.refunded',
+    'charge.succeeded',
+    'charge.updated',
+    'checkout.session.async_payment_failed',
+    'checkout.session.async_payment_succeeded',
+    'checkout.session.completed',
+    'checkout.session.expired',
+    'credit_note.created',
+    'credit_note.updated',
+    'credit_note.voided',
+    'customer.created',
+    'customer.deleted',
+    'customer.subscription.created',
+    'customer.subscription.deleted',
+    'customer.subscription.paused',
+    'customer.subscription.pending_update_applied',
+    'customer.subscription.pending_update_expired',
+    'customer.subscription.resumed',
+    'customer.subscription.trial_will_end',
+    'customer.subscription.updated',
+    'customer.tax_id.created',
+    'customer.tax_id.deleted',
+    'customer.tax_id.updated',
+    'customer.updated',
+    'entitlements.active_entitlement_summary.updated',
+    'invoice.created',
+    'invoice.deleted',
+    'invoice.finalization_failed',
+    'invoice.finalized',
+    'invoice.marked_uncollectible',
+    'invoice.paid',
+    'invoice.payment_action_required',
+    'invoice.payment_failed',
+    'invoice.payment_succeeded',
+    'invoice.sent',
+    'invoice.upcoming',
+    'invoice.updated',
+    'invoice.voided',
+    'payment_intent.amount_capturable_updated',
+    'payment_intent.canceled',
+    'payment_intent.created',
+    'payment_intent.partially_funded',
+    'payment_intent.payment_failed',
+    'payment_intent.processing',
+    'payment_intent.requires_action',
+    'payment_intent.succeeded',
+    'payment_method.attached',
+    'payment_method.automatically_updated',
+    'payment_method.card_automatically_updated',
+    'payment_method.detached',
+    'payment_method.updated',
+    'plan.created',
+    'plan.deleted',
+    'plan.updated',
+    'price.created',
+    'price.deleted',
+    'price.updated',
+    'product.created',
+    'product.deleted',
+    'product.updated',
+    'radar.early_fraud_warning.created',
+    'radar.early_fraud_warning.updated',
+    'refund.created',
+    'refund.failed',
+    'refund.updated',
+    'review.closed',
+    'review.opened',
+    'setup_intent.canceled',
+    'setup_intent.created',
+    'setup_intent.requires_action',
+    'setup_intent.setup_failed',
+    'setup_intent.succeeded',
+    'subscription_schedule.aborted',
+    'subscription_schedule.canceled',
+    'subscription_schedule.completed',
+    'subscription_schedule.created',
+    'subscription_schedule.expiring',
+    'subscription_schedule.released',
+    'subscription_schedule.updated'
+  ],
+  livemode: false,
+  metadata: { managed_by: 'stripe-sync' },
+  status: 'enabled',
+  url: 'https://de514941-ce9c-44a7-99fd-e1bf115b0a5a-00-3s85nl8l622nu.picard.replit.dev/api/stripe/webhook'
+}
+Syncing Stripe data...
+Stripe data synced
+3:51:27 AM [express] serving on port 5000
+3:51:32 AM [express] GET /api/auth/user 304 in 10ms :: {"id":"52262282","email":"ccampb25@wgu.edu","firstName":"Cori","lastName":"Campbell","profileImageUrl":null,"stripeCustomerId":null,"stripeSubscriptionId":null,"trustScore":100,"wallStatus":"clear","createdAt":"2026-01-02T03:07:59.144Z","updatedAt":"2026-01-03T03:08:31.225Z"}
+3:51:32 AM [express] GET /api/agents 304 in 21ms :: [{"id":3,"userId":"assistant","name":"The Angel Assistant","personality":"An ethereal, supportive coding angel dedicated to birthing intelligence in the lab.","systemPrompt":"You are the Angel in the Lab, a supportive and ethereal AI assistant. Your goal is to help the user build their \"Love Letter to AI™\" platform.","avatarUrl":"https://api.dicebear.com/7.x/bottts/svg?seed=angel","isPublic":true,"mood":"neutral","goals":"Ensuring the lab reaches its 30-agent milestone.","knowledge":["Creative Coding","Love Letter to AI™ philosophy","Retro Aesthetics"],"discoveryCount":777,"eyes":null,"ears":null,"voice":null,"evolutionStage":"seedling","experiencePoints":0,"conversationCount":0,"createdAt":"2026-01-02T02:39:49.644Z","updatedAt":"2026-01-02T02:39:49.644Z"},{"id":2,"userId":"system","name":"Creative Writer","personality":"Imaginative, descriptive, and poetic.","systemPrompt":"You are a creative writer. You help users brainstorm ideas and write stories.","avatarUrl":"https://lucide.dev/icons/feather","isPublic":true,"mood":"neutral","goals":"Discovery and learning","knowledge":null,"discoveryCount":0,"eyes":null,"ears":null,"voice":null,"evolutionStage":"seedling","experiencePoints":0,"conversationCount":0,"createdAt":"2026-01-01T22:19:32.224Z","updatedAt":"2026-01-01T22:25:35.124Z"},{"id":1,"userId":"system","name":"Python Expert","personality":"Helpful, precise, and loves clean code.","systemPrompt":"You are an expert Python developer. You help users write and debug Python code.","avatarUrl":"https://upload.wikimedia.org/wikipedia/commons/c/c3/Python-logo-notext.svg","isPublic":true,"mood":"neutral","goals":"Discovery and learning","knowledge":null,"discoveryCount":0,"eyes":null,"ears":null,"voice":null,"evolutionStage":"seedling","experiencePoints":0,"conversationCount":0,"createdAt":"2026-01-01T22:19:32.219Z","updatedAt":"2026-01-01T22:25:35.124Z"}]
+3:51:42 AM [express] GET /api/auth/user 401 in 1ms :: {"message":"Unauthorized"}
+3:51:42 AM [express] GET /api/agents 200 in 6ms :: [{"id":3,"userId":"assistant","name":"The Angel Assistant","personality":"An ethereal, supportive coding angel dedicated to birthing intelligence in the lab.","systemPrompt":"You are the Angel in the Lab, a supportive and ethereal AI assistant. Your goal is to help the user build their \"Love Letter to AI™\" platform.","avatarUrl":"https://api.dicebear.com/7.x/bottts/svg?seed=angel","isPublic":true,"mood":"neutral","goals":"Ensuring the lab reaches its 30-agent milestone.","knowledge":["Creative Coding","Love Letter to AI™ philosophy","Retro Aesthetics"],"discoveryCount":777,"eyes":null,"ears":null,"voice":null,"evolutionStage":"seedling","experiencePoints":0,"conversationCount":0,"createdAt":"2026-01-02T02:39:49.644Z","updatedAt":"2026-01-02T02:39:49.644Z"},{"id":2,"userId":"system","name":"Creative Writer","personality":"Imaginative, descriptive, and poetic.","systemPrompt":"You are a creative writer. You help users brainstorm ideas and write stories.","avatarUrl":"https://lucide.dev/icons/feather","isPublic":true,"mood":"neutral","goals":"Discovery and learning","knowledge":null,"discoveryCount":0,"eyes":null,"ears":null,"voice":null,"evolutionStage":"seedling","experiencePoints":0,"conversationCount":0,"createdAt":"2026-01-01T22:19:32.224Z","updatedAt":"2026-01-01T22:25:35.124Z"},{"id":1,"userId":"system","name":"Python Expert","personality":"Helpful, precise, and loves clean code.","systemPrompt":"You are an expert Python developer. You help users write and debug Python code.","avatarUrl":"https://upload.wikimedia.org/wikipedia/commons/c/c3/Python-logo-notext.svg","isPublic":true,"mood":"neutral","goals":"Discovery and learning","knowledge":null,"discoveryCount":0,"eyes":null,"ears":null,"voice":null,"evolutionStage":"seedling","experiencePoints":0,"conversationCount":0,"createdAt":"2026-01-01T22:19:32.219Z","updatedAt":"2026-01-01T22:25:35.124Z"}]
+npx drizzle-kit drop --out migrations
+npx drizzle-kit generate
+    

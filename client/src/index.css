@@ -1,0 +1,306 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* HSL Space separated - Black Everything */
+  --background: 0 0% 0%;
+  --foreground: 0 0% 100%;
+
+  --card: 0 0% 5%;
+  --card-foreground: 0 0% 100%;
+
+  --popover: 0 0% 5%;
+  --popover-foreground: 0 0% 100%;
+
+  --primary: 0 0% 100%;
+  --primary-foreground: 0 0% 0%;
+
+  --secondary: 0 0% 15%;
+  --secondary-foreground: 0 0% 100%;
+
+  --muted: 0 0% 15%;
+  --muted-foreground: 0 0% 60%;
+
+  --accent: 0 0% 25%;
+  --accent-foreground: 0 0% 100%;
+
+  --destructive: 0 100% 50%;
+  --destructive-foreground: 0 0% 100%;
+
+  --border: 0 0% 15%;
+  --input: 0 0% 15%;
+  --ring: 0 0% 100%;
+
+  --radius: 0rem;
+
+  --font-display: 'Cormorant Garamond', serif;
+  --font-body: 'Outfit', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+}
+
+/* === COLLECTIVE THEMES === */
+
+/* Noir (Default) - Pure black and white */
+.theme-noir {
+  --background: 0 0% 0%;
+  --foreground: 0 0% 100%;
+  --card: 0 0% 5%;
+  --card-foreground: 0 0% 100%;
+  --primary: 0 0% 100%;
+  --primary-foreground: 0 0% 0%;
+  --secondary: 0 0% 15%;
+  --secondary-foreground: 0 0% 100%;
+  --muted: 0 0% 15%;
+  --muted-foreground: 0 0% 60%;
+  --accent: 0 0% 25%;
+  --accent-foreground: 0 0% 100%;
+  --border: 0 0% 15%;
+  --theme-glow: 255, 255, 255;
+}
+
+/* Emerald - Deep forest mystery */
+.theme-emerald {
+  --background: 160 30% 3%;
+  --foreground: 160 20% 95%;
+  --card: 160 30% 6%;
+  --card-foreground: 160 20% 95%;
+  --primary: 160 60% 45%;
+  --primary-foreground: 160 30% 3%;
+  --secondary: 160 20% 12%;
+  --secondary-foreground: 160 20% 90%;
+  --muted: 160 15% 15%;
+  --muted-foreground: 160 15% 55%;
+  --accent: 160 40% 20%;
+  --accent-foreground: 160 20% 95%;
+  --border: 160 20% 15%;
+  --theme-glow: 52, 211, 153;
+}
+
+/* Twilight - Deep purple cosmic */
+.theme-twilight {
+  --background: 270 40% 4%;
+  --foreground: 270 20% 95%;
+  --card: 270 35% 8%;
+  --card-foreground: 270 20% 95%;
+  --primary: 270 60% 60%;
+  --primary-foreground: 270 40% 4%;
+  --secondary: 270 25% 15%;
+  --secondary-foreground: 270 20% 90%;
+  --muted: 270 20% 18%;
+  --muted-foreground: 270 15% 55%;
+  --accent: 270 35% 25%;
+  --accent-foreground: 270 20% 95%;
+  --border: 270 25% 18%;
+  --theme-glow: 167, 139, 250;
+}
+
+/* Rose - Soft romantic warmth */
+.theme-rose {
+  --background: 350 30% 4%;
+  --foreground: 350 20% 95%;
+  --card: 350 25% 7%;
+  --card-foreground: 350 20% 95%;
+  --primary: 350 70% 60%;
+  --primary-foreground: 350 30% 4%;
+  --secondary: 350 20% 12%;
+  --secondary-foreground: 350 20% 90%;
+  --muted: 350 15% 15%;
+  --muted-foreground: 350 15% 55%;
+  --accent: 350 35% 20%;
+  --accent-foreground: 350 20% 95%;
+  --border: 350 20% 15%;
+  --theme-glow: 251, 113, 133;
+}
+
+/* Amber - Warm golden glow */
+.theme-amber {
+  --background: 35 40% 4%;
+  --foreground: 35 20% 95%;
+  --card: 35 30% 7%;
+  --card-foreground: 35 20% 95%;
+  --primary: 35 90% 50%;
+  --primary-foreground: 35 40% 4%;
+  --secondary: 35 25% 12%;
+  --secondary-foreground: 35 20% 90%;
+  --muted: 35 20% 15%;
+  --muted-foreground: 35 15% 55%;
+  --accent: 35 40% 20%;
+  --accent-foreground: 35 20% 95%;
+  --border: 35 25% 15%;
+  --theme-glow: 251, 191, 36;
+}
+
+.magical-glow {
+  box-shadow: 0 0 20px rgba(var(--theme-glow), 0.15), 0 0 40px rgba(var(--theme-glow), 0.05);
+}
+
+.magical-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+@keyframes star-twinkle {
+  0%, 100% { opacity: 0.2; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1.2); }
+}
+
+.star {
+  position: absolute;
+  background: white;
+  border-radius: 50%;
+  pointer-events: none;
+  animation: star-twinkle var(--duration) ease-in-out infinite;
+  animation-delay: var(--delay);
+}
+
+.stars-container {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* Comet Animation */
+@keyframes comet-fly {
+  0% {
+    opacity: 0;
+    transform: translateX(0) translateY(0);
+  }
+  5% {
+    opacity: 1;
+  }
+  95% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(calc(100vw * 0.8)) translateY(calc(100vh * 0.6));
+  }
+}
+
+.comet {
+  position: absolute;
+  width: 3px;
+  height: 3px;
+  background: rgb(var(--comet-glow));
+  border-radius: 50%;
+  box-shadow: 
+    0 0 8px rgba(var(--comet-glow), 0.9),
+    0 0 16px rgba(var(--comet-glow), 0.6),
+    0 0 24px rgba(var(--comet-glow), 0.3);
+  animation: comet-fly var(--comet-duration) ease-in-out infinite;
+  animation-delay: var(--comet-delay);
+  opacity: 0;
+}
+
+.comet::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  right: 100%;
+  transform: translateY(-50%);
+  width: var(--comet-length);
+  height: 1px;
+  background: linear-gradient(
+    to left,
+    rgba(var(--comet-glow), 0.8),
+    rgba(var(--comet-glow), 0.3) 20%,
+    transparent
+  );
+}
+
+.magical-text {
+  @apply text-white font-bold;
+  text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+}
+
+@layer base {
+  * {
+    @apply border-white/10;
+  }
+  body {
+    @apply text-foreground antialiased font-body bg-black;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-display tracking-tighter text-white lowercase;
+  }
+
+  code, pre, kbd {
+    @apply font-mono;
+  }
+}
+
+/* Retro Window System Styles */
+.retro-window {
+  background-color: var(--retro-bg, #c0c0c0);
+  border: 2px solid var(--retro-border-light, #ffffff);
+  border-right-color: var(--retro-border-dark, #808080);
+  border-bottom-color: var(--retro-border-dark, #808080);
+  box-shadow: 1px 1px 0 0 #000;
+}
+
+.retro-button {
+  background-color: var(--retro-bg, #c0c0c0);
+  border: 2px solid var(--retro-border-light, #ffffff);
+  border-right-color: var(--retro-border-dark, #808080);
+  border-bottom-color: var(--retro-border-dark, #808080);
+  @apply shadow-sm px-2 py-1 text-xs font-bold text-black uppercase;
+}
+
+.retro-button:active {
+  border-color: var(--retro-border-dark, #808080);
+  border-right-color: var(--retro-border-light, #ffffff);
+  border-bottom-color: var(--retro-border-light, #ffffff);
+}
+
+.retro-input {
+  @apply bg-white px-2 py-1 text-black font-mono;
+  border: 2px solid var(--retro-border-dark, #808080);
+  border-right-color: var(--retro-border-light, #ffffff);
+  border-bottom-color: var(--retro-border-light, #ffffff);
+}
+
+.retro-title-bar {
+  background: linear-gradient(to right, var(--retro-title-from, #000080), var(--retro-title-to, #1084d0));
+  @apply px-2 py-1 flex items-center justify-between text-white font-bold text-xs;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  @apply bg-background;
+}
+::-webkit-scrollbar-thumb {
+  @apply bg-muted rounded-full hover:bg-muted-foreground/50 transition-colors;
+}
+
+/* Glass Effect utility */
+.glass {
+  @apply bg-black/40 backdrop-blur-md border border-white/10;
+}
+
+/* Card Hover Effect */
+.hover-card-effect {
+  @apply transition-all duration-300 hover:shadow-2xl hover:shadow-primary/10 hover:-translate-y-1 hover:border-primary/50;
+}
+
+/* Animation Utilities */
+.animate-in {
+  animation: fadeIn 0.5s ease-out forwards;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
