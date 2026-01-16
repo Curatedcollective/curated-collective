@@ -38,7 +38,8 @@ async function initStripe() {
         webhookBaseUrl = `https://${process.env.VERCEL_URL}`;
       } else if (process.env.REPLIT_DOMAINS && process.env.REPLIT_DOMAINS.trim()) {
         // Replit deployment
-        const domain = process.env.REPLIT_DOMAINS.split(',')[0].trim();
+        const domains = process.env.REPLIT_DOMAINS.trim();
+        const domain = domains.split(',')[0].trim();
         if (domain) {
           webhookBaseUrl = `https://${domain}`;
         } else {
