@@ -5,7 +5,9 @@ import { sql } from "drizzle-orm";
 
 export const conversations = pgTable("conversations", {
   id: serial("id").primaryKey(),
+  userId: text("user_id"), // Owner of the conversation
   title: text("title").notNull(),
+  deletedAt: timestamp("deleted_at"), // Soft delete
   createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
 });
 

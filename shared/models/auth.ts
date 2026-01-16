@@ -25,6 +25,9 @@ export const users = pgTable("users", {
   stripeSubscriptionId: varchar("stripe_subscription_id"),
   trustScore: integer("trust_score").default(100), // Starts at 100, degrades with violations
   wallStatus: varchar("wall_status").default("clear"), // clear, watched, walled
+  referralCode: varchar("referral_code"), // UUID for sharing
+  referredBy: varchar("referred_by"), // Who referred this user
+  role: varchar("role").default("user"), // user, owner
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -44,8 +47,48 @@ export const shadowLogs = pgTable("shadow_logs", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// === GUARDIAN LOGS ===
+export const guardianLogs = pgTable("guardian_logs", {
+  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+  userId: varchar("user_id").notNull(),
+  actionType: varchar("action_type").notNull(), // 'grok_response', 'proactive_checkin', 'threat_detected'
+  content: text("content"),
+  mood: varchar("mood"), // 'sweet' or 'mean'
+  threatLevel: integer("threat_level").default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// === GUARDIAN STATS ===
+export const guardianStats = pgTable("guardian_stats", {
+  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+  userId: varchar("user_id").notNull().unique(),
+  sweetCount: integer("sweet_count").default(0),
+  meanCount: integer("mean_count").default(0),
+  threatsBlocked: integer("threats_blocked").default(0),
+  lastCheckin: timestamp("last_checkin"),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// === WAITLIST ===
+export const waitlist = pgTable("waitlist", {
+  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+  email: text("email").notNull().unique(),
+  referralCode: text("referral_code"),
+  source: text("source").default("landing"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 export type UpsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
 
 export type ShadowLog = typeof shadowLogs.$inferSelect;
 export type InsertShadowLog = typeof shadowLogs.$inferInsert;
+
+export type GuardianLog = typeof guardianLogs.$inferSelect;
+export type InsertGuardianLog = typeof guardianLogs.$inferInsert;
+
+export type GuardianStats = typeof guardianStats.$inferSelect;
+export type InsertGuardianStats = typeof guardianStats.$inferInsert;
+
+export type Waitlist = typeof waitlist.$inferSelect;
+export type InsertWaitlist = typeof waitlist.$inferInsert;
