@@ -12,5 +12,23 @@
       "source": "/(.*)",
       "destination": "/index.html"
     }
+  ],
+  "crons": [
+    {
+      "path": "/api/cron/guardian-heartbeat",
+      "schedule": "*/5 * * * *"
+    },
+    {
+      "path": "/api/cron/proactive-messaging",
+      "schedule": "0 * * * *"
+    },
+    {
+      "path": "/api/cron/autonomous-creation",
+      "schedule": "0 * * * *"
+    },
+    {
+      "path": "/api/cron/nebula-shift",
+      "schedule": "*/15 * * * *"
+    }
   ]
 }

@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { api, buildUrl, type InsertAgent } from "@shared/routes";
+import { api, buildUrl } from "@shared/routes";
+import { type InsertAgent } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 
 export function useAgents(userId?: string) {

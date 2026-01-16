@@ -17,6 +17,9 @@ import InnerSanctum from "@/pages/InnerSanctum";
 import Pricing from "@/pages/Pricing";
 import Observatory from "@/pages/Observatory";
 import SocialGenerator from "@/pages/SocialGenerator";
+import GodDashboard from "@/pages/GodDashboard";
+import GodGuardian from "@/pages/GodGuardian";
+import GodPromoter from "@/pages/GodPromoter";
 import NotFound from "@/pages/not-found";
 import { Loader2 } from "lucide-react";
 import { StarBackground } from "@/components/StarBackground";
@@ -42,7 +45,7 @@ function Router() {
   const isPublicPage = publicPaths.some(path => location === path || location.startsWith(path + "?"));
   
   // Protected pages require sign-in
-  const protectedPaths = ["/chat", "/sanctum", "/social"];
+  const protectedPaths = ["/chat", "/sanctum", "/social", "/god"];
   const isProtectedPage = protectedPaths.some(path => location === path || location.startsWith(path));
   const isCreationEditor = location.startsWith("/creations/") && location !== "/creations";
 
@@ -50,6 +53,16 @@ function Router() {
   if (!user && (isProtectedPage || isCreationEditor)) {
     window.location.href = "/";
     return null;
+  }
+
+  // Check if accessing god mode routes - owner only
+  const isGodRoute = location.startsWith("/god");
+  if (isGodRoute) {
+    const isOwner = user?.email === 'curated.collectiveai@proton.me' || (user as any)?.role === 'owner';
+    if (!isOwner) {
+      window.location.href = "/";
+      return null;
+    }
   }
 
   return (
@@ -65,6 +78,9 @@ function Router() {
           <Route path="/observatory" component={Observatory} />
           <Route path="/pricing" component={Pricing} />
           <Route path="/social" component={SocialGenerator} />
+          <Route path="/god" component={GodDashboard} />
+          <Route path="/god/guardian" component={GodGuardian} />
+          <Route path="/god/promoter" component={GodPromoter} />
           <Route component={NotFound} />
         </Switch>
       </main>

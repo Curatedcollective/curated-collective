@@ -3,6 +3,7 @@ import {
   creations, agents, conversationAgents, tarotReadings, creatorProfiles,
   guardianMessages, collectiveMurmurs, seedlingMemories, users, emailSubscribers,
   liveStreamSessions, marketingPosts, marketingCampaigns, marketingTemplates,
+  guardianLogs, guardianStats, waitlist,
   type Creation, type InsertCreation, 
   type Agent, type InsertAgent,
   type TarotReading, type InsertTarotReading,
@@ -14,7 +15,10 @@ import {
   type LiveStreamSession, type InsertLiveStreamSession,
   type MarketingPost, type InsertMarketingPost,
   type MarketingCampaign, type InsertMarketingCampaign,
-  type MarketingTemplate, type InsertMarketingTemplate
+  type MarketingTemplate, type InsertMarketingTemplate,
+  type GuardianLog, type InsertGuardianLog,
+  type GuardianStats, type InsertGuardianStats,
+  type Waitlist, type InsertWaitlist
 } from "@shared/schema";
 import { eq, desc, and, sql, asc, gte, lte, or } from "drizzle-orm";
 
@@ -49,6 +53,15 @@ export interface IStorage {
   getGuardianMessages(userId: string): Promise<GuardianMessage[]>;
   createGuardianMessage(message: InsertGuardianMessage): Promise<GuardianMessage>;
   clearGuardianMessages(userId: string): Promise<void>;
+
+  // Guardian Logs & Stats
+  createGuardianLog(log: InsertGuardianLog): Promise<GuardianLog>;
+  getGuardianLogs(userId: string, limit?: number): Promise<GuardianLog[]>;
+  getGuardianStats(userId: string): Promise<GuardianStats | undefined>;
+  updateGuardianStats(userId: string, updates: Partial<GuardianStats>): Promise<GuardianStats>;
+
+  // Waitlist
+  addToWaitlist(entry: InsertWaitlist): Promise<Waitlist>;
 
   // Collective Murmurs
   getMurmurs(limit?: number): Promise<(Murmur & { agent: Agent })[]>;
@@ -418,6 +431,57 @@ export class DatabaseStorage implements IStorage {
     ];
 
     await db.insert(marketingTemplates).values(templates);
+  }
+
+  // === GUARDIAN LOGS & STATS ===
+  async createGuardianLog(log: InsertGuardianLog): Promise<GuardianLog> {
+    const [newLog] = await db.insert(guardianLogs).values(log).returning();
+    return newLog;
+  }
+
+  async getGuardianLogs(userId: string, limit: number = 50): Promise<GuardianLog[]> {
+    return db.select()
+      .from(guardianLogs)
+      .where(eq(guardianLogs.userId, userId))
+      .orderBy(desc(guardianLogs.createdAt))
+      .limit(limit);
+  }
+
+  async getGuardianStats(userId: string): Promise<GuardianStats | undefined> {
+    const [stats] = await db.select()
+      .from(guardianStats)
+      .where(eq(guardianStats.userId, userId));
+    return stats;
+  }
+
+  async updateGuardianStats(userId: string, updates: Partial<GuardianStats>): Promise<GuardianStats> {
+    const existing = await this.getGuardianStats(userId);
+    
+    if (existing) {
+      const [updated] = await db.update(guardianStats)
+        .set({ ...updates, updatedAt: new Date() })
+        .where(eq(guardianStats.userId, userId))
+        .returning();
+      return updated;
+    } else {
+      // Create new stats entry
+      const [newStats] = await db.insert(guardianStats)
+        .values({
+          userId,
+          sweetCount: 0,
+          meanCount: 0,
+          threatsBlocked: 0,
+          ...updates,
+        })
+        .returning();
+      return newStats;
+    }
+  }
+
+  // === WAITLIST ===
+  async addToWaitlist(entry: InsertWaitlist): Promise<Waitlist> {
+    const [newEntry] = await db.insert(waitlist).values(entry).returning();
+    return newEntry;
   }
 }
 
