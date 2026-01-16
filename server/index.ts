@@ -36,9 +36,14 @@ async function initStripe() {
       if (process.env.VERCEL_URL) {
         // Vercel deployment
         webhookBaseUrl = `https://${process.env.VERCEL_URL}`;
-      } else if (process.env.REPLIT_DOMAINS) {
+      } else if (process.env.REPLIT_DOMAINS && process.env.REPLIT_DOMAINS.trim()) {
         // Replit deployment
-        webhookBaseUrl = `https://${process.env.REPLIT_DOMAINS.split(',')[0]}`;
+        const domain = process.env.REPLIT_DOMAINS.split(',')[0].trim();
+        if (domain) {
+          webhookBaseUrl = `https://${domain}`;
+        } else {
+          webhookBaseUrl = 'http://localhost:5000';
+        }
       } else {
         // Local development fallback
         webhookBaseUrl = 'http://localhost:5000';

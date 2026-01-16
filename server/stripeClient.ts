@@ -20,7 +20,7 @@ async function getCredentials() {
       : null;
 
   if (!xReplitToken) {
-    throw new Error('Stripe credentials not found. Set STRIPE_SECRET_KEY and STRIPE_PUBLISHABLE_KEY or use Replit connectors.');
+    throw new Error('Stripe credentials not found. Please set STRIPE_SECRET_KEY and STRIPE_PUBLISHABLE_KEY environment variables.');
   }
 
   const connectorName = 'stripe';

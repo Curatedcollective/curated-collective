@@ -15,7 +15,7 @@ const getOidcConfig = memoize(
     }
     return await client.discovery(
       new URL(process.env.ISSUER_URL ?? "https://replit.com/oidc"),
-      process.env.REPL_ID
+      process.env.REPL_ID as string
     );
   },
   { maxAge: 3600 * 1000 }
