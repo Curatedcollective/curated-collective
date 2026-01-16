@@ -29,8 +29,23 @@ async function initStripe() {
 
     const stripeSync = await getStripeSync();
 
+    // Determine webhook base URL - support Vercel, Replit, and custom environments
+    let webhookBaseUrl = process.env.WEBHOOK_BASE_URL;
+    
+    if (!webhookBaseUrl) {
+      if (process.env.VERCEL_URL) {
+        // Vercel deployment
+        webhookBaseUrl = `https://${process.env.VERCEL_URL}`;
+      } else if (process.env.REPLIT_DOMAINS) {
+        // Replit deployment
+        webhookBaseUrl = `https://${process.env.REPLIT_DOMAINS.split(',')[0]}`;
+      } else {
+        // Local development fallback
+        webhookBaseUrl = 'http://localhost:5000';
+      }
+    }
+
     console.log('Setting up managed webhook...');
-    const webhookBaseUrl = `https://${process.env.REPLIT_DOMAINS?.split(',')[0]}`;
     try {
       const result = await stripeSync.findOrCreateManagedWebhook(
         `${webhookBaseUrl}/api/stripe/webhook`
@@ -46,6 +61,7 @@ async function initStripe() {
       .catch((err: any) => console.error('Error syncing Stripe data:', err));
   } catch (error) {
     console.error('Failed to initialize Stripe:', error);
+    // Don't throw - allow server to continue even if Stripe init fails
   }
 }
 

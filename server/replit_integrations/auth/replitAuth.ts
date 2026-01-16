@@ -10,9 +10,12 @@ import { authStorage } from "./storage";
 
 const getOidcConfig = memoize(
   async () => {
+    if (!process.env.REPL_ID) {
+      throw new Error('REPL_ID environment variable is required for Replit auth');
+    }
     return await client.discovery(
       new URL(process.env.ISSUER_URL ?? "https://replit.com/oidc"),
-      process.env.REPL_ID!
+      process.env.REPL_ID
     );
   },
   { maxAge: 3600 * 1000 }
@@ -61,6 +64,17 @@ async function upsertUser(claims: any) {
 }
 
 export async function setupAuth(app: Express) {
+  // Guard: Only setup auth if required environment variables are present
+  if (!process.env.REPL_ID) {
+    console.log('REPL_ID not found - skipping Replit auth setup');
+    return;
+  }
+
+  if (!process.env.SESSION_SECRET) {
+    console.log('SESSION_SECRET not found - skipping auth setup');
+    return;
+  }
+
   app.set("trust proxy", 1);
   app.use(getSession());
   app.use(passport.initialize());
@@ -120,9 +134,14 @@ export async function setupAuth(app: Express) {
 
   app.get("/api/logout", (req, res) => {
     req.logout(() => {
+      if (!process.env.REPL_ID) {
+        // Simple logout for non-Replit environments
+        res.redirect('/');
+        return;
+      }
       res.redirect(
         client.buildEndSessionUrl(config, {
-          client_id: process.env.REPL_ID!,
+          client_id: process.env.REPL_ID,
           post_logout_redirect_uri: `${req.protocol}://${req.hostname}`,
         }).href
       );
