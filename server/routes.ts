@@ -22,9 +22,15 @@ export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
-  // 1. Setup Auth (Must be first)
-  await setupAuth(app);
-  registerAuthRoutes(app);
+  // 1. Setup Auth (Conditional - only if in Replit environment)
+  if (process.env.REPL_ID) {
+    console.log('Replit environment detected - setting up Replit auth');
+    await setupAuth(app);
+    registerAuthRoutes(app);
+  } else {
+    console.log('Non-Replit environment - skipping Replit auth setup');
+    // TODO: Set up alternative auth for Vercel/other platforms if needed
+  }
 
   // 2. Register Integrations
   registerChatRoutes(app);
