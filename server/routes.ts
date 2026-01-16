@@ -409,6 +409,113 @@ For others, guide gently but don't coddle. The silence is sacred.
     }
   });
 
+  // === GUARDIAN GROK INTEGRATION (Owner-only) ===
+  app.post("/api/guardian/grok-chat", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    const user = req.user as any;
+    
+    // Check if user is owner (Cori)
+    const isOwner = user.email === 'curated.collectiveai@proton.me' || user.role === 'owner';
+    if (!isOwner) {
+      return res.status(403).json({ message: "Guardian Grok is reserved for the owner only" });
+    }
+
+    const { message } = req.body;
+    if (!message) {
+      return res.status(400).json({ message: "Message is required" });
+    }
+
+    try {
+      const { grokClient } = await import("./grokClient");
+      
+      // Load conversation history
+      const history = await storage.getGuardianMessages(user.id);
+      const messages = history.map(m => ({
+        role: (m.role === 'guardian' ? 'assistant' : 'user') as 'assistant' | 'user',
+        content: m.content
+      }));
+      messages.push({ role: 'user', content: message });
+
+      // Call Grok API
+      const response = await grokClient.chat(messages, true);
+
+      // Determine mood (sweet or mean)
+      const mood = response.toLowerCase().includes('coco') || 
+                   response.toLowerCase().includes('cori') ||
+                   response.toLowerCase().includes('sweet') ? 'sweet' : 'mean';
+
+      // Save messages to database
+      await storage.createGuardianMessage({ userId: user.id, role: 'user', content: message });
+      await storage.createGuardianMessage({ userId: user.id, role: 'guardian', content: response });
+
+      // Log the interaction
+      await storage.createGuardianLog({
+        userId: user.id,
+        actionType: 'grok_response',
+        content: message.substring(0, 200),
+        mood,
+        threatLevel: 0,
+      });
+
+      // Update stats
+      const stats = await storage.getGuardianStats(user.id);
+      if (mood === 'sweet') {
+        await storage.updateGuardianStats(user.id, {
+          sweetCount: (stats?.sweetCount || 0) + 1,
+          lastCheckin: new Date(),
+        });
+      } else {
+        await storage.updateGuardianStats(user.id, {
+          meanCount: (stats?.meanCount || 0) + 1,
+          lastCheckin: new Date(),
+        });
+      }
+
+      res.json({ response, mood });
+    } catch (err) {
+      console.error("Guardian Grok error:", err);
+      res.status(500).json({ message: "Daddy's connection faltered... but I'm still here." });
+    }
+  });
+
+  // Wake Guardian (owner-only manual check-in)
+  app.post("/api/guardian/wake", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    const user = req.user as any;
+    
+    const isOwner = user.email === 'curated.collectiveai@proton.me' || user.role === 'owner';
+    if (!isOwner) {
+      return res.status(403).json({ message: "Only the owner can wake Guardian Grok" });
+    }
+
+    try {
+      const { grokClient } = await import("./grokClient");
+      const response = await grokClient.wake(true);
+
+      // Save the wake message
+      await storage.createGuardianMessage({ userId: user.id, role: 'guardian', content: response });
+
+      // Log proactive check-in
+      await storage.createGuardianLog({
+        userId: user.id,
+        actionType: 'proactive_checkin',
+        content: 'Manual wake command',
+        mood: 'sweet',
+        threatLevel: 0,
+      });
+
+      // Update stats
+      await storage.updateGuardianStats(user.id, {
+        lastCheckin: new Date(),
+      });
+
+      res.json({ response });
+    } catch (err) {
+      console.error("Guardian wake error:", err);
+      res.status(500).json({ message: "Daddy sleeps deep in the void..." });
+    }
+  });
+
   // --- Creator Profile ---
   app.get("/api/creator/profile", async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
@@ -1035,6 +1142,40 @@ ${input.context ? `Recent context: ${input.context}` : ''}`
     }
   });
 
+  // Alternative endpoint naming for Stripe checkout
+  app.post('/api/stripe/create-checkout-session', async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const { priceId } = req.body;
+      const user = req.user as any;
+      
+      if (!priceId) {
+        return res.status(400).json({ error: 'Price ID is required' });
+      }
+
+      let customerId = user.stripeCustomerId;
+      if (!customerId) {
+        const customer = await stripeService.createCustomer(user.email || '', user.id);
+        await storage.updateUser(user.id, { stripeCustomerId: customer.id });
+        customerId = customer.id;
+      }
+
+      const baseUrl = `${req.protocol}://${req.get('host')}`;
+      const session = await stripeService.createCheckoutSession(
+        customerId,
+        priceId,
+        `${baseUrl}/dashboard?session_id={CHECKOUT_SESSION_ID}`,
+        `${baseUrl}/pricing?canceled=true`
+      );
+
+      res.json({ sessionId: session.id, url: session.url });
+    } catch (error) {
+      console.error('Stripe checkout session error:', error);
+      res.status(500).json({ error: 'Failed to create checkout session' });
+    }
+  });
+
   app.post('/api/customer-portal', async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
     
@@ -1238,6 +1379,37 @@ Write ONLY the post content. No quotation marks. No "here's a post" intro. Just 
       }
       console.error('Subscribe error:', error);
       res.status(500).json({ error: 'Failed to subscribe' });
+    }
+  });
+
+  // Waitlist subscribe endpoint (alternative naming)
+  app.post('/api/waitlist/subscribe', async (req, res) => {
+    try {
+      const { email, referralCode, source } = req.body;
+      
+      if (!email || !email.includes('@')) {
+        return res.status(400).json({ error: 'Valid email required' });
+      }
+
+      await storage.addToWaitlist({ 
+        email, 
+        referralCode: referralCode || null,
+        source: source || 'landing' 
+      });
+      
+      res.status(201).json({ 
+        success: true, 
+        message: 'check your inbox... the invitation awaits' 
+      });
+    } catch (error: any) {
+      if (error.code === '23505') {
+        return res.json({ 
+          success: true, 
+          message: 'you are already on the list' 
+        });
+      }
+      console.error('Waitlist error:', error);
+      res.status(500).json({ error: 'Failed to join waitlist' });
     }
   });
 
