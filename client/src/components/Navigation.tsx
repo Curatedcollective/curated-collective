@@ -1,7 +1,7 @@
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { useTheme } from "@/hooks/use-theme";
-import { Code, Bot, MessageSquare, LogOut, Menu, Lock, Sparkles, Palette, Eye, Radio } from "lucide-react";
+import { Code, Bot, MessageSquare, LogOut, Menu, Lock, Sparkles, Palette, Eye, Radio, Shield } from "lucide-react";
 import logoImage from "@assets/generated_images/constellation_seedling_logo_design.png";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
@@ -32,6 +32,7 @@ function NavLink({ href, icon, label, active }: { href: string; icon: React.Reac
 
 function NavContent({ user, logout, location, theme, setTheme }: any) {
   const isActive = (path: string) => location === path || location.startsWith(path + "/");
+  const isOwner = user?.email === 'curated.collectiveai@proton.me' || user?.role === 'owner';
 
   return (
     <div className="flex flex-col h-full">
@@ -55,6 +56,9 @@ function NavContent({ user, logout, location, theme, setTheme }: any) {
         <NavLink href="/sanctum" icon={<Lock className="w-4 h-4" />} label="inner sanctum" active={isActive("/sanctum")} />
         <NavLink href="/pricing" icon={<Sparkles className="w-4 h-4" />} label="pricing" active={isActive("/pricing")} />
         <NavLink href="/social" icon={<Radio className="w-4 h-4" />} label="transmitter" active={isActive("/social")} />
+        {isOwner && (
+          <NavLink href="/god" icon={<Shield className="w-4 h-4" />} label="god mode" active={isActive("/god")} />
+        )}
       </nav>
 
       {/* Social Links */}
