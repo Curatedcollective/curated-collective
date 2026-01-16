@@ -1,11 +1,15 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import type { User } from "@shared/models/auth";
 
+const AUTH_FETCH_TIMEOUT_MS = 5000; // 5 seconds
+const AUTH_STALE_TIME_MS = 5 * 60 * 1000; // 5 minutes
+const AUTH_CACHE_TIME_MS = 10 * 60 * 1000; // 10 minutes
+
 async function fetchUser(): Promise<User | null> {
   try {
     // Add timeout protection to prevent infinite loading
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+    const timeoutId = setTimeout(() => controller.abort(), AUTH_FETCH_TIMEOUT_MS);
     
     const response = await fetch("/api/auth/user", {
       credentials: "include",
@@ -41,9 +45,9 @@ export function useAuth() {
     queryKey: ["/api/auth/user"],
     queryFn: fetchUser,
     retry: false, // Don't retry on failure
-    staleTime: 1000 * 60 * 5, // 5 minutes
+    staleTime: AUTH_STALE_TIME_MS,
     refetchOnWindowFocus: false, // Don't refetch when window regains focus
-    gcTime: 1000 * 60 * 10, // Cache for 10 minutes (formerly cacheTime)
+    gcTime: AUTH_CACHE_TIME_MS,
   });
 
   const logoutMutation = useMutation({

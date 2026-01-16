@@ -38,7 +38,7 @@ export async function registerRoutes(
         res.status(200).json(null);
       } catch (error) {
         console.error("Auth user error:", error);
-        res.status(200).json(null); // Still return null, don't crash
+        res.status(200).json(null); // Return null to indicate no authenticated user
       }
     });
   }
