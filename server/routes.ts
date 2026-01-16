@@ -31,15 +31,10 @@ export async function registerRoutes(
     console.log('Non-Replit environment - skipping Replit auth setup');
     // Fallback auth endpoint for non-Replit environments
     // Returns null (not authenticated) to prevent infinite loading
-    app.get("/api/auth/user", async (req, res) => {
-      try {
-        // For now, return null (not authenticated)
-        // TODO: Implement proper Vercel-compatible auth
-        res.status(200).json(null);
-      } catch (error) {
-        console.error("Auth user error:", error);
-        res.status(200).json(null); // Return null to indicate no authenticated user
-      }
+    app.get("/api/auth/user", (req, res) => {
+      // For now, return null (not authenticated)
+      // TODO: Implement proper Vercel-compatible auth
+      res.status(200).json(null);
     });
   }
 
