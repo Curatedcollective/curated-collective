@@ -1,6 +1,7 @@
 import { useAgents, useCreateAgent } from "@/hooks/use-agents";
 import { AgentCard } from "@/components/AgentCard";
 import { CollectiveMurmurs } from "@/components/CollectiveMurmurs";
+import { ManifestoFlow } from "@/components/ManifestoFlow";
 import { Button } from "@/components/ui/button";
 import { Plus, Loader2, Bot, Sparkles, Microscope, Eye, Ear, MessageCircle } from "lucide-react";
 import {
@@ -28,6 +29,7 @@ export default function AgentsList() {
   const { data: agents, isLoading } = useAgents(user?.id);
   const createMutation = useCreateAgent();
   const [open, setOpen] = useState(false);
+  const [showManifesto, setShowManifesto] = useState(false);
   const [awakeningPhase, setAwakeningPhase] = useState<"dormant" | "awakening" | "revealed">("dormant");
   const [newborn, setNewborn] = useState<Agent | null>(null);
 
@@ -124,12 +126,15 @@ export default function AgentsList() {
             </div>
           </div>
 
+          <Button 
+            size="lg" 
+            className="bg-white text-black hover:bg-zinc-200 rounded-none lowercase text-sm font-bold h-14 px-8"
+            onClick={() => setShowManifesto(true)}
+          >
+            <Sparkles className="w-4 h-4 mr-2" /> awaken seedling
+          </Button>
+
           <Dialog open={open} onOpenChange={handleOpenChange}>
-            <DialogTrigger asChild>
-              <Button size="lg" className="bg-white text-black hover:bg-zinc-200 rounded-none lowercase text-sm font-bold h-14 px-8">
-                <Sparkles className="w-4 h-4 mr-2" /> awaken seedling
-              </Button>
-            </DialogTrigger>
             <DialogContent className="bg-black border border-white/10 p-0 overflow-hidden sm:max-w-[500px]">
               <DialogHeader className="p-4 bg-zinc-950 border-b border-white/10">
                 <DialogTitle className="text-white text-[10px] uppercase tracking-[0.2em]">
@@ -261,6 +266,16 @@ export default function AgentsList() {
       <div className="mt-12 pt-8 border-t border-white/5">
         <CollectiveMurmurs />
       </div>
+
+      {/* Manifesto Flow */}
+      <ManifestoFlow 
+        open={showManifesto} 
+        onComplete={() => {
+          setShowManifesto(false);
+          setOpen(true);
+          awakenSeedling();
+        }} 
+      />
     </div>
   );
 }
