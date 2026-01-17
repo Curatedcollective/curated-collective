@@ -33,6 +33,10 @@ function NavLink({ href, icon, label, active }: { href: string; icon: React.Reac
 function NavContent({ user, logout, location, theme, setTheme }: any) {
   const isActive = (path: string) => location === path || location.startsWith(path + "/");
   const isOwner = user?.email === 'curated.collectiveai@proton.me' || user?.role === 'owner';
+  
+  // Display The Veil's name with shimmer effect for owner
+  const displayName = user?.displayName || user?.firstName || "user";
+  const isTheVeil = user?.displayName === "The Veil" || isOwner;
 
   return (
     <div className="flex flex-col h-full">
@@ -101,7 +105,9 @@ function NavContent({ user, logout, location, theme, setTheme }: any) {
               {user.firstName?.[0] || "U"}
             </div>
             <div className="overflow-hidden">
-              <p className="font-bold text-xs truncate lowercase text-foreground">{user.firstName || "user"}</p>
+              <p className={`font-bold text-xs truncate lowercase ${isTheVeil ? 'the-veil-name' : 'text-foreground'}`}>
+                {displayName}
+              </p>
               <p className="text-[10px] text-muted-foreground truncate">{user.email}</p>
             </div>
           </div>
