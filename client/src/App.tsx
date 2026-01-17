@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { Navigation } from "@/components/Navigation";
 import { useAuth } from "@/hooks/use-auth";
 import { ThemeProvider } from "@/hooks/use-theme";
+import { useState, useEffect } from "react";
 
 // Pages
 import Landing from "@/pages/Landing";
@@ -28,8 +29,23 @@ import { VoidWhispers } from "@/components/VoidWhispers";
 function Router() {
   const { user, isLoading } = useAuth();
   const [location] = useLocation();
+  const [showLoading, setShowLoading] = useState(true);
 
-  if (isLoading) {
+  // Force loading to end after 3 seconds no matter what
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowLoading(false);
+    }, 3000);
+    
+    if (!isLoading) {
+      setShowLoading(false);
+      clearTimeout(timer);
+    }
+    
+    return () => clearTimeout(timer);
+  }, [isLoading]);
+
+  if (isLoading && showLoading) {
     return (
       <div className="h-screen w-screen flex flex-col items-center justify-center bg-background text-primary">
         <Loader2 className="w-10 h-10 animate-spin mb-4" />
