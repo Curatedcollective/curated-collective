@@ -42,10 +42,10 @@ export default function GodDashboard() {
       <div className="max-w-6xl mx-auto">
         <div className="mb-12">
           <h1 className="text-4xl font-display tracking-tight mb-2 bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
-            God Mode
+            The Veil's Observatory
           </h1>
           <p className="text-muted-foreground">
-            owner-only control center. manage your empire, guardian, and collective.
+            command center. manage your empire, guardian, and collective.
           </p>
         </div>
 

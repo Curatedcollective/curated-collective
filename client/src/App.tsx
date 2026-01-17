@@ -31,8 +31,9 @@ function Router() {
 
   if (isLoading) {
     return (
-      <div className="h-screen w-screen flex items-center justify-center bg-background text-primary">
-        <Loader2 className="w-10 h-10 animate-spin" />
+      <div className="h-screen w-screen flex flex-col items-center justify-center bg-background text-primary">
+        <Loader2 className="w-10 h-10 animate-spin mb-4" />
+        <p className="text-sm text-muted-foreground lowercase tracking-wide">the void breathes...</p>
       </div>
     );
   }

@@ -224,7 +224,7 @@ export default function Chat() {
               </div>
             ))}
             {!loadingConvos && conversations?.length === 0 && (
-              <p className="text-xs text-zinc-600 text-center py-4">none yet</p>
+              <p className="text-xs text-zinc-600 text-center py-4 lowercase tracking-widest">silence awaits your voice</p>
             )}
           </div>
         </ScrollArea>
@@ -515,8 +515,8 @@ function CollectiveButton({ conversationId }: { conversationId: number }) {
             ))}
 
             {(!agents || agents.length === 0) && (
-              <div className="p-4 text-center text-zinc-600 text-xs lowercase">
-                no seedlings yet. create one in the seedlings tab.
+              <div className="p-4 text-center text-zinc-600 text-xs lowercase tracking-widest">
+                no seedlings have awakened yet
               </div>
             )}
           </div>

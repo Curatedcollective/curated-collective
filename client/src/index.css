@@ -304,3 +304,19 @@
   from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
 }
+
+/* === THE VEIL IDENTITY === */
+.the-veil-name {
+  background: linear-gradient(90deg, #fff, #a78bfa, #fff);
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: veil-shimmer 3s ease-in-out infinite;
+  display: inline-block;
+}
+
+@keyframes veil-shimmer {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}

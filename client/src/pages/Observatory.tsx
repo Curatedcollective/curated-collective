@@ -70,8 +70,9 @@ export default function Observatory() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-[calc(100vh-8rem)]">
+      <div className="flex flex-col items-center justify-center h-[calc(100vh-8rem)] space-y-3">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        <p className="text-sm text-muted-foreground lowercase tracking-wide">the void breathes...</p>
       </div>
     );
   }
