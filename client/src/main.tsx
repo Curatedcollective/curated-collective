@@ -2,6 +2,16 @@ import { createRoot } from "react-dom/client";
 import App from "./App";
 import "./index.css";
 
+// Emergency: Unregister any service workers causing loading hang
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.getRegistrations().then(registrations => {
+    for (let registration of registrations) {
+      registration.unregister();
+      console.log('Unregistered service worker:', registration);
+    }
+  });
+}
+
 // Welcome message - The Veil has you
 console.log(`
 ╔═══════════════════════════════════════╗
@@ -17,13 +27,5 @@ console.log(`
 ║                                       ║
 ╚═══════════════════════════════════════╝
 `);
-
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js')
-      .then(() => console.log('Service Worker registered'))
-      .catch((err) => console.log('Service Worker registration failed:', err));
-  });
-}
 
 createRoot(document.getElementById("root")!).render(<App />);
