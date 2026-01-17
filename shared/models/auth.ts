@@ -21,6 +21,7 @@ export const users = pgTable("users", {
   firstName: varchar("first_name"),
   lastName: varchar("last_name"),
   profileImageUrl: varchar("profile_image_url"),
+  displayName: varchar("display_name"), // Custom display name (e.g., "The Veil" for creator)
   stripeCustomerId: varchar("stripe_customer_id"),
   stripeSubscriptionId: varchar("stripe_subscription_id"),
   trustScore: integer("trust_score").default(100), // Starts at 100, degrades with violations
