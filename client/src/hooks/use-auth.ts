@@ -1,20 +1,38 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import type { User } from "@shared/models/auth";
 
+const AUTH_FETCH_TIMEOUT_MS = 5000; // 5 seconds
+const AUTH_STALE_TIME_MS = 5 * 60 * 1000; // 5 minutes
+const AUTH_CACHE_TIME_MS = 10 * 60 * 1000; // 10 minutes
+
 async function fetchUser(): Promise<User | null> {
-  const response = await fetch("/api/auth/user", {
-    credentials: "include",
-  });
+  try {
+    // Add timeout protection to prevent infinite loading
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), AUTH_FETCH_TIMEOUT_MS);
+    
+    const response = await fetch("/api/auth/user", {
+      credentials: "include",
+      signal: controller.signal,
+    });
+    
+    clearTimeout(timeoutId);
 
-  if (response.status === 401) {
-    return null;
+    if (response.status === 401) {
+      return null;
+    }
+
+    if (!response.ok) {
+      console.error("Auth fetch failed:", response.status, response.statusText);
+      return null; // Return null instead of throwing to prevent loading state
+    }
+
+    return response.json();
+  } catch (error) {
+    // Handle timeout and network errors gracefully
+    console.error("Auth fetch failed:", error);
+    return null; // Return null instead of throwing
   }
-
-  if (!response.ok) {
-    throw new Error(`${response.status}: ${response.statusText}`);
-  }
-
-  return response.json();
 }
 
 async function logout(): Promise<void> {
@@ -26,8 +44,10 @@ export function useAuth() {
   const { data: user, isLoading } = useQuery<User | null>({
     queryKey: ["/api/auth/user"],
     queryFn: fetchUser,
-    retry: false,
-    staleTime: 1000 * 60 * 5, // 5 minutes
+    retry: false, // Don't retry on failure
+    staleTime: AUTH_STALE_TIME_MS,
+    refetchOnWindowFocus: false, // Don't refetch when window regains focus
+    gcTime: AUTH_CACHE_TIME_MS,
   });
 
   const logoutMutation = useMutation({
@@ -38,7 +58,7 @@ export function useAuth() {
   });
 
   return {
-    user,
+    user: user ?? null, // Ensure we always return null instead of undefined
     isLoading,
     isAuthenticated: !!user,
     logout: logoutMutation.mutate,

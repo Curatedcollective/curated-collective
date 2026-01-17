@@ -29,7 +29,13 @@ export async function registerRoutes(
     registerAuthRoutes(app);
   } else {
     console.log('Non-Replit environment - skipping Replit auth setup');
-    // TODO: Set up alternative auth for Vercel/other platforms if needed
+    // Fallback auth endpoint for non-Replit environments
+    // Returns null (not authenticated) to prevent infinite loading
+    app.get("/api/auth/user", (req, res) => {
+      // For now, return null (not authenticated)
+      // TODO: Implement proper Vercel-compatible auth
+      res.status(200).json(null);
+    });
   }
 
   // 2. Register Integrations
