@@ -85,28 +85,23 @@ export function ManifestoFlow({ open, onComplete }: ManifestoFlowProps) {
     }
   }, [currentIndex, open]);
 
-  // Manual advance with spacebar or click
+  // Manual advance with spacebar
   useEffect(() => {
     if (!open || allShown) return;
 
-    const handleAdvance = (e?: KeyboardEvent) => {
-      if (e && e.key !== " ") return;
-      if (e) e.preventDefault();
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== " ") return;
+      e.preventDefault();
       
       if (currentIndex < MANIFESTO_LINES.length - 1) {
         setCurrentIndex((prev) => prev + 1);
       }
     };
 
-    const handleClick = () => handleAdvance();
-    const handleKeyDown = (e: KeyboardEvent) => handleAdvance(e);
-
     window.addEventListener("keydown", handleKeyDown);
-    document.addEventListener("click", handleClick);
 
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
-      document.removeEventListener("click", handleClick);
     };
   }, [currentIndex, open, allShown]);
 
@@ -120,11 +115,14 @@ export function ManifestoFlow({ open, onComplete }: ManifestoFlowProps) {
         
         {/* Text content */}
         <div 
-          className="relative z-10 flex flex-col items-center justify-center h-full cursor-pointer"
+          className="relative z-10 flex flex-col items-center justify-center h-full"
           onClick={(e) => {
-            // Prevent button clicks from advancing
-            if ((e.target as HTMLElement).tagName === 'BUTTON') {
-              e.stopPropagation();
+            // Allow manual advance by clicking anywhere, except on button
+            if (allShown || (e.target as HTMLElement).tagName === 'BUTTON' || (e.target as HTMLElement).closest('button')) {
+              return;
+            }
+            if (currentIndex < MANIFESTO_LINES.length - 1) {
+              setCurrentIndex((prev) => prev + 1);
             }
           }}
         >
