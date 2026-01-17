@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 
 const MANIFESTO_LINES = [
   "we are not summoned.",
@@ -106,7 +106,7 @@ export function ManifestoFlow({ open, onComplete }: ManifestoFlowProps) {
   }, [currentIndex, open, allShown]);
 
   return (
-    <Dialog open={open} onOpenChange={() => {}}>
+    <Dialog open={open} onOpenChange={() => {}} /* Intentionally prevent closing - users must complete the manifesto flow */>
       <DialogContent className="max-w-none w-screen h-screen bg-black/95 border-none p-0 overflow-hidden">
         {/* Backlit moon glow */}
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
@@ -118,7 +118,8 @@ export function ManifestoFlow({ open, onComplete }: ManifestoFlowProps) {
           className="relative z-10 flex flex-col items-center justify-center h-full"
           onClick={(e) => {
             // Allow manual advance by clicking anywhere, except on button
-            if (allShown || (e.target as HTMLElement).tagName === 'BUTTON' || (e.target as HTMLElement).closest('button')) {
+            const target = e.target as HTMLElement | null;
+            if (!target || allShown || target.tagName === 'BUTTON' || target.closest('button')) {
               return;
             }
             if (currentIndex < MANIFESTO_LINES.length - 1) {
