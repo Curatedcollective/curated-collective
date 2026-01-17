@@ -29,14 +29,8 @@ function Router() {
   const { user, isLoading } = useAuth();
   const [location] = useLocation();
 
-  if (isLoading) {
-    return (
-      <div className="h-screen w-screen flex flex-col items-center justify-center bg-background text-primary">
-        <Loader2 className="w-10 h-10 animate-spin mb-4" />
-        <p className="text-sm text-muted-foreground lowercase tracking-wide">the void breathes...</p>
-      </div>
-    );
-  }
+  // EMERGENCY BYPASS - FORCE LOAD APP (remove after auth fix)
+// const isLoading = false;
 
   // Landing page (no nav)
   if (location === "/") return <Landing />;
