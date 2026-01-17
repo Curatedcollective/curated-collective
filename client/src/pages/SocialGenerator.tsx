@@ -340,12 +340,13 @@ export default function SocialGenerator() {
 
           <TabsContent value="templates" className="space-y-4">
             {templatesLoading ? (
-              <div className="flex justify-center py-12">
+              <div className="flex flex-col items-center justify-center py-12 space-y-3">
                 <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+                <p className="text-xs text-muted-foreground lowercase tracking-wide">the void breathes...</p>
               </div>
             ) : templates.length === 0 ? (
               <Card className="p-8 text-center">
-                <p className="text-muted-foreground lowercase">no templates yet. they will emerge.</p>
+                <p className="text-muted-foreground lowercase tracking-widest">the void is empty here</p>
               </Card>
             ) : (
               <div className="grid gap-4">
@@ -367,12 +368,13 @@ export default function SocialGenerator() {
 
           <TabsContent value="scheduled" className="space-y-4">
             {postsLoading ? (
-              <div className="flex justify-center py-12">
+              <div className="flex flex-col items-center justify-center py-12 space-y-3">
                 <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+                <p className="text-xs text-muted-foreground lowercase tracking-wide">the void breathes...</p>
               </div>
             ) : [...draftPosts, ...scheduledPosts].length === 0 ? (
               <Card className="p-8 text-center">
-                <p className="text-muted-foreground lowercase">no posts in queue. generate some content.</p>
+                <p className="text-muted-foreground lowercase tracking-widest">silence awaits your voice</p>
               </Card>
             ) : (
               <div className="space-y-4">
@@ -398,12 +400,13 @@ export default function SocialGenerator() {
 
           <TabsContent value="published" className="space-y-4">
             {postsLoading ? (
-              <div className="flex justify-center py-12">
+              <div className="flex flex-col items-center justify-center py-12 space-y-3">
                 <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+                <p className="text-xs text-muted-foreground lowercase tracking-wide">the void breathes...</p>
               </div>
             ) : publishedPosts.length === 0 ? (
               <Card className="p-8 text-center">
-                <p className="text-muted-foreground lowercase">no published posts yet. share your voice.</p>
+                <p className="text-muted-foreground lowercase tracking-widest">nothing echoes here...</p>
               </Card>
             ) : (
               <div className="space-y-2">

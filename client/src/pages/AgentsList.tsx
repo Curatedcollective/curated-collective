@@ -99,8 +99,9 @@ export default function AgentsList() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-full min-h-[50vh]">
+      <div className="flex flex-col items-center justify-center h-full min-h-[50vh] space-y-3">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        <p className="text-sm text-muted-foreground lowercase tracking-wide">the void breathes...</p>
       </div>
     );
   }
@@ -243,8 +244,8 @@ export default function AgentsList() {
       {!agents?.length ? (
         <div className="flex flex-col items-center justify-center py-20 bg-zinc-950 border border-white/5">
           <Bot className="w-12 h-12 mb-4 text-zinc-800" />
-          <h3 className="text-sm font-bold text-white lowercase tracking-tighter">lab is empty</h3>
-          <p className="text-zinc-600 mb-6 text-[10px] uppercase tracking-widest">initiate awakening to begin</p>
+          <h3 className="text-sm font-bold text-white lowercase tracking-tighter">no seedlings have awakened yet</h3>
+          <p className="text-zinc-600 mb-6 text-[10px] uppercase tracking-widest">the lab awaits your first breath</p>
           <Button onClick={() => setOpen(true)} variant="outline" className="border-white/10 hover:bg-white hover:text-black rounded-none">initiate awakening</Button>
         </div>
       ) : (

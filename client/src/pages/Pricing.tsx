@@ -43,7 +43,7 @@ export default function Pricing() {
       }
     },
     onError: () => {
-      toast({ title: "Error", description: "Failed to start checkout", variant: "destructive" });
+      toast({ title: "the connection trembles...", description: "the void resists...", variant: "destructive" });
     }
   });
 
@@ -143,7 +143,7 @@ export default function Pricing() {
       return;
     }
     if (!priceId) {
-      toast({ title: "Loading", description: "Please wait, loading payment options..." });
+      toast({ title: "listening to the silence...", description: "the void breathes..." });
       return;
     }
     checkoutMutation.mutate(priceId);
