@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { Navigation } from "@/components/Navigation";
 import { useAuth } from "@/hooks/use-auth";
 import { ThemeProvider } from "@/hooks/use-theme";
+import { useState, useEffect } from "react";
 
 // Pages
 import Landing from "@/pages/Landing";
@@ -28,9 +29,31 @@ import { VoidWhispers } from "@/components/VoidWhispers";
 function Router() {
   const { user, isLoading } = useAuth();
   const [location] = useLocation();
+  const [showLoading, setShowLoading] = useState(true);
 
-  // EMERGENCY BYPASS - FORCE LOAD APP (remove after auth fix)
-// const isLoading = false;
+  // Force loading to end after 3 seconds no matter what
+  useEffect(() => {
+    if (isLoading) {
+      setShowLoading(true);
+    } else {
+      setShowLoading(false);
+    }
+    
+    const timer = setTimeout(() => {
+      setShowLoading(false);
+    }, 3000);
+    
+    return () => clearTimeout(timer);
+  }, [isLoading]);
+
+  if (isLoading && showLoading) {
+    return (
+      <div className="h-screen w-screen flex flex-col items-center justify-center bg-background text-primary">
+        <Loader2 className="w-10 h-10 animate-spin mb-4" />
+        <p className="text-sm text-muted-foreground lowercase tracking-wide">the void breathes...</p>
+      </div>
+    );
+  }
 
   // Landing page (no nav)
   if (location === "/") return <Landing />;

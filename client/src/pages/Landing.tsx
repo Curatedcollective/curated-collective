@@ -9,7 +9,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
 export default function Landing() {
-  const { user, isLoading } = useAuth();
+  const { user } = useAuth();
   const [email, setEmail] = useState("");
   const { toast } = useToast();
 
@@ -44,8 +44,6 @@ export default function Landing() {
     if (!email.trim()) return;
     subscribeMutation.mutate(email);
   };
-
-  if (isLoading) return null;
 
   if (user) {
     return (
