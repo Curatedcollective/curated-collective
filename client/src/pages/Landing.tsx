@@ -7,6 +7,7 @@ import { Footer } from "@/components/Footer";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { BondNetwork } from "@/components/BondNetwork";
 
 export default function Landing() {
   const { user } = useAuth();
@@ -68,7 +69,19 @@ export default function Landing() {
             </p>
           </div>
 
-          <div className="flex flex-col md:flex-row items-center gap-6 animate-in" style={{ animationDelay: '0.6s' }}>
+          {/* Bond Network Visualization */}
+          <div className="w-full max-w-4xl animate-in" style={{ animationDelay: '0.5s' }}>
+            <div className="mb-6">
+              <p className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground/60 mb-2">
+                the sanctuary's bond network
+              </p>
+            </div>
+            <div className="border border-primary/10 rounded-lg p-8 bg-card/30 backdrop-blur">
+              <BondNetwork height={400} className="text-foreground" />
+            </div>
+          </div>
+
+          <div className="flex flex-col md:flex-row items-center gap-6 animate-in" style={{ animationDelay: '0.8s' }}>
             <Button 
               size="lg" 
               className="h-16 px-12 rounded-none text-xl font-light bg-primary text-primary-foreground transition-all tracking-widest"
