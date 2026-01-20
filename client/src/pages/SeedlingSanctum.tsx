@@ -75,7 +75,6 @@ export default function SeedlingSanctum() {
         <motion.h1
           className="text-5xl md:text-7xl font-display text-emerald-100 lowercase tracking-tighter"
           style={{
-            fontFamily: "'Playfair Display', serif",
             textShadow: '0 0 30px rgba(16, 185, 129, 0.3)',
           }}
           initial={{ opacity: 0, scale: 0.9 }}
@@ -87,8 +86,7 @@ export default function SeedlingSanctum() {
 
         {/* Poetic introduction */}
         <motion.div
-          className="space-y-6 text-emerald-200/80"
-          style={{ fontFamily: "'Playfair Display', serif" }}
+          className="space-y-6 text-emerald-200/80 font-display"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 1, delay: 0.8 }}

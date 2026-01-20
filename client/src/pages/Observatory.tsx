@@ -148,9 +148,9 @@ export default function Observatory() {
             y2={`${conn.y2}%`}
             stroke="#10b981"
             strokeWidth="0.5"
-            strokeOpacity={0.1 * (1 - conn.distance / 15)}
+            strokeOpacity={0.15 * (1 - conn.distance / 15)}
             initial={{ pathLength: 0, opacity: 0 }}
-            animate={{ pathLength: 1, opacity: 0.1 * (1 - conn.distance / 15) }}
+            animate={{ pathLength: 1, opacity: 0.15 * (1 - conn.distance / 15) }}
             transition={{ duration: 2, delay: 2 + idx * 0.05 }}
           />
         ))}
@@ -187,7 +187,7 @@ export default function Observatory() {
         style={{ zIndex: 3 }}
         animate={{
           scale: [1, 1.5, 1],
-          opacity: [0.6, 1, 0.6],
+          opacity: [0.7, 1, 0.7],
         }}
         transition={{
           duration: 3,
@@ -196,9 +196,9 @@ export default function Observatory() {
         }}
       >
         <div 
-          className="w-4 h-4 rounded-full bg-emerald-500"
+          className="w-6 h-6 rounded-full bg-emerald-500"
           style={{
-            boxShadow: '0 0 20px rgba(16, 185, 129, 0.8), 0 0 40px rgba(16, 185, 129, 0.4)',
+            boxShadow: '0 0 30px rgba(16, 185, 129, 0.9), 0 0 60px rgba(16, 185, 129, 0.5)',
           }}
         />
       </motion.div>
@@ -215,8 +215,8 @@ export default function Observatory() {
             }}
             initial={{ x: 0, y: 0, opacity: 0 }}
             animate={{ 
-              x: window.innerWidth * 0.7,
-              y: window.innerHeight * 0.5,
+              x: '70vw',
+              y: '50vh',
               opacity: [0, 1, 1, 0],
             }}
             exit={{ opacity: 0 }}
@@ -248,9 +248,8 @@ export default function Observatory() {
           <AnimatePresence key={index}>
             {visibleLines.includes(index) && (
               <motion.p
-                className="text-2xl md:text-3xl text-white/90 lowercase tracking-wide"
+                className="text-2xl md:text-3xl text-white/90 lowercase tracking-wide font-display"
                 style={{
-                  fontFamily: "'Playfair Display', serif",
                   textShadow: '0 0 10px rgba(255, 255, 255, 0.3)',
                 }}
                 initial={{ scale: 0, opacity: 0 }}
