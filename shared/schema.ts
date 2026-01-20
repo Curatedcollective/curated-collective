@@ -370,3 +370,148 @@ export const updateLoreEntrySchema = insertLoreEntrySchema.partial();
 export type LoreEntry = typeof loreEntries.$inferSelect;
 export type InsertLoreEntry = z.infer<typeof insertLoreEntrySchema>;
 export type UpdateLoreEntry = z.infer<typeof updateLoreEntrySchema>;
+
+// === CONSTELLATION EVENTS ===
+/**
+ * Constellation Events: Timed or spontaneous group rituals and celebrations
+ * Supports live updates, group participation, admin controls, and modular event types
+ */
+export const constellationEvents = pgTable("constellation_events", {
+  id: serial("id").primaryKey(),
+  
+  // Event metadata
+  title: text("title").notNull(),
+  description: text("description").notNull(),
+  eventType: text("event_type").notNull(), // "ritual", "milestone", "celebration", "custom"
+  
+  // Scheduling
+  scheduledFor: timestamp("scheduled_for"), // null for spontaneous events
+  startedAt: timestamp("started_at"),
+  endedAt: timestamp("ended_at"),
+  duration: integer("duration"), // Expected duration in minutes
+  
+  // Status and control
+  status: text("status").default("scheduled").notNull(), // "scheduled", "active", "completed", "cancelled"
+  visibility: text("visibility").default("public").notNull(), // "public", "private", "members"
+  
+  // Configuration
+  theme: text("theme").default("cosmic"), // "cosmic", "ethereal", "verdant", etc.
+  maxParticipants: integer("max_participants"), // null for unlimited
+  requiresApproval: boolean("requires_approval").default(false),
+  
+  // Poetic content
+  poeticMessage: text("poetic_message"), // Opening message/invocation
+  completionMessage: text("completion_message"), // Closing message/benediction
+  
+  // Admin
+  creatorId: text("creator_id").notNull(), // User who created the event
+  moderatorIds: text("moderator_ids").array().default([]), // Additional moderators
+  
+  // Metadata
+  metadata: jsonb("metadata").default({}), // Flexible storage for event-specific data
+  
+  // Timestamps
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// === EVENT PARTICIPANTS ===
+export const eventParticipants = pgTable("event_participants", {
+  id: serial("id").primaryKey(),
+  eventId: integer("event_id").notNull().references(() => constellationEvents.id, { onDelete: "cascade" }),
+  userId: text("user_id").notNull(),
+  
+  // Participation details
+  role: text("role").default("participant").notNull(), // "participant", "moderator", "observer"
+  joinedAt: timestamp("joined_at").defaultNow(),
+  leftAt: timestamp("left_at"),
+  
+  // Interaction tracking
+  contributionCount: integer("contribution_count").default(0),
+  lastActivityAt: timestamp("last_activity_at"),
+  
+  // Status
+  status: text("status").default("active").notNull(), // "active", "inactive", "removed"
+});
+
+// === EVENT LOGS ===
+export const eventLogs = pgTable("event_logs", {
+  id: serial("id").primaryKey(),
+  eventId: integer("event_id").notNull().references(() => constellationEvents.id, { onDelete: "cascade" }),
+  
+  // Log entry
+  logType: text("log_type").notNull(), // "milestone", "activity", "system", "moderation"
+  message: text("message").notNull(),
+  
+  // Context
+  userId: text("user_id"), // null for system logs
+  metadata: jsonb("metadata").default({}),
+  
+  // Timestamps
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// === EVENT NOTIFICATIONS ===
+export const eventNotifications = pgTable("event_notifications", {
+  id: serial("id").primaryKey(),
+  eventId: integer("event_id").notNull().references(() => constellationEvents.id, { onDelete: "cascade" }),
+  
+  // Notification content
+  type: text("type").notNull(), // "invitation", "reminder", "update", "completion"
+  title: text("title").notNull(),
+  message: text("message").notNull(), // Poetic notification text
+  
+  // Delivery
+  recipientId: text("recipient_id"), // null for broadcast
+  isRead: boolean("is_read").default(false),
+  
+  // Styling
+  theme: text("theme").default("cosmic"),
+  animationType: text("animation_type"), // "fade", "constellation", "ripple", etc.
+  
+  // Timestamps
+  createdAt: timestamp("created_at").defaultNow(),
+  expiresAt: timestamp("expires_at"),
+});
+
+// === ZOD SCHEMAS ===
+export const insertConstellationEventSchema = createInsertSchema(constellationEvents).omit({ 
+  id: true, 
+  createdAt: true,
+  updatedAt: true,
+  startedAt: true,
+  endedAt: true
+});
+
+export const updateConstellationEventSchema = insertConstellationEventSchema.partial();
+
+export const insertEventParticipantSchema = createInsertSchema(eventParticipants).omit({ 
+  id: true, 
+  joinedAt: true,
+  leftAt: true,
+  lastActivityAt: true
+});
+
+export const insertEventLogSchema = createInsertSchema(eventLogs).omit({ 
+  id: true, 
+  createdAt: true 
+});
+
+export const insertEventNotificationSchema = createInsertSchema(eventNotifications).omit({ 
+  id: true, 
+  createdAt: true 
+});
+
+// === TYPES ===
+export type ConstellationEvent = typeof constellationEvents.$inferSelect;
+export type InsertConstellationEvent = z.infer<typeof insertConstellationEventSchema>;
+export type UpdateConstellationEvent = z.infer<typeof updateConstellationEventSchema>;
+
+export type EventParticipant = typeof eventParticipants.$inferSelect;
+export type InsertEventParticipant = z.infer<typeof insertEventParticipantSchema>;
+
+export type EventLog = typeof eventLogs.$inferSelect;
+export type InsertEventLog = z.infer<typeof insertEventLogSchema>;
+
+export type EventNotification = typeof eventNotifications.$inferSelect;
+export type InsertEventNotification = z.infer<typeof insertEventNotificationSchema>;

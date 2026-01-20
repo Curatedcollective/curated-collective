@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { insertCreationSchema, insertAgentSchema, creations, agents } from './schema';
+import { insertCreationSchema, insertAgentSchema, creations, agents, insertConstellationEventSchema, updateConstellationEventSchema, insertEventParticipantSchema, insertEventNotificationSchema, constellationEvents } from './schema';
 
 export const errorSchemas = {
   validation: z.object({
@@ -125,6 +125,110 @@ export const api = {
         200: z.void(), // Triggers a stream or background response, client handles SSE normally
       },
     }
+  },
+  constellationEvents: {
+    list: {
+      method: 'GET' as const,
+      path: '/api/constellation-events',
+      input: z.object({
+        status: z.string().optional(),
+        eventType: z.string().optional(),
+        upcoming: z.boolean().optional(),
+      }).optional(),
+      responses: {
+        200: z.array(z.custom<typeof constellationEvents.$inferSelect>()),
+      },
+    },
+    get: {
+      method: 'GET' as const,
+      path: '/api/constellation-events/:id',
+      responses: {
+        200: z.custom<typeof constellationEvents.$inferSelect>(),
+        404: errorSchemas.notFound,
+      },
+    },
+    create: {
+      method: 'POST' as const,
+      path: '/api/constellation-events',
+      input: insertConstellationEventSchema,
+      responses: {
+        201: z.custom<typeof constellationEvents.$inferSelect>(),
+        400: errorSchemas.validation,
+      },
+    },
+    update: {
+      method: 'PUT' as const,
+      path: '/api/constellation-events/:id',
+      input: updateConstellationEventSchema,
+      responses: {
+        200: z.custom<typeof constellationEvents.$inferSelect>(),
+        404: errorSchemas.notFound,
+      },
+    },
+    delete: {
+      method: 'DELETE' as const,
+      path: '/api/constellation-events/:id',
+      responses: {
+        204: z.void(),
+        404: errorSchemas.notFound,
+      },
+    },
+    start: {
+      method: 'POST' as const,
+      path: '/api/constellation-events/:id/start',
+      responses: {
+        200: z.custom<typeof constellationEvents.$inferSelect>(),
+        404: errorSchemas.notFound,
+      },
+    },
+    end: {
+      method: 'POST' as const,
+      path: '/api/constellation-events/:id/end',
+      responses: {
+        200: z.custom<typeof constellationEvents.$inferSelect>(),
+        404: errorSchemas.notFound,
+      },
+    },
+    join: {
+      method: 'POST' as const,
+      path: '/api/constellation-events/:id/join',
+      input: insertEventParticipantSchema.omit({ eventId: true }),
+      responses: {
+        200: z.object({ message: z.string() }),
+      },
+    },
+    leave: {
+      method: 'POST' as const,
+      path: '/api/constellation-events/:id/leave',
+      responses: {
+        200: z.object({ message: z.string() }),
+      },
+    },
+    participants: {
+      method: 'GET' as const,
+      path: '/api/constellation-events/:id/participants',
+      responses: {
+        200: z.array(z.any()),
+      },
+    },
+    logs: {
+      method: 'GET' as const,
+      path: '/api/constellation-events/:id/logs',
+      responses: {
+        200: z.array(z.any()),
+      },
+    },
+    notifications: {
+      method: 'GET' as const,
+      path: '/api/constellation-events/notifications',
+      input: z.object({
+        userId: z.string().optional(),
+        eventId: z.number().optional(),
+      }).optional(),
+      responses: {
+        200: z.array(z.any()),
+      },
+    },
   }
 };
 
