@@ -326,6 +326,33 @@ If you get "slug already exists" errors:
 - Check PostgreSQL version supports ILIKE
 - Ensure content is not null
 
+## Security Considerations
+
+### Rate Limiting
+The lore endpoints currently do not have rate limiting implemented. This is consistent with the existing codebase architecture. For production deployments, consider adding:
+- Express rate limiting middleware
+- Per-user rate limits on POST/PATCH/DELETE operations
+- IP-based throttling on search endpoints
+
+### CSRF Protection
+The application uses session-based authentication without CSRF tokens. This is an existing pattern across all endpoints. For enhanced security:
+- Implement CSRF token middleware
+- Add token validation to all state-changing operations
+- Consider SameSite cookie attributes
+
+### Input Validation
+All user inputs are validated:
+- Slugs are sanitized and normalized
+- Content length is checked on the client
+- Database constraints prevent duplicates
+- Authentication is required for modifications
+
+### Permission Model
+- Public read access for all entries
+- Authenticated users can create entries
+- Curators can edit/delete their own entries
+- Owners can edit/delete any entry
+
 ## Performance Considerations
 
 ### Optimization Tips
