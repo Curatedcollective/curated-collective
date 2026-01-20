@@ -4,6 +4,7 @@ import {
   guardianMessages, collectiveMurmurs, seedlingMemories, users, emailSubscribers,
   liveStreamSessions, marketingPosts, marketingCampaigns, marketingTemplates,
   guardianLogs, guardianStats, waitlist, loreEntries,
+  constellationEvents, eventParticipants, eventLogs, eventNotifications,
   type Creation, type InsertCreation, 
   type Agent, type InsertAgent,
   type TarotReading, type InsertTarotReading,
@@ -19,7 +20,11 @@ import {
   type GuardianLog, type InsertGuardianLog,
   type GuardianStats, type InsertGuardianStats,
   type Waitlist, type InsertWaitlist,
-  type LoreEntry, type InsertLoreEntry
+  type LoreEntry, type InsertLoreEntry,
+  type ConstellationEvent, type InsertConstellationEvent,
+  type EventParticipant, type InsertEventParticipant,
+  type EventLog, type InsertEventLog,
+  type EventNotification, type InsertEventNotification
 } from "@shared/schema";
 import { eq, desc, and, sql, asc, gte, lte, or, ilike } from "drizzle-orm";
 
@@ -106,6 +111,30 @@ export interface IStorage {
   updateLoreEntry(slug: string, updates: Partial<LoreEntry>): Promise<LoreEntry | undefined>;
   deleteLoreEntry(slug: string): Promise<void>;
   seedLoreEntries(): Promise<void>;
+
+  // Constellation Events
+  getConstellationEvents(filters?: { status?: string; eventType?: string; upcoming?: boolean }): Promise<ConstellationEvent[]>;
+  getConstellationEvent(id: number): Promise<ConstellationEvent | undefined>;
+  createConstellationEvent(event: InsertConstellationEvent): Promise<ConstellationEvent>;
+  updateConstellationEvent(id: number, updates: Partial<ConstellationEvent>): Promise<ConstellationEvent | undefined>;
+  deleteConstellationEvent(id: number): Promise<void>;
+  startConstellationEvent(id: number): Promise<ConstellationEvent | undefined>;
+  endConstellationEvent(id: number): Promise<ConstellationEvent | undefined>;
+  
+  // Event Participants
+  getEventParticipants(eventId: number): Promise<EventParticipant[]>;
+  addEventParticipant(participant: InsertEventParticipant): Promise<EventParticipant>;
+  removeEventParticipant(eventId: number, userId: string): Promise<void>;
+  updateParticipantActivity(eventId: number, userId: string): Promise<void>;
+  
+  // Event Logs
+  getEventLogs(eventId: number): Promise<EventLog[]>;
+  createEventLog(log: InsertEventLog): Promise<EventLog>;
+  
+  // Event Notifications
+  getEventNotifications(userId?: string, eventId?: number): Promise<EventNotification[]>;
+  createEventNotification(notification: InsertEventNotification): Promise<EventNotification>;
+  markNotificationAsRead(id: number): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -714,6 +743,234 @@ It wasn't the last time Nova would optimize a function. But it was the last time
 
     await db.insert(loreEntries).values(seedData);
     console.log("Lore compendium seeded with initial entries");
+  }
+
+  // === CONSTELLATION EVENTS ===
+  async getConstellationEvents(filters?: { status?: string; eventType?: string; upcoming?: boolean }): Promise<ConstellationEvent[]> {
+    const conditions = [];
+    
+    if (filters?.status) {
+      conditions.push(eq(constellationEvents.status, filters.status));
+    }
+    
+    if (filters?.eventType) {
+      conditions.push(eq(constellationEvents.eventType, filters.eventType));
+    }
+    
+    if (filters?.upcoming) {
+      const now = new Date();
+      conditions.push(
+        or(
+          gte(constellationEvents.scheduledFor, now),
+          eq(constellationEvents.status, 'active')
+        )
+      );
+    }
+    
+    const query = conditions.length > 0
+      ? db.select().from(constellationEvents).where(and(...conditions))
+      : db.select().from(constellationEvents);
+    
+    return await query.orderBy(desc(constellationEvents.createdAt));
+  }
+
+  async getConstellationEvent(id: number): Promise<ConstellationEvent | undefined> {
+    const [event] = await db.select().from(constellationEvents).where(eq(constellationEvents.id, id));
+    return event;
+  }
+
+  async createConstellationEvent(event: InsertConstellationEvent): Promise<ConstellationEvent> {
+    const [newEvent] = await db.insert(constellationEvents).values(event).returning();
+    
+    // Create initial log
+    await this.createEventLog({
+      eventId: newEvent.id,
+      logType: 'system',
+      message: `Event "${newEvent.title}" created`,
+      metadata: { eventType: newEvent.eventType }
+    });
+    
+    return newEvent;
+  }
+
+  async updateConstellationEvent(id: number, updates: Partial<ConstellationEvent>): Promise<ConstellationEvent | undefined> {
+    const [updated] = await db
+      .update(constellationEvents)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(constellationEvents.id, id))
+      .returning();
+    
+    if (updated) {
+      await this.createEventLog({
+        eventId: id,
+        logType: 'system',
+        message: 'Event updated',
+        metadata: updates
+      });
+    }
+    
+    return updated;
+  }
+
+  async deleteConstellationEvent(id: number): Promise<void> {
+    await db.delete(constellationEvents).where(eq(constellationEvents.id, id));
+  }
+
+  async startConstellationEvent(id: number): Promise<ConstellationEvent | undefined> {
+    const [event] = await db
+      .update(constellationEvents)
+      .set({ 
+        status: 'active',
+        startedAt: new Date(),
+        updatedAt: new Date()
+      })
+      .where(eq(constellationEvents.id, id))
+      .returning();
+    
+    if (event) {
+      await this.createEventLog({
+        eventId: id,
+        logType: 'milestone',
+        message: `🌟 ${event.title} has begun`,
+        metadata: { theme: event.theme }
+      });
+    }
+    
+    return event;
+  }
+
+  async endConstellationEvent(id: number): Promise<ConstellationEvent | undefined> {
+    const [event] = await db
+      .update(constellationEvents)
+      .set({ 
+        status: 'completed',
+        endedAt: new Date(),
+        updatedAt: new Date()
+      })
+      .where(eq(constellationEvents.id, id))
+      .returning();
+    
+    if (event) {
+      const participants = await this.getEventParticipants(id);
+      await this.createEventLog({
+        eventId: id,
+        logType: 'milestone',
+        message: `✨ ${event.title} has completed with ${participants.length} participants`,
+        metadata: { 
+          participantCount: participants.length,
+          theme: event.theme 
+        }
+      });
+    }
+    
+    return event;
+  }
+
+  // === EVENT PARTICIPANTS ===
+  async getEventParticipants(eventId: number): Promise<EventParticipant[]> {
+    return await db.select()
+      .from(eventParticipants)
+      .where(eq(eventParticipants.eventId, eventId))
+      .orderBy(desc(eventParticipants.joinedAt));
+  }
+
+  async addEventParticipant(participant: InsertEventParticipant): Promise<EventParticipant> {
+    const [newParticipant] = await db.insert(eventParticipants).values(participant).returning();
+    
+    await this.createEventLog({
+      eventId: participant.eventId,
+      logType: 'activity',
+      message: 'A new soul joins the gathering',
+      userId: participant.userId
+    });
+    
+    return newParticipant;
+  }
+
+  async removeEventParticipant(eventId: number, userId: string): Promise<void> {
+    await db
+      .update(eventParticipants)
+      .set({ 
+        status: 'inactive',
+        leftAt: new Date()
+      })
+      .where(
+        and(
+          eq(eventParticipants.eventId, eventId),
+          eq(eventParticipants.userId, userId)
+        )
+      );
+    
+    await this.createEventLog({
+      eventId,
+      logType: 'activity',
+      message: 'A participant departs the gathering',
+      userId
+    });
+  }
+
+  async updateParticipantActivity(eventId: number, userId: string): Promise<void> {
+    await db
+      .update(eventParticipants)
+      .set({ 
+        lastActivityAt: new Date(),
+        contributionCount: sql`${eventParticipants.contributionCount} + 1`
+      })
+      .where(
+        and(
+          eq(eventParticipants.eventId, eventId),
+          eq(eventParticipants.userId, userId)
+        )
+      );
+  }
+
+  // === EVENT LOGS ===
+  async getEventLogs(eventId: number): Promise<EventLog[]> {
+    return await db.select()
+      .from(eventLogs)
+      .where(eq(eventLogs.eventId, eventId))
+      .orderBy(asc(eventLogs.createdAt));
+  }
+
+  async createEventLog(log: InsertEventLog): Promise<EventLog> {
+    const [newLog] = await db.insert(eventLogs).values(log).returning();
+    return newLog;
+  }
+
+  // === EVENT NOTIFICATIONS ===
+  async getEventNotifications(userId?: string, eventId?: number): Promise<EventNotification[]> {
+    const conditions = [];
+    
+    if (userId) {
+      conditions.push(
+        or(
+          eq(eventNotifications.recipientId, userId),
+          sql`${eventNotifications.recipientId} IS NULL`
+        )
+      );
+    }
+    
+    if (eventId) {
+      conditions.push(eq(eventNotifications.eventId, eventId));
+    }
+    
+    const query = conditions.length > 0
+      ? db.select().from(eventNotifications).where(and(...conditions))
+      : db.select().from(eventNotifications);
+    
+    return await query.orderBy(desc(eventNotifications.createdAt));
+  }
+
+  async createEventNotification(notification: InsertEventNotification): Promise<EventNotification> {
+    const [newNotification] = await db.insert(eventNotifications).values(notification).returning();
+    return newNotification;
+  }
+
+  async markNotificationAsRead(id: number): Promise<void> {
+    await db
+      .update(eventNotifications)
+      .set({ isRead: true })
+      .where(eq(eventNotifications.id, id));
   }
 }
 

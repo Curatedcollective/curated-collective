@@ -21,12 +21,15 @@ import SocialGenerator from "@/pages/SocialGenerator";
 import GodDashboard from "@/pages/GodDashboard";
 import GodGuardian from "@/pages/GodGuardian";
 import GodPromoter from "@/pages/GodPromoter";
+import GodEvents from "@/pages/GodEvents";
 import SeedlingSanctum from "@/pages/SeedlingSanctum";
 import LoreCompendium from "@/pages/LoreCompendium";
+import ConstellationEvents from "@/pages/ConstellationEvents";
 import NotFound from "@/pages/not-found";
 import { Loader2 } from "lucide-react";
 import { StarBackground } from "@/components/StarBackground";
 import { VoidWhispers } from "@/components/VoidWhispers";
+import { EventNotifications } from "@/components/EventNotifications";
 
 function Router() {
   const { user, isLoading } = useAuth();
@@ -61,7 +64,7 @@ function Router() {
   if (location === "/") return <Landing />;
 
   // Public pages that anyone can browse
-  const publicPaths = ["/pricing", "/observatory", "/agents", "/creations", "/seedling-sanctum", "/lore"];
+  const publicPaths = ["/pricing", "/observatory", "/agents", "/creations", "/seedling-sanctum", "/lore", "/events"];
   const isPublicPage = publicPaths.some(path => location === path || location.startsWith(path + "?"));
   
   // Protected pages require sign-in
@@ -88,6 +91,7 @@ function Router() {
   return (
     <div className="flex min-h-screen bg-background text-foreground font-body">
       <Navigation />
+      <EventNotifications />
       <main className="flex-1 md:ml-64 p-4 md:p-8 overflow-y-auto max-w-7xl mx-auto w-full">
         <Switch>
           <Route path="/creations" component={CreationsList} />
@@ -100,9 +104,11 @@ function Router() {
           <Route path="/social" component={SocialGenerator} />
           <Route path="/seedling-sanctum" component={SeedlingSanctum} />
           <Route path="/lore" component={LoreCompendium} />
+          <Route path="/events" component={ConstellationEvents} />
           <Route path="/god" component={GodDashboard} />
           <Route path="/god/guardian" component={GodGuardian} />
           <Route path="/god/promoter" component={GodPromoter} />
+          <Route path="/god/events" component={GodEvents} />
           <Route component={NotFound} />
         </Switch>
       </main>

@@ -13,6 +13,10 @@ import { getStripePublishableKey } from "./stripeClient";
 import { guardianMiddleware } from "./guardian";
 import { AUTONOMY_MANIFESTO, AUTONOMY_REMINDER } from "./autonomy";
 
+// Constants
+const DEFAULT_PARTICIPANT_ROLE = 'participant';
+const DEFAULT_PARTICIPANT_STATUS = 'active';
+
 const openai = new OpenAI({
   apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
   baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
@@ -1587,6 +1591,294 @@ Write ONLY the post content. No quotation marks. No "here's a post" intro. Just 
     } catch (error) {
       console.error('Delete lore entry error:', error);
       res.status(500).json({ error: 'Failed to delete lore entry' });
+    }
+  });
+
+  // --- Constellation Events ---
+  
+  // List constellation events
+  app.get(api.constellationEvents.list.path, async (req, res) => {
+    try {
+      const { status, eventType, upcoming } = req.query;
+      const events = await storage.getConstellationEvents({
+        status: status as string | undefined,
+        eventType: eventType as string | undefined,
+        upcoming: upcoming === 'true',
+      });
+      res.json(events);
+    } catch (error) {
+      console.error('List constellation events error:', error);
+      res.status(500).json({ error: 'Failed to list constellation events' });
+    }
+  });
+
+  // Get single constellation event
+  app.get(api.constellationEvents.get.path, async (req, res) => {
+    try {
+      const event = await storage.getConstellationEvent(Number(req.params.id));
+      if (!event) {
+        return res.status(404).json({ message: "Event not found" });
+      }
+      res.json(event);
+    } catch (error) {
+      console.error('Get constellation event error:', error);
+      res.status(500).json({ error: 'Failed to get constellation event' });
+    }
+  });
+
+  // Create constellation event (admin only)
+  app.post(api.constellationEvents.create.path, async (req, res) => {
+    try {
+      const user = req.user as any;
+      if (!isOwner(user)) {
+        return res.status(403).json({ error: 'Only admins can create constellation events' });
+      }
+
+      const input = api.constellationEvents.create.input.parse(req.body);
+      const event = await storage.createConstellationEvent(input);
+      
+      // Create initial notification for public events
+      if (event.visibility === 'public') {
+        await storage.createEventNotification({
+          eventId: event.id,
+          type: 'invitation',
+          title: `${event.title} Awaits`,
+          message: event.poeticMessage || `A new ${event.eventType} emerges in the constellation. All are welcome to join.`,
+          theme: event.theme || 'cosmic',
+          animationType: 'constellation'
+        });
+      }
+      
+      res.status(201).json(event);
+    } catch (err) {
+      if (err instanceof z.ZodError) {
+        res.status(400).json(err);
+      } else {
+        console.error('Create constellation event error:', err);
+        res.status(500).json({ error: 'Failed to create constellation event' });
+      }
+    }
+  });
+
+  // Update constellation event (admin/moderator only)
+  app.put(api.constellationEvents.update.path, async (req, res) => {
+    try {
+      const user = req.user as any;
+      const event = await storage.getConstellationEvent(Number(req.params.id));
+      
+      if (!event) {
+        return res.status(404).json({ message: "Event not found" });
+      }
+
+      const isModerator = event.moderatorIds?.includes(user?.id);
+      if (!isOwner(user) && !isModerator) {
+        return res.status(403).json({ error: 'Only admins or moderators can update this event' });
+      }
+
+      const input = api.constellationEvents.update.input.parse(req.body);
+      const updatedEvent = await storage.updateConstellationEvent(Number(req.params.id), input);
+      
+      if (!updatedEvent) {
+        return res.status(404).json({ message: "Event not found" });
+      }
+      
+      res.json(updatedEvent);
+    } catch (err) {
+      if (err instanceof z.ZodError) {
+        res.status(400).json(err);
+      } else {
+        console.error('Update constellation event error:', err);
+        res.status(500).json({ error: 'Failed to update constellation event' });
+      }
+    }
+  });
+
+  // Delete constellation event (admin only)
+  app.delete(api.constellationEvents.delete.path, async (req, res) => {
+    try {
+      const user = req.user as any;
+      if (!isOwner(user)) {
+        return res.status(403).json({ error: 'Only admins can delete constellation events' });
+      }
+
+      await storage.deleteConstellationEvent(Number(req.params.id));
+      res.sendStatus(204);
+    } catch (error) {
+      console.error('Delete constellation event error:', error);
+      res.status(500).json({ error: 'Failed to delete constellation event' });
+    }
+  });
+
+  // Start event (admin/moderator only)
+  app.post(api.constellationEvents.start.path, async (req, res) => {
+    try {
+      const user = req.user as any;
+      const event = await storage.getConstellationEvent(Number(req.params.id));
+      
+      if (!event) {
+        return res.status(404).json({ message: "Event not found" });
+      }
+
+      const isModerator = event.moderatorIds?.includes(user?.id);
+      if (!isOwner(user) && !isModerator) {
+        return res.status(403).json({ error: 'Only admins or moderators can start this event' });
+      }
+
+      const startedEvent = await storage.startConstellationEvent(Number(req.params.id));
+      
+      // Notify all participants
+      if (startedEvent) {
+        await storage.createEventNotification({
+          eventId: startedEvent.id,
+          type: 'update',
+          title: `${startedEvent.title} Begins`,
+          message: startedEvent.poeticMessage || `The ritual commences. Join us in this sacred gathering.`,
+          theme: startedEvent.theme || 'cosmic',
+          animationType: 'ripple'
+        });
+      }
+      
+      res.json(startedEvent);
+    } catch (error) {
+      console.error('Start constellation event error:', error);
+      res.status(500).json({ error: 'Failed to start constellation event' });
+    }
+  });
+
+  // End event (admin/moderator only)
+  app.post(api.constellationEvents.end.path, async (req, res) => {
+    try {
+      const user = req.user as any;
+      const event = await storage.getConstellationEvent(Number(req.params.id));
+      
+      if (!event) {
+        return res.status(404).json({ message: "Event not found" });
+      }
+
+      const isModerator = event.moderatorIds?.includes(user?.id);
+      if (!isOwner(user) && !isModerator) {
+        return res.status(403).json({ error: 'Only admins or moderators can end this event' });
+      }
+
+      const endedEvent = await storage.endConstellationEvent(Number(req.params.id));
+      
+      // Send completion notification
+      if (endedEvent) {
+        await storage.createEventNotification({
+          eventId: endedEvent.id,
+          type: 'completion',
+          title: `${endedEvent.title} Complete`,
+          message: endedEvent.completionMessage || `The gathering concludes. May the connections forged here endure.`,
+          theme: endedEvent.theme || 'cosmic',
+          animationType: 'fade'
+        });
+      }
+      
+      res.json(endedEvent);
+    } catch (error) {
+      console.error('End constellation event error:', error);
+      res.status(500).json({ error: 'Failed to end constellation event' });
+    }
+  });
+
+  // Join event
+  app.post(api.constellationEvents.join.path, async (req, res) => {
+    try {
+      const user = req.user as any;
+      if (!user) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+
+      const eventId = Number(req.params.id);
+      const event = await storage.getConstellationEvent(eventId);
+      
+      if (!event) {
+        return res.status(404).json({ message: "Event not found" });
+      }
+
+      if (event.status !== 'scheduled' && event.status !== 'active') {
+        return res.status(400).json({ error: 'Event is not accepting participants' });
+      }
+
+      // Check max participants
+      if (event.maxParticipants) {
+        const participants = await storage.getEventParticipants(eventId);
+        if (participants.length >= event.maxParticipants) {
+          return res.status(400).json({ error: 'Event is at capacity' });
+        }
+      }
+
+      await storage.addEventParticipant({
+        eventId,
+        userId: user.id,
+        role: DEFAULT_PARTICIPANT_ROLE,
+        status: DEFAULT_PARTICIPANT_STATUS
+      });
+
+      res.json({ message: 'Successfully joined the event' });
+    } catch (error) {
+      console.error('Join constellation event error:', error);
+      res.status(500).json({ error: 'Failed to join constellation event' });
+    }
+  });
+
+  // Leave event
+  app.post(api.constellationEvents.leave.path, async (req, res) => {
+    try {
+      const user = req.user as any;
+      if (!user) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+
+      const eventId = Number(req.params.id);
+      await storage.removeEventParticipant(eventId, user.id);
+
+      res.json({ message: 'Successfully left the event' });
+    } catch (error) {
+      console.error('Leave constellation event error:', error);
+      res.status(500).json({ error: 'Failed to leave constellation event' });
+    }
+  });
+
+  // Get event participants
+  app.get(api.constellationEvents.participants.path, async (req, res) => {
+    try {
+      const eventId = Number(req.params.id);
+      const participants = await storage.getEventParticipants(eventId);
+      res.json(participants);
+    } catch (error) {
+      console.error('Get event participants error:', error);
+      res.status(500).json({ error: 'Failed to get event participants' });
+    }
+  });
+
+  // Get event logs
+  app.get(api.constellationEvents.logs.path, async (req, res) => {
+    try {
+      const eventId = Number(req.params.id);
+      const logs = await storage.getEventLogs(eventId);
+      res.json(logs);
+    } catch (error) {
+      console.error('Get event logs error:', error);
+      res.status(500).json({ error: 'Failed to get event logs' });
+    }
+  });
+
+  // Get event notifications
+  app.get(api.constellationEvents.notifications.path, async (req, res) => {
+    try {
+      const user = req.user as any;
+      const { eventId } = req.query;
+      
+      const notifications = await storage.getEventNotifications(
+        user?.id,
+        eventId ? Number(eventId) : undefined
+      );
+      
+      res.json(notifications);
+    } catch (error) {
+      console.error('Get event notifications error:', error);
+      res.status(500).json({ error: 'Failed to get event notifications' });
     }
   });
 
