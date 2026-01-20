@@ -499,8 +499,6 @@ export class DatabaseStorage implements IStorage {
    * Supports category, search (title/content), and featured filtering
    */
   async getLoreEntries(filters?: { category?: string; search?: string; featured?: boolean }): Promise<LoreEntry[]> {
-    let query = db.select().from(loreEntries).where(eq(loreEntries.isPublic, true));
-    
     const conditions = [eq(loreEntries.isPublic, true)];
     
     if (filters?.category) {

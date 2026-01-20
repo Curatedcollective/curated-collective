@@ -364,7 +364,7 @@ export const insertLoreEntrySchema = createInsertSchema(loreEntries).omit({
   updatedAt: true 
 });
 
-export const updateLoreEntrySchema = insertLoreEntrySchema.partial().required({ slug: true });
+export const updateLoreEntrySchema = insertLoreEntrySchema.partial();
 
 // === TYPES ===
 export type LoreEntry = typeof loreEntries.$inferSelect;

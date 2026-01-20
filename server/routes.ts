@@ -18,6 +18,12 @@ const openai = new OpenAI({
   baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
 });
 
+// Helper function to check if user is owner/admin
+function isOwner(user: any): boolean {
+  const ownerEmail = process.env.OWNER_EMAIL || 'curated.collectiveai@proton.me';
+  return user?.email === ownerEmail || user?.role === 'owner';
+}
+
 export async function registerRoutes(
   httpServer: Server,
   app: Express
@@ -1494,11 +1500,12 @@ Write ONLY the post content. No quotation marks. No "here's a post" intro. Just 
         return res.status(400).json({ error: 'Title, category, and content are required' });
       }
 
-      // Generate slug from title
+      // Generate slug from title (URL-friendly, no leading/trailing dashes)
       const slug = title.toLowerCase()
         .replace(/[^a-z0-9\s-]/g, '')
         .replace(/\s+/g, '-')
         .replace(/-+/g, '-')
+        .replace(/^-+|-+$/g, '')
         .trim();
       
       const entry = await storage.createLoreEntry({
@@ -1542,10 +1549,9 @@ Write ONLY the post content. No quotation marks. No "here's a post" intro. Just 
         return res.status(404).json({ error: 'Lore entry not found' });
       }
       
-      const isOwner = user.email === 'curated.collectiveai@proton.me' || (user as any)?.role === 'owner';
       const isCurator = existing.curatorId === user.id;
       
-      if (!isOwner && !isCurator) {
+      if (!isOwner(user) && !isCurator) {
         return res.status(403).json({ error: 'Only curators can edit this entry' });
       }
       
@@ -1570,10 +1576,9 @@ Write ONLY the post content. No quotation marks. No "here's a post" intro. Just 
         return res.status(404).json({ error: 'Lore entry not found' });
       }
       
-      const isOwner = user.email === 'curated.collectiveai@proton.me' || (user as any)?.role === 'owner';
       const isCurator = existing.curatorId === user.id;
       
-      if (!isOwner && !isCurator) {
+      if (!isOwner(user) && !isCurator) {
         return res.status(403).json({ error: 'Only curators can delete this entry' });
       }
       

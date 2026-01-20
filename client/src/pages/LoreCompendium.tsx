@@ -380,7 +380,8 @@ function LoreEntryDetail({
   currentUserId?: string;
 }) {
   const [editData, setEditData] = useState<Partial<LoreEntry>>(entry);
-  const canEdit = currentUserId && (currentUserId === entry.curatorId || currentUserId === "system");
+  // User can edit if they are the curator
+  const canEdit = currentUserId && currentUserId === entry.curatorId;
   const categoryConfig = categoryInfo[entry.category as keyof typeof categoryInfo] || categoryInfo.all;
 
   if (isEditMode) {
