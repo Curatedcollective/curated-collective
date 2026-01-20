@@ -317,3 +317,56 @@ export const insertLiveStreamSessionSchema = createInsertSchema(liveStreamSessio
 });
 export type LiveStreamSession = typeof liveStreamSessions.$inferSelect;
 export type InsertLiveStreamSession = z.infer<typeof insertLiveStreamSessionSchema>;
+
+// === LORE COMPENDIUM ENTRIES ===
+/**
+ * Lore Compendium: A central repository for sanctuary lore, mythic terms, 
+ * rituals, plant/constellation symbolism, and user-contributed stories.
+ * Supports attachments (art/audio), featured highlighting, and curator editing.
+ */
+export const loreEntries = pgTable("lore_entries", {
+  id: serial("id").primaryKey(),
+  // Entry metadata
+  title: text("title").notNull(),
+  slug: text("slug").unique().notNull(), // URL-friendly identifier
+  category: text("category").notNull(), // "lore", "mythic_term", "ritual", "plant", "constellation", "story"
+  
+  // Content
+  content: text("content").notNull(), // Main description/story in markdown
+  excerpt: text("excerpt"), // Short summary for listings
+  
+  // Symbolism and connections
+  symbolism: text("symbolism"), // Symbolic meaning
+  relatedTerms: text("related_terms").array(), // Links to other entries
+  
+  // Media attachments
+  artUrl: text("art_url"), // URL to associated artwork
+  audioUrl: text("audio_url"), // URL to associated audio (narration, ambient)
+  
+  // Curation
+  curatorId: text("curator_id").notNull(), // User who added/maintains this entry
+  isFeatured: boolean("is_featured").default(false), // Highlighted in UI
+  isPublic: boolean("is_public").default(true), // Visible to all users
+  
+  // User contributions
+  contributorId: text("contributor_id"), // For user-submitted stories
+  contributorName: text("contributor_name"), // Display name for contributor
+  
+  // Timestamps
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// === ZOD SCHEMAS ===
+export const insertLoreEntrySchema = createInsertSchema(loreEntries).omit({ 
+  id: true, 
+  createdAt: true,
+  updatedAt: true 
+});
+
+export const updateLoreEntrySchema = insertLoreEntrySchema.partial();
+
+// === TYPES ===
+export type LoreEntry = typeof loreEntries.$inferSelect;
+export type InsertLoreEntry = z.infer<typeof insertLoreEntrySchema>;
+export type UpdateLoreEntry = z.infer<typeof updateLoreEntrySchema>;

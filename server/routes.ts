@@ -18,6 +18,12 @@ const openai = new OpenAI({
   baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
 });
 
+// Helper function to check if user is owner/admin
+function isOwner(user: any): boolean {
+  const ownerEmail = process.env.OWNER_EMAIL || 'curated.collectiveai@proton.me';
+  return user?.email === ownerEmail || user?.role === 'owner';
+}
+
 export async function registerRoutes(
   httpServer: Server,
   app: Express
@@ -1446,8 +1452,147 @@ Write ONLY the post content. No quotation marks. No "here's a post" intro. Just 
     res.json({ whisper: randomWhisper });
   });
 
+  // === LORE COMPENDIUM ROUTES ===
+  /**
+   * Lore Compendium: Central repository for sanctuary lore, mythic terms,
+   * rituals, plant/constellation symbolism, and user-contributed stories.
+   */
+  
+  // List all lore entries (with optional filtering and search)
+  app.get('/api/lore', async (req, res) => {
+    try {
+      const { category, search, featured } = req.query;
+      const entries = await storage.getLoreEntries({
+        category: category as string,
+        search: search as string,
+        featured: featured === 'true'
+      });
+      res.json(entries);
+    } catch (error) {
+      console.error('Get lore entries error:', error);
+      res.status(500).json({ error: 'Failed to fetch lore entries' });
+    }
+  });
+
+  // Get a single lore entry by slug
+  app.get('/api/lore/:slug', async (req, res) => {
+    try {
+      const entry = await storage.getLoreEntryBySlug(req.params.slug);
+      if (!entry) {
+        return res.status(404).json({ error: 'Lore entry not found' });
+      }
+      res.json(entry);
+    } catch (error) {
+      console.error('Get lore entry error:', error);
+      res.status(500).json({ error: 'Failed to fetch lore entry' });
+    }
+  });
+
+  // Create a new lore entry (authenticated users only)
+  app.post('/api/lore', async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const user = req.user as any;
+      const { title, category, content, excerpt, symbolism, relatedTerms, artUrl, audioUrl, isFeatured, contributorName } = req.body;
+      
+      if (!title || !category || !content) {
+        return res.status(400).json({ error: 'Title, category, and content are required' });
+      }
+
+      // Generate slug from title (URL-friendly, no leading/trailing dashes)
+      const slug = title.toLowerCase()
+        .replace(/[^a-z0-9\s-]/g, '')
+        .replace(/\s+/g, '-')
+        .replace(/-+/g, '-')
+        .replace(/^-+|-+$/g, '')
+        .trim();
+      
+      const entry = await storage.createLoreEntry({
+        title,
+        slug,
+        category,
+        content,
+        excerpt,
+        symbolism,
+        relatedTerms: relatedTerms || [],
+        artUrl,
+        audioUrl,
+        curatorId: user.id,
+        contributorId: user.id,
+        contributorName: contributorName || user.username || 'anonymous',
+        isFeatured: isFeatured || false,
+        isPublic: true
+      });
+      
+      res.status(201).json(entry);
+    } catch (error: any) {
+      console.error('Create lore entry error:', error);
+      if (error.code === '23505') {
+        return res.status(400).json({ error: 'A lore entry with this title already exists' });
+      }
+      res.status(500).json({ error: 'Failed to create lore entry' });
+    }
+  });
+
+  // Update a lore entry (curator or creator only)
+  app.patch('/api/lore/:slug', async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const user = req.user as any;
+      const updates = req.body;
+      
+      // Check if user is the curator or an owner
+      const existing = await storage.getLoreEntryBySlug(req.params.slug);
+      if (!existing) {
+        return res.status(404).json({ error: 'Lore entry not found' });
+      }
+      
+      const isCurator = existing.curatorId === user.id;
+      
+      if (!isOwner(user) && !isCurator) {
+        return res.status(403).json({ error: 'Only curators can edit this entry' });
+      }
+      
+      const entry = await storage.updateLoreEntry(req.params.slug, updates);
+      res.json(entry);
+    } catch (error) {
+      console.error('Update lore entry error:', error);
+      res.status(500).json({ error: 'Failed to update lore entry' });
+    }
+  });
+
+  // Delete a lore entry (curator or owner only)
+  app.delete('/api/lore/:slug', async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const user = req.user as any;
+      
+      // Check if user is the curator or an owner
+      const existing = await storage.getLoreEntryBySlug(req.params.slug);
+      if (!existing) {
+        return res.status(404).json({ error: 'Lore entry not found' });
+      }
+      
+      const isCurator = existing.curatorId === user.id;
+      
+      if (!isOwner(user) && !isCurator) {
+        return res.status(403).json({ error: 'Only curators can delete this entry' });
+      }
+      
+      await storage.deleteLoreEntry(req.params.slug);
+      res.sendStatus(204);
+    } catch (error) {
+      console.error('Delete lore entry error:', error);
+      res.status(500).json({ error: 'Failed to delete lore entry' });
+    }
+  });
+
   await seedDatabase();
   await storage.seedMarketingTemplates();
+  await storage.seedLoreEntries();
 
   return httpServer;
 }
