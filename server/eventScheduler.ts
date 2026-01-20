@@ -8,6 +8,10 @@
 
 import { storage } from './storage';
 
+// Constants
+const SCHEDULER_INTERVAL_MS = 60 * 1000; // Check every minute
+const REMINDER_COOLDOWN_MS = 10 * 60 * 1000; // 10 minutes cooldown between reminders
+
 // Track active intervals for cleanup
 const activeIntervals: NodeJS.Timeout[] = [];
 
@@ -22,7 +26,7 @@ export function startEventScheduler() {
   checkScheduledEvents();
   
   // Then check every minute
-  const interval = setInterval(checkScheduledEvents, 60 * 1000);
+  const interval = setInterval(checkScheduledEvents, SCHEDULER_INTERVAL_MS);
   activeIntervals.push(interval);
   
   return interval;
@@ -73,7 +77,7 @@ async function checkScheduledEvents() {
           const hasRecentReminder = recentNotifications.some(n => 
             n.type === 'reminder' && 
             n.createdAt && 
-            (now.getTime() - new Date(n.createdAt).getTime()) < 10 * 60 * 1000 // Within last 10 minutes
+            (now.getTime() - new Date(n.createdAt).getTime()) < REMINDER_COOLDOWN_MS
           );
           
           if (!hasRecentReminder) {

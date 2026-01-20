@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Plus, Play, Square, Trash2, Calendar } from 'lucide-react';
 import { api, buildUrl } from '@shared/routes';
+import { useAuth } from '@/hooks/use-auth';
 import type { ConstellationEvent, InsertConstellationEvent } from '@shared/schema';
 
 export function EventAdmin() {
@@ -53,6 +54,7 @@ export function EventAdmin() {
 
 function EventCreator({ onClose }: { onClose: () => void }) {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
   const [formData, setFormData] = useState<Partial<InsertConstellationEvent>>({
     title: '',
     description: '',
@@ -60,7 +62,7 @@ function EventCreator({ onClose }: { onClose: () => void }) {
     visibility: 'public',
     theme: 'cosmic',
     status: 'scheduled',
-    creatorId: 'current-user', // TODO: Get from auth context
+    creatorId: user?.id || '',
   });
 
   const createMutation = useMutation({

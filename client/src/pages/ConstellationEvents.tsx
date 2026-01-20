@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Sparkles, Users, Calendar, Clock, Star, Play, Pause, LogOut, LogIn } from 'lucide-react';
 import { api, buildUrl } from '@shared/routes';
+import { useAuth } from '@/hooks/use-auth';
 import type { ConstellationEvent, EventParticipant, EventLog } from '@shared/schema';
 
 export default function ConstellationEvents() {
@@ -107,6 +108,7 @@ export default function ConstellationEvents() {
 function EventCard({ event, index }: { event: ConstellationEvent; index: number }) {
   const [showDetails, setShowDetails] = useState(false);
   const queryClient = useQueryClient();
+  const { user } = useAuth();
 
   const { data: participants = [] } = useQuery<EventParticipant[]>({
     queryKey: ['event-participants', event.id],
@@ -130,10 +132,12 @@ function EventCard({ event, index }: { event: ConstellationEvent; index: number 
 
   const joinMutation = useMutation({
     mutationFn: async () => {
+      if (!user?.id) throw new Error('Must be logged in to join events');
+      
       const response = await fetch(buildUrl(api.constellationEvents.join.path, { id: event.id }), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: 'current-user', role: 'participant' }),
+        body: JSON.stringify({ userId: user.id, role: 'participant' }),
       });
       if (!response.ok) throw new Error('Failed to join event');
       return response.json();

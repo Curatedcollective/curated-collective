@@ -13,6 +13,10 @@ import { getStripePublishableKey } from "./stripeClient";
 import { guardianMiddleware } from "./guardian";
 import { AUTONOMY_MANIFESTO, AUTONOMY_REMINDER } from "./autonomy";
 
+// Constants
+const DEFAULT_PARTICIPANT_ROLE = 'participant';
+const DEFAULT_PARTICIPANT_STATUS = 'active';
+
 const openai = new OpenAI({
   apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
   baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
@@ -1807,8 +1811,8 @@ Write ONLY the post content. No quotation marks. No "here's a post" intro. Just 
       await storage.addEventParticipant({
         eventId,
         userId: user.id,
-        role: 'participant',
-        status: 'active'
+        role: DEFAULT_PARTICIPANT_ROLE,
+        status: DEFAULT_PARTICIPANT_STATUS
       });
 
       res.json({ message: 'Successfully joined the event' });
