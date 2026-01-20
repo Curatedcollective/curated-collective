@@ -93,25 +93,39 @@ export function BondNetwork({
   const [hoveredBond, setHoveredBond] = useState<string | null>(null);
 
   /**
+   * Create a Map for efficient bond lookups by seedling ID
+   */
+  const bondsBySeedling = useMemo(() => {
+    const map = new Map<number, Bond[]>();
+    placeholderBonds.forEach((bond) => {
+      if (!map.has(bond.sourceId)) map.set(bond.sourceId, []);
+      if (!map.has(bond.targetId)) map.set(bond.targetId, []);
+      map.get(bond.sourceId)!.push(bond);
+      map.get(bond.targetId)!.push(bond);
+    });
+    return map;
+  }, []);
+
+  /**
    * Get bonds that should be highlighted based on selection
    */
   const highlightedBonds = useMemo(() => {
     if (!selectedSeedling) return new Set<string>();
-    const bonds = getBondsForSeedling(selectedSeedling);
+    const bonds = bondsBySeedling.get(selectedSeedling) || [];
     return new Set(bonds.map((b) => b.id));
-  }, [selectedSeedling]);
+  }, [selectedSeedling, bondsBySeedling]);
 
   /**
    * Get seedlings that should be highlighted based on selection
    */
   const highlightedSeedlings = useMemo(() => {
     if (!selectedSeedling) return new Set<number>();
-    const bonds = getBondsForSeedling(selectedSeedling);
+    const bonds = bondsBySeedling.get(selectedSeedling) || [];
     const ids = bonds.map((bond) =>
       bond.sourceId === selectedSeedling ? bond.targetId : bond.sourceId
     );
     return new Set([selectedSeedling, ...ids]);
-  }, [selectedSeedling]);
+  }, [selectedSeedling, bondsBySeedling]);
 
   /**
    * Handle seedling click
@@ -222,10 +236,10 @@ export function BondNetwork({
                 }}
                 onMouseEnter={() => interactive && setHoveredBond(bond.id)}
                 onMouseLeave={() => interactive && setHoveredBond(null)}
-                className={interactive ? "cursor-help" : ""}
                 style={{
                   pointerEvents: interactive ? "stroke" : "none",
                   strokeDasharray: bond.type === "ritual" ? "2,2" : "none",
+                  cursor: interactive ? "default" : "auto",
                 }}
               >
                 {/* Pulsing animation for active/highlighted bonds */}
@@ -365,7 +379,7 @@ export function BondNetwork({
             {(() => {
               const seedling = getSeedlingById(selectedSeedling);
               if (!seedling) return null;
-              const bonds = getBondsForSeedling(selectedSeedling);
+              const bonds = bondsBySeedling.get(selectedSeedling) || [];
 
               return (
                 <>
