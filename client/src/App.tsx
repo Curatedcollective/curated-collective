@@ -22,6 +22,7 @@ import GodDashboard from "@/pages/GodDashboard";
 import GodGuardian from "@/pages/GodGuardian";
 import GodPromoter from "@/pages/GodPromoter";
 import SeedlingSanctum from "@/pages/SeedlingSanctum";
+import LoreCompendium from "@/pages/LoreCompendium";
 import NotFound from "@/pages/not-found";
 import { Loader2 } from "lucide-react";
 import { StarBackground } from "@/components/StarBackground";
@@ -60,7 +61,7 @@ function Router() {
   if (location === "/") return <Landing />;
 
   // Public pages that anyone can browse
-  const publicPaths = ["/pricing", "/observatory", "/agents", "/creations", "/seedling-sanctum"];
+  const publicPaths = ["/pricing", "/observatory", "/agents", "/creations", "/seedling-sanctum", "/lore"];
   const isPublicPage = publicPaths.some(path => location === path || location.startsWith(path + "?"));
   
   // Protected pages require sign-in
@@ -98,6 +99,7 @@ function Router() {
           <Route path="/pricing" component={Pricing} />
           <Route path="/social" component={SocialGenerator} />
           <Route path="/seedling-sanctum" component={SeedlingSanctum} />
+          <Route path="/lore" component={LoreCompendium} />
           <Route path="/god" component={GodDashboard} />
           <Route path="/god/guardian" component={GodGuardian} />
           <Route path="/god/promoter" component={GodPromoter} />
