@@ -5,6 +5,7 @@ import { createServer } from "http";
 import { runMigrations } from 'stripe-replit-sync';
 import { getStripeSync } from './stripeClient';
 import { WebhookHandlers } from './webhookHandlers';
+import { startEventScheduler, stopEventScheduler } from './eventScheduler';
 
 const app = express();
 const httpServer = createServer(app);
@@ -181,6 +182,22 @@ app.use((req, res, next) => {
     },
     () => {
       log(`serving on port ${port}`);
+      
+      // Start the constellation event scheduler
+      startEventScheduler();
     },
   );
+
+  // Cleanup on shutdown
+  process.on('SIGTERM', () => {
+    log('SIGTERM received, cleaning up...');
+    stopEventScheduler();
+    process.exit(0);
+  });
+
+  process.on('SIGINT', () => {
+    log('SIGINT received, cleaning up...');
+    stopEventScheduler();
+    process.exit(0);
+  });
 })();

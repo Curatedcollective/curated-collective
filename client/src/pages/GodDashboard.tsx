@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'wouter';
-import { Shield, Megaphone, Settings, Eye } from 'lucide-react';
+import { Shield, Megaphone, Settings, Eye, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
@@ -20,6 +20,13 @@ export default function GodDashboard() {
       icon: Megaphone,
       path: '/god/promoter',
       color: 'from-blue-600 to-cyan-600',
+    },
+    {
+      title: 'Constellation Events',
+      description: 'Create and manage sacred rituals, milestones, and community celebrations.',
+      icon: Star,
+      path: '/god/events',
+      color: 'from-purple-600 to-indigo-600',
     },
     {
       title: 'Observatory',
