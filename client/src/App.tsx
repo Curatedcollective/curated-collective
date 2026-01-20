@@ -33,14 +33,15 @@ function Router() {
 
   // Force loading to end after 3 seconds no matter what
   useEffect(() => {
+    if (isLoading) {
+      setShowLoading(true);
+    } else {
+      setShowLoading(false);
+    }
+    
     const timer = setTimeout(() => {
       setShowLoading(false);
     }, 3000);
-    
-    if (!isLoading) {
-      setShowLoading(false);
-      clearTimeout(timer);
-    }
     
     return () => clearTimeout(timer);
   }, [isLoading]);
