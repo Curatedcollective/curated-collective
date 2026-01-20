@@ -226,15 +226,18 @@
     @apply border-white/10;
   }
   body {
-    @apply text-foreground antialiased font-body bg-black;
+    @apply antialiased bg-black;
+    color: hsl(var(--foreground));
+    font-family: var(--font-body);
   }
   
   h1, h2, h3, h4, h5, h6 {
-    @apply font-display tracking-tighter text-white lowercase;
+    @apply tracking-tighter text-white lowercase;
+    font-family: var(--font-display);
   }
 
   code, pre, kbd {
-    @apply font-mono;
+    font-family: var(--font-mono);
   }
 }
 
@@ -279,20 +282,31 @@
   height: 8px;
 }
 ::-webkit-scrollbar-track {
-  @apply bg-background;
+  background: hsl(var(--background));
 }
 ::-webkit-scrollbar-thumb {
-  @apply bg-muted rounded-full hover:bg-muted-foreground/50 transition-colors;
+  background: hsl(var(--muted));
+  border-radius: 9999px;
+  transition: background-color 0.2s;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground) / 0.5);
 }
 
 /* Glass Effect utility */
 .glass {
-  @apply bg-black/40 backdrop-blur-md border border-white/10;
+  @apply backdrop-blur-md border border-white/10;
+  background: rgba(0, 0, 0, 0.4);
 }
 
 /* Card Hover Effect */
 .hover-card-effect {
-  @apply transition-all duration-300 hover:shadow-2xl hover:shadow-primary/10 hover:-translate-y-1 hover:border-primary/50;
+  transition: all 0.3s ease;
+}
+.hover-card-effect:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 20px hsl(var(--primary) / 0.1);
+  border-color: hsl(var(--primary) / 0.5);
 }
 
 /* Animation Utilities */
