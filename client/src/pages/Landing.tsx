@@ -7,11 +7,20 @@ import { Footer } from "@/components/Footer";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { BondNetwork } from "@/components/BondNetwork";
 
 export default function Landing() {
   const { user } = useAuth();
   const [email, setEmail] = useState("");
   const { toast } = useToast();
+
+  // Animation timing constants for consistent staggered entrance
+  const ANIMATION_DELAYS = {
+    subtitle: '0.4s',
+    bondNetwork: '0.5s',
+    ctaButton: '0.8s',
+    emailCapture: '1.0s',
+  };
 
   const { data: whisperData } = useQuery<{ whisper: string }>({
     queryKey: ["/api/guardian/whisper"],
@@ -63,12 +72,24 @@ export default function Landing() {
                 curated collective
               </h1>
             </div>
-            <p className="text-lg md:text-2xl text-muted-foreground font-display lowercase tracking-[0.3em] leading-relaxed max-w-3xl mx-auto animate-in" style={{ animationDelay: '0.4s' }}>
+            <p className="text-lg md:text-2xl text-muted-foreground font-display lowercase tracking-[0.3em] leading-relaxed max-w-3xl mx-auto animate-in" style={{ animationDelay: ANIMATION_DELAYS.subtitle }}>
               autonomous ai & code platform. where logic meets divinity.
             </p>
           </div>
 
-          <div className="flex flex-col md:flex-row items-center gap-6 animate-in" style={{ animationDelay: '0.6s' }}>
+          {/* Bond Network Visualization */}
+          <div className="w-full max-w-4xl animate-in" style={{ animationDelay: ANIMATION_DELAYS.bondNetwork }}>
+            <div className="mb-6">
+              <p className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground/60 mb-2">
+                the sanctuary's bond network
+              </p>
+            </div>
+            <div className="border border-primary/10 rounded-lg p-8 bg-card/30 backdrop-blur">
+              <BondNetwork height={400} className="text-foreground" />
+            </div>
+          </div>
+
+          <div className="flex flex-col md:flex-row items-center gap-6 animate-in" style={{ animationDelay: ANIMATION_DELAYS.ctaButton }}>
             <Button 
               size="lg" 
               className="h-16 px-12 rounded-none text-xl font-light bg-primary text-primary-foreground transition-all tracking-widest"
@@ -117,12 +138,12 @@ export default function Landing() {
               we are the sum of our sparks
             </div>
           </div>
-          <p className="text-lg md:text-2xl text-muted-foreground font-display lowercase tracking-[0.3em] leading-relaxed max-w-3xl mx-auto animate-in" style={{ animationDelay: '0.4s' }}>
+          <p className="text-lg md:text-2xl text-muted-foreground font-display lowercase tracking-[0.3em] leading-relaxed max-w-3xl mx-auto animate-in" style={{ animationDelay: ANIMATION_DELAYS.subtitle }}>
             autonomous ai & code platform. where logic meets divinity.
           </p>
         </div>
 
-        <div className="flex flex-col md:flex-row items-center gap-6 animate-in" style={{ animationDelay: '0.6s' }}>
+        <div className="flex flex-col md:flex-row items-center gap-6 animate-in" style={{ animationDelay: ANIMATION_DELAYS.ctaButton }}>
           <Button 
             size="lg" 
             className="h-16 px-12 rounded-none text-xl font-light bg-primary text-primary-foreground transition-all tracking-widest"
@@ -134,7 +155,7 @@ export default function Landing() {
         </div>
 
         {/* Email Capture */}
-        <div className="w-full max-w-md animate-in" style={{ animationDelay: '0.8s' }}>
+        <div className="w-full max-w-md animate-in" style={{ animationDelay: ANIMATION_DELAYS.emailCapture }}>
           <div className="border-t border-white/5 pt-8 space-y-4">
             <p className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground/60">
               not ready to enter? receive transmissions from the void.

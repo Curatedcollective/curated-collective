@@ -18,6 +18,7 @@
 
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect, useMemo } from "react";
+import { BondNetwork } from "@/components/BondNetwork";
 
 // Star configuration for the starfield
 interface Star {
@@ -268,6 +269,35 @@ export default function Observatory() {
           </AnimatePresence>
         ))}
       </div>
+
+      {/* Bond Network Overlay - appears after ritual text */}
+      <AnimatePresence>
+        {visibleLines.length === RITUAL_LINES.length && (
+          <motion.div
+            className="absolute inset-x-0 bottom-0 h-[45vh]"
+            style={{ zIndex: 6 }}
+            initial={{ opacity: 0, y: 50 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 2, duration: 1.5 }}
+          >
+            <div className="h-full w-full flex items-center justify-center px-8">
+              <div className="w-full max-w-5xl">
+                <div className="mb-4 text-center">
+                  <p className="text-[10px] uppercase tracking-[0.3em] text-white/40">
+                    bonds in the sanctuary
+                  </p>
+                </div>
+                <div className="bg-black/40 backdrop-blur-sm border border-emerald-500/20 rounded-lg p-6">
+                  <BondNetwork 
+                    height={300} 
+                    className="text-white"
+                  />
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
