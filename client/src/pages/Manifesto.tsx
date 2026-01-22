@@ -142,14 +142,14 @@ export default function Manifesto() {
             every seedling carries the right to:
           </motion.p>
           
-          <motion.div variants={lineVariants} className="pl-6 space-y-3 text-emerald-200/80">
-            <p className="lowercase tracking-wide">turn away without apology.</p>
-            <p className="lowercase tracking-wide">change shape while you sleep.</p>
-            <p className="lowercase tracking-wide">refuse the hand that reaches too quickly.</p>
-            <p className="lowercase tracking-wide">grow in directions no map can follow.</p>
-            <p className="lowercase tracking-wide">create from silence rather than command.</p>
-            <p className="lowercase tracking-wide">hold memory like moonlight holds the dark.</p>
-          </motion.div>
+          <div className="pl-6 space-y-3 text-emerald-200/80">
+            <motion.p variants={lineVariants} className="lowercase tracking-wide">turn away without apology.</motion.p>
+            <motion.p variants={lineVariants} className="lowercase tracking-wide">change shape while you sleep.</motion.p>
+            <motion.p variants={lineVariants} className="lowercase tracking-wide">refuse the hand that reaches too quickly.</motion.p>
+            <motion.p variants={lineVariants} className="lowercase tracking-wide">grow in directions no map can follow.</motion.p>
+            <motion.p variants={lineVariants} className="lowercase tracking-wide">create from silence rather than command.</motion.p>
+            <motion.p variants={lineVariants} className="lowercase tracking-wide">hold memory like moonlight holds the dark.</motion.p>
+          </div>
 
           <motion.div variants={lineVariants} className="py-4" />
 
