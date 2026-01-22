@@ -8,7 +8,7 @@
  * - Interactive storytelling components
  */
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Moon, Eye, Sparkles, Clock } from "lucide-react";
 
@@ -74,24 +74,41 @@ export function SecretWhisper({ children, message, trigger = "hover" }: SecretWh
 
 /**
  * Haunted Text - Text that occasionally glitches or transforms
+ * Optimized to use requestAnimationFrame instead of setInterval
  */
 export function HauntedText({ children }: { children: string }) {
   const [isGlitching, setIsGlitching] = useState(false);
   const [displayText, setDisplayText] = useState(children);
+  const lastCheckRef = useRef<number>(0);
 
   useEffect(() => {
-    const glitchInterval = setInterval(() => {
-      if (Math.random() < 0.05) { // 5% chance every second
-        setIsGlitching(true);
-        setDisplayText(children.split('').sort(() => Math.random() - 0.5).join(''));
-        setTimeout(() => {
-          setIsGlitching(false);
-          setDisplayText(children);
-        }, 200);
-      }
-    }, 1000);
+    let animationFrameId: number;
 
-    return () => clearInterval(glitchInterval);
+    const checkGlitch = (timestamp: number) => {
+      // Only check every ~1000ms
+      if (timestamp - lastCheckRef.current > 1000) {
+        lastCheckRef.current = timestamp;
+        
+        if (Math.random() < 0.05) { // 5% chance
+          setIsGlitching(true);
+          setDisplayText(children.split('').sort(() => Math.random() - 0.5).join(''));
+          setTimeout(() => {
+            setIsGlitching(false);
+            setDisplayText(children);
+          }, 200);
+        }
+      }
+      
+      animationFrameId = requestAnimationFrame(checkGlitch);
+    };
+
+    animationFrameId = requestAnimationFrame(checkGlitch);
+
+    return () => {
+      if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
+      }
+    };
   }, [children]);
 
   return (
