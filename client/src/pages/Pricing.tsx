@@ -99,6 +99,22 @@ export default function Pricing() {
       highlight: false
     },
     {
+      name: "architect",
+      price: "99",
+      description: "for the master builders of digital realms.",
+      features: [
+        "everything in creator",
+        "advanced code generation",
+        "priority api access",
+        "dedicated support channel",
+        "custom integrations",
+        "enhanced analytics",
+        "team collaboration tools"
+      ],
+      priceId: null,
+      highlight: true
+    },
+    {
       name: "business",
       price: "199",
       description: "for teams and organizations who demand excellence.",
@@ -112,7 +128,7 @@ export default function Pricing() {
         "analytics dashboard"
       ],
       priceId: null,
-      highlight: true
+      highlight: false
     }
   ];
 
@@ -161,7 +177,7 @@ export default function Pricing() {
           <Loader2 className="w-8 h-8 animate-spin text-primary" />
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 pt-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 pt-8">
           {plans.map((plan) => (
             <Card key={plan.name} className={`bg-card border-border/20 rounded-none transition-all flex flex-col ${plan.highlight ? 'border-primary/50 ring-1 ring-primary/20' : 'hover:border-primary/30'}`}>
               <CardHeader className="space-y-2 p-6">
