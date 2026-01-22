@@ -62,7 +62,7 @@ export default function GuardianChat() {
     if (guardianCount >= 3) {
       setGuardianTriggerCount(prev => prev + 1);
       
-      if (guardianTriggerCount >= 2) {
+      if (guardianTriggerCount >= 3) {
         // More than 3 attempts total - cold termination
         setShowGuardianResponse("Your persistence has been noted. This interaction ends now.");
         setInput('');
@@ -71,7 +71,7 @@ export default function GuardianChat() {
         }, 4000);
         return;
       } else {
-        // First 3 "guardian" in a message - helpful response
+        // First attempts - helpful response
         setShowGuardianResponse("I am here. The Veil is safe. State your need.");
         setInput('');
         setTimeout(() => {

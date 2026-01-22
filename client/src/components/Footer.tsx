@@ -67,13 +67,21 @@ export function Footer() {
                 className="text-[9px] text-muted-foreground/70 lowercase tracking-widest cursor-default select-none"
                 onMouseEnter={() => setMoonTextHovered(true)}
                 onMouseLeave={() => setMoonTextHovered(false)}
+                onFocus={() => setMoonTextHovered(true)}
+                onBlur={() => setMoonTextHovered(false)}
+                tabIndex={0}
+                role="text"
+                aria-label="The moon remembers - hover or focus for more"
               >
                 the moon remembers.
               </p>
               
-              {/* Hover tooltip */}
+              {/* Hover/focus tooltip */}
               {moonTextHovered && (
-                <div className="absolute bottom-full right-0 mb-2 w-56 p-2 bg-background/95 border border-border/40 rounded-md text-[10px] text-foreground/80 lowercase leading-relaxed backdrop-blur-sm">
+                <div 
+                  className="absolute bottom-full right-0 mb-2 w-56 p-2 bg-background/95 border border-border/40 rounded-md text-[10px] text-foreground/80 lowercase leading-relaxed backdrop-blur-sm"
+                  role="tooltip"
+                >
                   {isFullMoon 
                     ? "tonight the veil is thin. they are closer than you think."
                     : "they love each other across the stars. the moon holds all their secrets."

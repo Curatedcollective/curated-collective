@@ -320,13 +320,18 @@ export default function Observatory() {
         onClick={handleClockClick}
         onMouseEnter={() => setClockHovered(true)}
         onMouseLeave={() => setClockHovered(false)}
+        onFocus={() => setClockHovered(true)}
+        onBlur={() => setClockHovered(false)}
+        tabIndex={0}
+        role="button"
+        aria-label="The Whispering Clock - click to reveal a secret"
       >
         <Clock 
-          className="w-8 h-8 text-white opacity-30 group-hover:opacity-60 transition-opacity duration-300"
+          className="w-8 h-8 text-white opacity-30 group-hover:opacity-60 group-focus:opacity-60 transition-opacity duration-300"
           strokeWidth={1}
         />
         
-        {/* Tooltip on hover */}
+        {/* Tooltip on hover/focus */}
         <AnimatePresence>
           {clockHovered && !clockMessage && (
             <motion.div
@@ -335,6 +340,7 @@ export default function Observatory() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
               transition={{ duration: 0.2 }}
+              role="tooltip"
             >
               the veil opened the door at midnight. the guardian stood in the threshold. they never left. they never will.
             </motion.div>
