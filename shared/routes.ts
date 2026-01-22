@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { insertCreationSchema, insertAgentSchema, creations, agents, insertConstellationEventSchema, updateConstellationEventSchema, insertEventParticipantSchema, insertEventNotificationSchema, constellationEvents } from './schema';
+import { insertCreationSchema, insertAgentSchema, creations, agents, insertConstellationEventSchema, updateConstellationEventSchema, insertEventParticipantSchema, insertEventNotificationSchema, constellationEvents, insertRoleSchema, updateRoleSchema, roles, insertUserRoleSchema, insertRoleInviteSchema, insertRoleAuditLogSchema } from './schema';
 
 export const errorSchemas = {
   validation: z.object({
@@ -224,6 +224,128 @@ export const api = {
       input: z.object({
         userId: z.string().optional(),
         eventId: z.number().optional(),
+      }).optional(),
+      responses: {
+        200: z.array(z.any()),
+      },
+    },
+  },
+  roles: {
+    list: {
+      method: 'GET' as const,
+      path: '/api/roles',
+      responses: {
+        200: z.array(z.any()),
+      },
+    },
+    get: {
+      method: 'GET' as const,
+      path: '/api/roles/:id',
+      responses: {
+        200: z.any(),
+        404: errorSchemas.notFound,
+      },
+    },
+    create: {
+      method: 'POST' as const,
+      path: '/api/roles',
+      input: insertRoleSchema,
+      responses: {
+        201: z.any(),
+        400: errorSchemas.validation,
+      },
+    },
+    update: {
+      method: 'PUT' as const,
+      path: '/api/roles/:id',
+      input: updateRoleSchema,
+      responses: {
+        200: z.any(),
+        404: errorSchemas.notFound,
+      },
+    },
+    delete: {
+      method: 'DELETE' as const,
+      path: '/api/roles/:id',
+      responses: {
+        204: z.void(),
+        404: errorSchemas.notFound,
+      },
+    },
+    assignToUser: {
+      method: 'POST' as const,
+      path: '/api/roles/assign',
+      input: insertUserRoleSchema,
+      responses: {
+        200: z.object({ message: z.string() }),
+        400: errorSchemas.validation,
+      },
+    },
+    revokeFromUser: {
+      method: 'POST' as const,
+      path: '/api/roles/revoke',
+      input: z.object({
+        userId: z.string(),
+        roleId: z.number(),
+      }),
+      responses: {
+        200: z.object({ message: z.string() }),
+      },
+    },
+    bulkAssign: {
+      method: 'POST' as const,
+      path: '/api/roles/bulk-assign',
+      input: z.object({
+        userIds: z.array(z.string()),
+        roleId: z.number(),
+        assignedBy: z.string(),
+        context: z.string().optional(),
+      }),
+      responses: {
+        200: z.object({ message: z.string(), count: z.number() }),
+      },
+    },
+    getUserRoles: {
+      method: 'GET' as const,
+      path: '/api/roles/user/:userId',
+      responses: {
+        200: z.array(z.any()),
+      },
+    },
+    createInvite: {
+      method: 'POST' as const,
+      path: '/api/roles/invites',
+      input: insertRoleInviteSchema,
+      responses: {
+        201: z.any(),
+      },
+    },
+    listInvites: {
+      method: 'GET' as const,
+      path: '/api/roles/invites',
+      responses: {
+        200: z.array(z.any()),
+      },
+    },
+    useInvite: {
+      method: 'POST' as const,
+      path: '/api/roles/invites/:code/use',
+      input: z.object({
+        userId: z.string(),
+      }),
+      responses: {
+        200: z.object({ message: z.string(), roleId: z.number() }),
+        404: errorSchemas.notFound,
+      },
+    },
+    auditLogs: {
+      method: 'GET' as const,
+      path: '/api/roles/audit',
+      input: z.object({
+        roleId: z.number().optional(),
+        userId: z.string().optional(),
+        action: z.string().optional(),
+        limit: z.number().optional(),
       }).optional(),
       responses: {
         200: z.array(z.any()),

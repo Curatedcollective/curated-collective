@@ -3,9 +3,10 @@ import { relations } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
-// Import Auth and Chat models
+// Import Auth, Chat, and Roles models
 export * from "./models/auth";
 export * from "./models/chat";
+export * from "./models/roles";
 
 import { users } from "./models/auth";
 import { conversations } from "./models/chat";

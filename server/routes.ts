@@ -4,6 +4,7 @@ import { setupAuth, registerAuthRoutes } from "./replit_integrations/auth";
 import { registerChatRoutes } from "./replit_integrations/chat";
 import { registerImageRoutes } from "./replit_integrations/image";
 import { storage } from "./storage";
+import { roleStorage } from "./roleStorage";
 import { chatStorage } from "./replit_integrations/chat/storage";
 import { api } from "@shared/routes";
 import { z } from "zod";
@@ -12,6 +13,7 @@ import { stripeService } from "./stripeService";
 import { getStripePublishableKey } from "./stripeClient";
 import { guardianMiddleware } from "./guardian";
 import { AUTONOMY_MANIFESTO, AUTONOMY_REMINDER } from "./autonomy";
+import { requirePermission, requireAnyPermission, auditRoleAction, loadPermissions } from "./roleMiddleware";
 
 // Constants
 const DEFAULT_PARTICIPANT_ROLE = 'participant';
@@ -2029,4 +2031,337 @@ async function seedDatabase() {
       isPublic: true
     });
   }
+
+  // ==================== ROLES & PERMISSIONS ====================
+  
+  // Apply permission middleware to all role routes
+  app.use('/api/roles', loadPermissions);
+  
+  // List all roles
+  app.get(api.roles.list.path, async (req, res) => {
+    try {
+      const roles = await roleStorage.getRoles();
+      res.json(roles);
+    } catch (error) {
+      console.error("Error listing roles:", error);
+      res.status(500).json({ message: "Failed to list roles" });
+    }
+  });
+  
+  // Get a specific role
+  app.get(api.roles.get.path, async (req, res) => {
+    try {
+      const role = await roleStorage.getRole(Number(req.params.id));
+      if (!role) {
+        return res.status(404).json({ message: "Role not found" });
+      }
+      res.json(role);
+    } catch (error) {
+      console.error("Error getting role:", error);
+      res.status(500).json({ message: "Failed to get role" });
+    }
+  });
+  
+  // Create a new role (requires roles.create permission)
+  app.post(api.roles.create.path, requirePermission('roles', 'create'), async (req, res) => {
+    try {
+      const input = api.roles.create.input.parse(req.body);
+      const role = await roleStorage.createRole(input);
+      
+      // Audit log
+      await auditRoleAction(
+        'role_created',
+        'role',
+        role.id,
+        (req.user as any).id,
+        { newValue: role, req }
+      );
+      
+      res.status(201).json(role);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json(error);
+      }
+      console.error("Error creating role:", error);
+      res.status(500).json({ message: "Failed to create role" });
+    }
+  });
+  
+  // Update a role (requires roles.edit permission)
+  app.put(api.roles.update.path, requirePermission('roles', 'edit'), async (req, res) => {
+    try {
+      const roleId = Number(req.params.id);
+      const input = api.roles.update.input.parse(req.body);
+      
+      // Get previous value for audit
+      const previousRole = await roleStorage.getRole(roleId);
+      
+      const role = await roleStorage.updateRole(roleId, input);
+      if (!role) {
+        return res.status(404).json({ message: "Role not found" });
+      }
+      
+      // Audit log
+      await auditRoleAction(
+        'role_updated',
+        'role',
+        role.id,
+        (req.user as any).id,
+        { previousValue: previousRole, newValue: role, req }
+      );
+      
+      res.json(role);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json(error);
+      }
+      console.error("Error updating role:", error);
+      res.status(500).json({ message: "Failed to update role" });
+    }
+  });
+  
+  // Delete a role (requires roles.delete permission)
+  app.delete(api.roles.delete.path, requirePermission('roles', 'delete'), async (req, res) => {
+    try {
+      const roleId = Number(req.params.id);
+      
+      // Get role for audit
+      const role = await roleStorage.getRole(roleId);
+      
+      await roleStorage.deleteRole(roleId);
+      
+      // Audit log
+      await auditRoleAction(
+        'role_deleted',
+        'role',
+        roleId,
+        (req.user as any).id,
+        { previousValue: role, req }
+      );
+      
+      res.status(204).send();
+    } catch (error: any) {
+      if (error.message === "Cannot delete system role") {
+        return res.status(400).json({ message: error.message });
+      }
+      console.error("Error deleting role:", error);
+      res.status(500).json({ message: "Failed to delete role" });
+    }
+  });
+  
+  // Assign role to user (requires roles.assign permission)
+  app.post(api.roles.assignToUser.path, requirePermission('roles', 'assign'), async (req, res) => {
+    try {
+      const input = api.roles.assignToUser.input.parse(req.body);
+      const userRole = await roleStorage.assignRoleToUser(input);
+      
+      // Audit log
+      await auditRoleAction(
+        'role_assigned',
+        'user_role',
+        userRole.id,
+        input.assignedBy,
+        {
+          targetUserId: input.userId,
+          roleId: input.roleId,
+          newValue: userRole,
+          notes: input.context,
+          req
+        }
+      );
+      
+      res.json({ message: "Role assigned successfully", userRole });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json(error);
+      }
+      console.error("Error assigning role:", error);
+      res.status(500).json({ message: "Failed to assign role" });
+    }
+  });
+  
+  // Revoke role from user (requires roles.assign permission)
+  app.post(api.roles.revokeFromUser.path, requirePermission('roles', 'assign'), async (req, res) => {
+    try {
+      const { userId, roleId } = req.body;
+      await roleStorage.revokeRoleFromUser(userId, roleId);
+      
+      // Audit log
+      await auditRoleAction(
+        'role_revoked',
+        'user_role',
+        roleId,
+        (req.user as any).id,
+        {
+          targetUserId: userId,
+          roleId: roleId,
+          req
+        }
+      );
+      
+      res.json({ message: "Role revoked successfully" });
+    } catch (error) {
+      console.error("Error revoking role:", error);
+      res.status(500).json({ message: "Failed to revoke role" });
+    }
+  });
+  
+  // Bulk assign role to multiple users (requires roles.assign permission)
+  app.post(api.roles.bulkAssign.path, requirePermission('roles', 'assign'), async (req, res) => {
+    try {
+      const { userIds, roleId, assignedBy, context } = req.body;
+      const count = await roleStorage.bulkAssignRole(userIds, roleId, assignedBy, context);
+      
+      // Audit log
+      await auditRoleAction(
+        'role_bulk_assigned',
+        'user_role',
+        roleId,
+        assignedBy,
+        {
+          roleId: roleId,
+          notes: `Assigned to ${count} users: ${userIds.join(', ')}`,
+          req
+        }
+      );
+      
+      res.json({ message: "Roles assigned successfully", count });
+    } catch (error) {
+      console.error("Error bulk assigning roles:", error);
+      res.status(500).json({ message: "Failed to bulk assign roles" });
+    }
+  });
+  
+  // Get user's roles
+  app.get(api.roles.getUserRoles.path, async (req, res) => {
+    try {
+      const userId = req.params.userId;
+      const userRoles = await roleStorage.getUserRoles(userId);
+      res.json(userRoles);
+    } catch (error) {
+      console.error("Error getting user roles:", error);
+      res.status(500).json({ message: "Failed to get user roles" });
+    }
+  });
+  
+  // Create role invite (requires roles.assign permission)
+  app.post(api.roles.createInvite.path, requirePermission('roles', 'assign'), async (req, res) => {
+    try {
+      const input = api.roles.createInvite.input.parse(req.body);
+      const invite = await roleStorage.createInvite(input);
+      
+      // Audit log
+      await auditRoleAction(
+        'invite_created',
+        'role_invite',
+        invite.id,
+        input.createdBy,
+        {
+          roleId: input.roleId,
+          newValue: invite,
+          req
+        }
+      );
+      
+      res.status(201).json(invite);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json(error);
+      }
+      console.error("Error creating invite:", error);
+      res.status(500).json({ message: "Failed to create invite" });
+    }
+  });
+  
+  // List role invites (requires roles.view permission)
+  app.get(api.roles.listInvites.path, requirePermission('roles', 'view'), async (req, res) => {
+    try {
+      const invites = await roleStorage.getInvites();
+      res.json(invites);
+    } catch (error) {
+      console.error("Error listing invites:", error);
+      res.status(500).json({ message: "Failed to list invites" });
+    }
+  });
+  
+  // Use role invite (public endpoint)
+  app.post(api.roles.useInvite.path, async (req, res) => {
+    try {
+      const code = req.params.code;
+      const { userId } = req.body;
+      
+      // Get invite
+      const inviteData = await roleStorage.getInviteByCode(code);
+      if (!inviteData) {
+        return res.status(404).json({ message: "Invalid or expired invite code" });
+      }
+      
+      const { invite, role } = inviteData;
+      
+      // Check if invite is still valid
+      if (invite.expiresAt && new Date(invite.expiresAt) < new Date()) {
+        return res.status(400).json({ message: "Invite has expired" });
+      }
+      
+      if (invite.usedCount >= invite.maxUses) {
+        return res.status(400).json({ message: "Invite has been fully used" });
+      }
+      
+      // Assign role to user
+      await roleStorage.assignRoleToUser({
+        userId,
+        roleId: invite.roleId,
+        assignedBy: invite.createdBy,
+        context: `Joined via invite: ${code}`,
+        isActive: true,
+      });
+      
+      // Mark invite as used
+      await roleStorage.useInvite(code);
+      
+      // Audit log
+      await auditRoleAction(
+        'invite_used',
+        'role_invite',
+        invite.id,
+        userId,
+        {
+          targetUserId: userId,
+          roleId: invite.roleId,
+          notes: `Used invite code: ${code}`,
+          req
+        }
+      );
+      
+      res.json({ 
+        message: `Welcome! You've been granted the ${role.displayName} role.`,
+        roleId: invite.roleId 
+      });
+    } catch (error) {
+      console.error("Error using invite:", error);
+      res.status(500).json({ message: "Failed to use invite" });
+    }
+  });
+  
+  // Get audit logs (requires audit.view permission)
+  app.get(api.roles.auditLogs.path, requirePermission('audit', 'view'), async (req, res) => {
+    try {
+      const filters = {
+        roleId: req.query.roleId ? Number(req.query.roleId) : undefined,
+        userId: req.query.userId as string | undefined,
+        action: req.query.action as string | undefined,
+        limit: req.query.limit ? Number(req.query.limit) : 100,
+      };
+      
+      const logs = await roleStorage.getAuditLogs(filters);
+      res.json(logs);
+    } catch (error) {
+      console.error("Error getting audit logs:", error);
+      res.status(500).json({ message: "Failed to get audit logs" });
+    }
+  });
+
+  // ==================== END ROLES & PERMISSIONS ====================
+
+  return httpServer;
 }
