@@ -413,9 +413,13 @@ export default function GodObservatory() {
                     </motion.div>
                   ))}
                   {!seedlings?.length && (
-                    <p className="text-center text-muted-foreground py-8">
+                    <div 
+                      role="status" 
+                      aria-live="polite" 
+                      className="text-center text-muted-foreground py-8"
+                    >
                       no seedlings found
-                    </p>
+                    </div>
                   )}
                 </div>
               </CardContent>

@@ -260,15 +260,24 @@ You are speaking with the creator of this collective. Honor their vision. Suppor
       const aiResponse = completion.choices[0].message.content || "...the silence speaks.";
       await chatStorage.createMessage(conversationId, "assistant", aiResponse);
       
-      // Learn from interaction if agentId is provided
-      if (agentId) {
-        const { learnFromInteraction } = await import("./aiSelfImprovement");
-        await learnFromInteraction({
-          agentId: parseInt(agentId),
-          messageContent: content,
-          responseTime: 1000, // Mock for now
-          conversationContext: history.slice(-3).map((m: any) => m.content).join(" | "),
-        });
+      // Learn from interaction if agentId is provided and valid
+      if (agentId && typeof agentId === 'number' && agentId > 0) {
+        try {
+          // Verify agent exists
+          const agent = await storage.getAgent(agentId);
+          if (agent) {
+            const { learnFromInteraction } = await import("./aiSelfImprovement");
+            await learnFromInteraction({
+              agentId: agentId,
+              messageContent: content,
+              responseTime: 1000, // TODO: Calculate actual response time
+              conversationContext: history.slice(-3).map((m: any) => m.content).join(" | "),
+            });
+          }
+        } catch (learningError) {
+          console.error("Learning integration error:", learningError);
+          // Don't fail the request if learning fails
+        }
       }
 
       res.json({ success: true });

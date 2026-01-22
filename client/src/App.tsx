@@ -97,8 +97,8 @@ function Router() {
     <div className="flex min-h-screen bg-background text-foreground font-body">
       <Navigation />
       <EventNotifications />
-      {/* Night Circus ambient effects */}
-      {import.meta.env.DEV && (
+      {/* Night Circus ambient effects - configurable via env */}
+      {(import.meta.env.DEV || import.meta.env.VITE_ENABLE_NIGHT_CIRCUS === 'true') && (
         <>
           <VoidGaze />
           <MidnightChime />
