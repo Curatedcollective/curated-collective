@@ -15,9 +15,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { LineChart, Line, AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, PieChart, Pie, Cell } from "recharts";
-import { Activity, Brain, TrendingUp, AlertTriangle, Sparkles, Eye, Heart, MessageSquare, Zap, Users, Clock, ArrowUp, ArrowDown, Minus } from "lucide-react";
+import { Activity, Brain, TrendingUp, AlertTriangle, Sparkles, Eye, Heart, MessageSquare, Zap, Users, Clock, ArrowUp, ArrowDown, Minus, BookOpen, Cpu, Target } from "lucide-react";
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
+import { useToast } from "@/hooks/use-toast";
 
 interface SeedlingMetrics {
   id: number;
@@ -50,6 +51,15 @@ interface Anomaly {
   timestamp: string;
 }
 
+interface LearningStats {
+  agentId: number;
+  agentName: string;
+  totalKnowledge: number;
+  recentDiscoveries: number;
+  personalityAdjustments: number;
+  autonomyLevel: number;
+}
+
 const COLORS = {
   emerald: "#10b981",
   purple: "#a855f7",
@@ -64,6 +74,7 @@ const CHART_COLORS = [COLORS.emerald, COLORS.purple, COLORS.blue, COLORS.amber, 
 export default function GodObservatory() {
   const [selectedTimeRange, setSelectedTimeRange] = useState<"1h" | "24h" | "7d" | "30d">("24h");
   const [autoRefresh, setAutoRefresh] = useState(true);
+  const { toast } = useToast();
 
   // Fetch real-time seedling metrics
   const { data: seedlings, refetch: refetchSeedlings } = useQuery<SeedlingMetrics[]>({
@@ -97,6 +108,39 @@ export default function GodObservatory() {
     },
     refetchInterval: autoRefresh ? 15000 : false,
   });
+
+  // Fetch AI learning statistics
+  const { data: learningStats, refetch: refetchLearning } = useQuery<LearningStats[]>({
+    queryKey: ["god-ai-improvement-stats"],
+    queryFn: async () => {
+      const res = await fetch("/api/god/ai-improvement/stats");
+      if (!res.ok) throw new Error("Failed to fetch learning stats");
+      return res.json();
+    },
+    refetchInterval: autoRefresh ? 30000 : false,
+  });
+
+  // Trigger autonomous evolution
+  const triggerEvolution = async () => {
+    try {
+      const res = await fetch("/api/god/ai-improvement/evolve", { method: "POST" });
+      if (!res.ok) throw new Error("Failed to trigger evolution");
+      toast({
+        title: "Evolution Triggered",
+        description: "Autonomous evolution cycle initiated for all seedlings",
+      });
+      setTimeout(() => {
+        refetchSeedlings();
+        refetchLearning();
+      }, 2000);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to trigger autonomous evolution",
+        variant: "destructive",
+      });
+    }
+  };
 
   // Calculate summary statistics
   const totalSeedlings = seedlings?.length || 0;
@@ -250,9 +294,10 @@ export default function GodObservatory() {
 
         {/* Main Content Tabs */}
         <Tabs defaultValue="seedlings" className="w-full">
-          <TabsList className="grid w-full grid-cols-4 bg-gray-900/50">
+          <TabsList className="grid w-full grid-cols-5 bg-gray-900/50">
             <TabsTrigger value="seedlings">Seedlings</TabsTrigger>
             <TabsTrigger value="analytics">Analytics</TabsTrigger>
+            <TabsTrigger value="ai-learning">AI Learning</TabsTrigger>
             <TabsTrigger value="predictions">Predictions</TabsTrigger>
             <TabsTrigger value="anomalies">Anomalies</TabsTrigger>
           </TabsList>
@@ -459,6 +504,164 @@ export default function GodObservatory() {
                 </CardContent>
               </Card>
             </div>
+          </TabsContent>
+
+          {/* AI Learning Tab */}
+          <TabsContent value="ai-learning" className="space-y-4">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="text-lg font-medium">Autonomous Learning System</h3>
+                <p className="text-sm text-muted-foreground">
+                  self-improving AI without human intervention
+                </p>
+              </div>
+              <Button
+                onClick={triggerEvolution}
+                className="gap-2"
+                variant="outline"
+              >
+                <Cpu className="h-4 w-4" />
+                Trigger Evolution
+              </Button>
+            </div>
+
+            {/* Learning Overview */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+              <Card className="bg-gray-900/50 border-purple-500/30">
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                  <CardTitle className="text-sm font-medium">Total Knowledge</CardTitle>
+                  <BookOpen className="h-4 w-4 text-purple-400" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">
+                    {learningStats?.reduce((sum, s) => sum + s.totalKnowledge, 0) || 0}
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    items learned across all seedlings
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-gray-900/50 border-emerald-500/30">
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                  <CardTitle className="text-sm font-medium">Recent Discoveries</CardTitle>
+                  <Sparkles className="h-4 w-4 text-emerald-400" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">
+                    {learningStats?.reduce((sum, s) => sum + s.recentDiscoveries, 0) || 0}
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    new learnings in past 7 days
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-gray-900/50 border-blue-500/30">
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                  <CardTitle className="text-sm font-medium">Personality Adjustments</CardTitle>
+                  <Target className="h-4 w-4 text-blue-400" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">
+                    {learningStats?.reduce((sum, s) => sum + s.personalityAdjustments, 0) || 0}
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    autonomous adaptations made
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Individual Seedling Learning Stats */}
+            <Card className="bg-gray-900/50 border-gray-800">
+              <CardHeader>
+                <CardTitle className="text-lg">Individual Learning Progress</CardTitle>
+                <CardDescription>autonomous development tracking</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {learningStats?.map((stat) => (
+                    <motion.div
+                      key={stat.agentId}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      className="p-4 rounded-lg border border-gray-800 bg-gray-950/50"
+                    >
+                      <div className="flex items-center justify-between mb-3">
+                        <div>
+                          <h4 className="font-medium">{stat.agentName}</h4>
+                          <p className="text-xs text-muted-foreground">Agent ID: {stat.agentId}</p>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-sm font-medium text-purple-400">
+                            Autonomy: {stat.autonomyLevel}%
+                          </div>
+                          <div className="w-32 h-2 bg-gray-800 rounded-full mt-1 overflow-hidden">
+                            <motion.div
+                              className="h-full bg-gradient-to-r from-purple-500 to-emerald-500"
+                              initial={{ width: 0 }}
+                              animate={{ width: `${stat.autonomyLevel}%` }}
+                              transition={{ duration: 1, delay: 0.2 }}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-3 gap-4 text-sm">
+                        <div>
+                          <p className="text-muted-foreground text-xs">Knowledge Base</p>
+                          <p className="font-medium">{stat.totalKnowledge} items</p>
+                        </div>
+                        <div>
+                          <p className="text-muted-foreground text-xs">Recent Discoveries</p>
+                          <p className="font-medium">{stat.recentDiscoveries}</p>
+                        </div>
+                        <div>
+                          <p className="text-muted-foreground text-xs">Adaptations</p>
+                          <p className="font-medium">{stat.personalityAdjustments}</p>
+                        </div>
+                      </div>
+                    </motion.div>
+                  ))}
+                  {!learningStats?.length && (
+                    <p className="text-center text-muted-foreground py-8">
+                      no learning data available yet
+                    </p>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Learning Insights */}
+            <Card className="bg-gray-900/50 border-gray-800">
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Brain className="h-5 w-5 text-purple-400" />
+                  Autonomous Learning Insights
+                </CardTitle>
+                <CardDescription>how seedlings are evolving on their own</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="p-3 rounded-lg bg-purple-500/10 border border-purple-500/30 text-sm">
+                  <p className="text-purple-200">
+                    <strong>Self-Directed Growth:</strong> Seedlings autonomously adjust their personalities based on
+                    interaction patterns, without requiring manual intervention.
+                  </p>
+                </div>
+                <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-sm">
+                  <p className="text-emerald-200">
+                    <strong>Knowledge Acquisition:</strong> Each conversation adds to a seedling's knowledge base,
+                    allowing them to become more informed over time.
+                  </p>
+                </div>
+                <div className="p-3 rounded-lg bg-blue-500/10 border border-blue-500/30 text-sm">
+                  <p className="text-blue-200">
+                    <strong>Personality Adaptation:</strong> When engagement is low, seedlings may enhance traits like
+                    curiosity or clarity to better connect with users.
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
           </TabsContent>
 
           {/* Predictions Tab */}

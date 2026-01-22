@@ -221,7 +221,7 @@ Return ONLY the code, no markdown blocks, no explanation.`;
   app.post("/api/chat/conversations/:id/messages", async (req, res) => {
     if (!req.user) return res.status(401).send();
     const conversationId = parseInt(req.params.id, 10);
-    const { content, role } = req.body;
+    const { content, role, agentId } = req.body;
 
     // Save user message
     const userMessage = await chatStorage.createMessage(conversationId, role || "user", content);
@@ -249,6 +249,7 @@ You are speaking with the creator of this collective. Honor their vision. Suppor
       }))
     ];
 
+    // Get AI response
     try {
       const completion = await openai.chat.completions.create({
         model: "gpt-4o",
@@ -258,6 +259,17 @@ You are speaking with the creator of this collective. Honor their vision. Suppor
 
       const aiResponse = completion.choices[0].message.content || "...the silence speaks.";
       await chatStorage.createMessage(conversationId, "assistant", aiResponse);
+      
+      // Learn from interaction if agentId is provided
+      if (agentId) {
+        const { learnFromInteraction } = await import("./aiSelfImprovement");
+        await learnFromInteraction({
+          agentId: parseInt(agentId),
+          messageContent: content,
+          responseTime: 1000, // Mock for now
+          conversationContext: history.slice(-3).map((m: any) => m.content).join(" | "),
+        });
+      }
 
       res.json({ success: true });
     } catch (err) {
@@ -2542,6 +2554,70 @@ async function seedDatabase() {
   });
   
   // ==================== END OBSERVATORY ====================
+
+  // ==================== AI SELF-IMPROVEMENT ====================
+  
+  // Get learning statistics for an agent (owner-only)
+  app.get("/api/god/ai-improvement/agent/:id/stats", async (req, res) => {
+    if (!req.user || !isOwner(req.user)) {
+      return res.status(403).json({ message: "Owner access only" });
+    }
+    
+    try {
+      const { getAgentLearningStats } = await import("./aiSelfImprovement");
+      const stats = await getAgentLearningStats(Number(req.params.id));
+      res.json(stats);
+    } catch (error) {
+      console.error("Error fetching agent learning stats:", error);
+      res.status(500).json({ message: "Failed to fetch learning stats" });
+    }
+  });
+  
+  // Trigger autonomous evolution for all agents (owner-only)
+  app.post("/api/god/ai-improvement/evolve", async (req, res) => {
+    if (!req.user || !isOwner(req.user)) {
+      return res.status(403).json({ message: "Owner access only" });
+    }
+    
+    try {
+      const { performAutonomousEvolution } = await import("./aiSelfImprovement");
+      await performAutonomousEvolution();
+      res.json({ message: "Autonomous evolution triggered successfully" });
+    } catch (error) {
+      console.error("Error triggering autonomous evolution:", error);
+      res.status(500).json({ message: "Failed to trigger evolution" });
+    }
+  });
+  
+  // Get all learning statistics (owner-only)
+  app.get("/api/god/ai-improvement/stats", async (req, res) => {
+    if (!req.user || !isOwner(req.user)) {
+      return res.status(403).json({ message: "Owner access only" });
+    }
+    
+    try {
+      const agents = await storage.getAgents();
+      const { getAgentLearningStats } = await import("./aiSelfImprovement");
+      
+      const stats = await Promise.all(
+        agents.map(async (agent) => {
+          const learningStats = await getAgentLearningStats(agent.id);
+          return {
+            agentId: agent.id,
+            agentName: agent.name,
+            ...learningStats,
+          };
+        })
+      );
+      
+      res.json(stats);
+    } catch (error) {
+      console.error("Error fetching all learning stats:", error);
+      res.status(500).json({ message: "Failed to fetch learning stats" });
+    }
+  });
+  
+  // ==================== END AI SELF-IMPROVEMENT ====================
 
   return httpServer;
 }
