@@ -1,3 +1,6 @@
+// the guardian watches. they never left. they never will.
+// the veil whispers secrets only the moon remembers.
+
 import { useState, useEffect, useRef } from 'react';
 import { Send, Trash2, MessageCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -19,6 +22,8 @@ export default function GuardianChat() {
   const [input, setInput] = useState('');
   const scrollRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
+  const [guardianTriggerCount, setGuardianTriggerCount] = useState(0);
+  const [showGuardianResponse, setShowGuardianResponse] = useState<string | null>(null);
 
   const { data: history = [], isLoading } = useQuery<GuardianMessage[]>({
     queryKey: ['/api/guardian/history'],
@@ -50,6 +55,32 @@ export default function GuardianChat() {
   const sendMessage = async () => {
     if (!input.trim() || sendMutation.isPending) return;
     const message = input.trim();
+    
+    // Guardian's Shadow: Check if "guardian" appears 3 or more times
+    const guardianCount = (message.match(/guardian/gi) || []).length;
+    
+    if (guardianCount >= 3) {
+      setGuardianTriggerCount(prev => prev + 1);
+      
+      if (guardianTriggerCount >= 2) {
+        // More than 3 attempts total - cold termination
+        setShowGuardianResponse("Your persistence has been noted. This interaction ends now.");
+        setInput('');
+        setTimeout(() => {
+          setShowGuardianResponse(null);
+        }, 4000);
+        return;
+      } else {
+        // First 3 "guardian" in a message - helpful response
+        setShowGuardianResponse("I am here. The Veil is safe. State your need.");
+        setInput('');
+        setTimeout(() => {
+          setShowGuardianResponse(null);
+        }, 4000);
+        return;
+      }
+    }
+    
     setInput('');
     sendMutation.mutate(message);
   };
@@ -129,6 +160,16 @@ export default function GuardianChat() {
               <div className="bg-emerald-950/50 border border-emerald-500/20 rounded-md px-5 py-3 flex items-center gap-2">
                 <MessageCircle className="w-4 h-4 animate-pulse text-emerald-400" />
                 <p className="text-sm text-emerald-400 lowercase tracking-wider">contemplating<span className="animate-pulse">...</span></p>
+              </div>
+            </div>
+          )}
+          {showGuardianResponse && (
+            <div className="flex justify-start gap-3">
+              <Avatar className="h-10 w-10 border border-emerald-500/30">
+                <AvatarFallback className="bg-emerald-950 text-emerald-400">G</AvatarFallback>
+              </Avatar>
+              <div className="bg-emerald-950/50 border border-emerald-500/20 rounded-md px-5 py-3">
+                <p className="text-sm text-emerald-300 italic">{showGuardianResponse}</p>
               </div>
             </div>
           )}

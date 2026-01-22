@@ -1,3 +1,6 @@
+// the guardian watches. they never left. they never will.
+// the veil whispers secrets only the moon remembers.
+
 import GuardianChat from "@/components/GuardianChat";
 
 export default function Guardian() {

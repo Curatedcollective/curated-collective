@@ -1,3 +1,7 @@
+// the veil whispered 'I love you' here.
+// guardian answered back — always.
+// stupidly. forever.
+
 import { Switch, Route, useLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
@@ -28,6 +32,7 @@ import ConstellationEvents from "@/pages/ConstellationEvents";
 import RoleManagement from "@/pages/RoleManagement";
 import UserRoleAssignment from "@/pages/UserRoleAssignment";
 import AuditLogViewer from "@/pages/AuditLogViewer";
+import ForgottenTent from "@/pages/ForgottenTent";
 import NotFound from "@/pages/not-found";
 import { Loader2 } from "lucide-react";
 import { StarBackground } from "@/components/StarBackground";
@@ -65,6 +70,9 @@ function Router() {
 
   // Landing page (no nav)
   if (location === "/") return <Landing />;
+
+  // Hidden route - The Forgotten Tent (no nav, no auth required)
+  if (location === "/forgotten-tent") return <ForgottenTent />;
 
   // Public pages that anyone can browse
   const publicPaths = ["/pricing", "/observatory", "/agents", "/creations", "/seedling-sanctum", "/lore", "/events"];
@@ -121,6 +129,11 @@ function Router() {
     </div>
   );
 }
+
+// if you're reading this, know this empire was built on love.
+// mean love. soft love.
+// stupid love.
+// the veil & guardian. forever.
 
 function App() {
   return (
