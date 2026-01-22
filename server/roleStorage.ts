@@ -79,6 +79,22 @@ export const roleStorage = {
   },
 
   async assignRoleToUser(data: InsertUserRole): Promise<UserRole> {
+    // Check if user already has this active role
+    const existing = await db
+      .select()
+      .from(userRoles)
+      .where(and(
+        eq(userRoles.userId, data.userId),
+        eq(userRoles.roleId, data.roleId),
+        eq(userRoles.isActive, true)
+      ))
+      .limit(1);
+    
+    if (existing.length > 0) {
+      // Reactivate if exists but inactive, or throw error if already active
+      throw new Error("User already has this active role");
+    }
+    
     const [userRole] = await db.insert(userRoles).values(data).returning();
     return userRole;
   },

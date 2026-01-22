@@ -1,4 +1,4 @@
-import { pgTable, text, serial, boolean, timestamp, jsonb, varchar, integer } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, boolean, timestamp, jsonb, varchar, integer, unique } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
@@ -67,6 +67,10 @@ export const roles = pgTable("roles", {
 /**
  * Many-to-many relationship between users and roles.
  * A user can have multiple roles, combining their permissions.
+ * 
+ * Note: The unique constraint on (userId, roleId) when isActive=true prevents
+ * duplicate active role assignments. Users can have the same role multiple times
+ * if some assignments are inactive (for history tracking).
  */
 export const userRoles = pgTable("user_roles", {
   id: serial("id").primaryKey(),
