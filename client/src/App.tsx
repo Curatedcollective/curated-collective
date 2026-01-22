@@ -87,7 +87,9 @@ function Router() {
 
   // Redirect to home if trying to access protected content without auth
   if (!user && (isProtectedPage || isCreationEditor)) {
-    window.location.href = "/";
+    // Store the intended destination and redirect to login
+    const intendedPath = location;
+    window.location.href = `/api/login?redirect=${encodeURIComponent(intendedPath)}`;
     return null;
   }
 
