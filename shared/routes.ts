@@ -315,7 +315,7 @@ export const api = {
     createInvite: {
       method: 'POST' as const,
       path: '/api/roles/invites',
-      input: insertRoleInviteSchema,
+      input: insertRoleInviteSchema.omit({ code: true }), // Code generated server-side
       responses: {
         201: z.any(),
       },

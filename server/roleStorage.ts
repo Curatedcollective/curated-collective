@@ -111,7 +111,24 @@ export const roleStorage = {
   },
 
   async bulkAssignRole(userIds: string[], roleId: number, assignedBy: string, context?: string): Promise<number> {
-    const values = userIds.map(userId => ({
+    // Check for existing active assignments and filter them out
+    const existing = await db
+      .select()
+      .from(userRoles)
+      .where(and(
+        inArray(userRoles.userId, userIds),
+        eq(userRoles.roleId, roleId),
+        eq(userRoles.isActive, true)
+      ));
+    
+    const existingUserIds = new Set(existing.map(ur => ur.userId));
+    const usersToAssign = userIds.filter(id => !existingUserIds.has(id));
+    
+    if (usersToAssign.length === 0) {
+      return 0; // All users already have this role
+    }
+    
+    const values = usersToAssign.map(userId => ({
       userId,
       roleId,
       assignedBy,

@@ -214,27 +214,12 @@ export default function UserRoleAssignment() {
       return;
     }
 
-    // Generate cryptographically secure invite code
-    const generateInviteCode = () => {
-      // Use crypto for secure random string
-      if (typeof crypto !== 'undefined' && crypto.randomUUID) {
-        return `invite-${crypto.randomUUID()}`;
-      } else {
-        // Fallback for environments without crypto.randomUUID
-        const array = new Uint8Array(16);
-        crypto.getRandomValues(array);
-        return `invite-${Array.from(array, b => b.toString(16).padStart(2, '0')).join('')}`;
-      }
-    };
-
-    const inviteCode = generateInviteCode();
-
     try {
+      // Code is now generated server-side for security
       const response = await fetch("/api/roles/invites", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          code: inviteCode,
           email: inviteEmail.trim() || null,
           roleId: inviteRoleId,
           maxUses: inviteMaxUses,

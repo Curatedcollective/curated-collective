@@ -2037,8 +2037,8 @@ async function seedDatabase() {
   // Apply permission middleware to all role routes
   app.use('/api/roles', loadPermissions);
   
-  // List all roles
-  app.get(api.roles.list.path, async (req, res) => {
+  // List all roles (requires roles.view permission)
+  app.get(api.roles.list.path, requirePermission('roles', 'view'), async (req, res) => {
     try {
       const roles = await roleStorage.getRoles();
       res.json(roles);
@@ -2048,8 +2048,8 @@ async function seedDatabase() {
     }
   });
   
-  // Get a specific role
-  app.get(api.roles.get.path, async (req, res) => {
+  // Get a specific role (requires roles.view permission)
+  app.get(api.roles.get.path, requirePermission('roles', 'view'), async (req, res) => {
     try {
       const role = await roleStorage.getRole(Number(req.params.id));
       if (!role) {
@@ -2232,11 +2232,27 @@ async function seedDatabase() {
     }
   });
   
-  // Get user's roles
+  // Get user's roles (users can view their own roles, or requires users.view permission to view others)
   app.get(api.roles.getUserRoles.path, async (req, res) => {
     try {
-      const userId = req.params.userId;
-      const userRoles = await roleStorage.getUserRoles(userId);
+      const targetUserId = req.params.userId;
+      const requestingUserId = (req.user as any)?.id;
+      
+      // Check if user is viewing their own roles or has permission to view others
+      const isViewingSelf = requestingUserId === targetUserId;
+      const isOwner = (req.user as any)?.email === process.env.OWNER_EMAIL || (req.user as any)?.role === 'owner';
+      
+      if (!isViewingSelf && !isOwner) {
+        // Check if user has permission to view other users' roles
+        const hasPermission = await roleStorage.hasPermission(requestingUserId, 'users', 'view');
+        if (!hasPermission) {
+          return res.status(403).json({ 
+            message: "You don't have permission to view other users' roles" 
+          });
+        }
+      }
+      
+      const userRoles = await roleStorage.getUserRoles(targetUserId);
       res.json(userRoles);
     } catch (error) {
       console.error("Error getting user roles:", error);
@@ -2247,7 +2263,15 @@ async function seedDatabase() {
   // Create role invite (requires roles.assign permission)
   app.post(api.roles.createInvite.path, requirePermission('roles', 'assign'), async (req, res) => {
     try {
-      const input = api.roles.createInvite.input.parse(req.body);
+      // Generate secure invite code server-side
+      const crypto = await import('crypto');
+      const inviteCode = `invite-${crypto.randomUUID()}`;
+      
+      const input = {
+        ...api.roles.createInvite.input.parse(req.body),
+        code: inviteCode,
+      };
+      
       const invite = await roleStorage.createInvite(input);
       
       // Audit log
