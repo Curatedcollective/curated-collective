@@ -13,7 +13,7 @@ import {
   UserRole,
   Permissions
 } from "@shared/schema";
-import { eq, and, desc, inArray } from "drizzle-orm";
+import { eq, and, desc, inArray, sql } from "drizzle-orm";
 
 export const roleStorage = {
   // === ROLES ===
@@ -142,24 +142,42 @@ export const roleStorage = {
   },
 
   async useInvite(code: string): Promise<boolean> {
-    const [invite] = await db
-      .update(roleInvites)
-      .set({
-        usedCount: db.raw(`used_count + 1`),
-        lastUsedAt: new Date(),
-      })
-      .where(eq(roleInvites.code, code))
-      .returning();
-    
-    // Deactivate if max uses reached
-    if (invite && invite.maxUses && invite.usedCount >= invite.maxUses) {
-      await db
+    // Use a transaction to prevent race conditions
+    return await db.transaction(async (tx) => {
+      // Get current invite state
+      const [currentInvite] = await tx
+        .select()
+        .from(roleInvites)
+        .where(and(
+          eq(roleInvites.code, code),
+          eq(roleInvites.isActive, true)
+        ))
+        .limit(1);
+      
+      if (!currentInvite) {
+        return false;
+      }
+      
+      // Check if max uses would be exceeded
+      if (currentInvite.maxUses && currentInvite.usedCount >= currentInvite.maxUses) {
+        return false;
+      }
+      
+      // Increment usage count
+      const newUsedCount = currentInvite.usedCount + 1;
+      const shouldDeactivate = currentInvite.maxUses && newUsedCount >= currentInvite.maxUses;
+      
+      await tx
         .update(roleInvites)
-        .set({ isActive: false })
+        .set({
+          usedCount: newUsedCount,
+          lastUsedAt: new Date(),
+          isActive: shouldDeactivate ? false : currentInvite.isActive,
+        })
         .where(eq(roleInvites.code, code));
-    }
-    
-    return !!invite;
+      
+      return true;
+    });
   },
 
   // === AUDIT LOGS ===

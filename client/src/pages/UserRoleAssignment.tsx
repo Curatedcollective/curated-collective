@@ -198,8 +198,20 @@ export default function UserRoleAssignment() {
       return;
     }
 
-    // Generate unique invite code
-    const inviteCode = `invite-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    // Generate cryptographically secure invite code
+    const generateInviteCode = () => {
+      // Use crypto for secure random string
+      if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+        return `invite-${crypto.randomUUID()}`;
+      } else {
+        // Fallback for environments without crypto.randomUUID
+        const array = new Uint8Array(16);
+        crypto.getRandomValues(array);
+        return `invite-${Array.from(array, b => b.toString(16).padStart(2, '0')).join('')}`;
+      }
+    };
+
+    const inviteCode = generateInviteCode();
 
     try {
       const response = await fetch("/api/roles/invites", {
