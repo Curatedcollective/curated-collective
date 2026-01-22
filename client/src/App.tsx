@@ -26,6 +26,7 @@ import GodDashboard from "@/pages/GodDashboard";
 import GodGuardian from "@/pages/GodGuardian";
 import GodPromoter from "@/pages/GodPromoter";
 import GodEvents from "@/pages/GodEvents";
+import GodObservatory from "@/pages/GodObservatory";
 import SeedlingSanctum from "@/pages/SeedlingSanctum";
 import LoreCompendium from "@/pages/LoreCompendium";
 import ConstellationEvents from "@/pages/ConstellationEvents";
@@ -38,6 +39,7 @@ import { Loader2 } from "lucide-react";
 import { StarBackground } from "@/components/StarBackground";
 import { VoidWhispers } from "@/components/VoidWhispers";
 import { EventNotifications } from "@/components/EventNotifications";
+import { VoidGaze, MidnightChime, Starfall, CircusTent } from "@/components/NightCircusSecrets";
 
 function Router() {
   const { user, isLoading } = useAuth();
@@ -103,6 +105,15 @@ function Router() {
     <div className="flex min-h-screen bg-background text-foreground font-body">
       <Navigation />
       <EventNotifications />
+      {/* Night Circus ambient effects - configurable via env */}
+      {(import.meta.env.DEV || import.meta.env.VITE_ENABLE_NIGHT_CIRCUS === 'true') && (
+        <>
+          <VoidGaze />
+          <MidnightChime />
+          <Starfall />
+          <CircusTent />
+        </>
+      )}
       <main className="flex-1 md:ml-64 p-4 md:p-8 overflow-y-auto max-w-7xl mx-auto w-full">
         <Switch>
           <Route path="/creations" component={CreationsList} />
@@ -120,6 +131,7 @@ function Router() {
           <Route path="/god/guardian" component={GodGuardian} />
           <Route path="/god/promoter" component={GodPromoter} />
           <Route path="/god/events" component={GodEvents} />
+          <Route path="/god/observatory" component={GodObservatory} />
           <Route path="/god/roles" component={RoleManagement} />
           <Route path="/god/user-roles" component={UserRoleAssignment} />
           <Route path="/god/audit" component={AuditLogViewer} />
