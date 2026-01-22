@@ -25,6 +25,9 @@ import GodEvents from "@/pages/GodEvents";
 import SeedlingSanctum from "@/pages/SeedlingSanctum";
 import LoreCompendium from "@/pages/LoreCompendium";
 import ConstellationEvents from "@/pages/ConstellationEvents";
+import RoleManagement from "@/pages/RoleManagement";
+import UserRoleAssignment from "@/pages/UserRoleAssignment";
+import AuditLogViewer from "@/pages/AuditLogViewer";
 import NotFound from "@/pages/not-found";
 import { Loader2 } from "lucide-react";
 import { StarBackground } from "@/components/StarBackground";
@@ -109,6 +112,9 @@ function Router() {
           <Route path="/god/guardian" component={GodGuardian} />
           <Route path="/god/promoter" component={GodPromoter} />
           <Route path="/god/events" component={GodEvents} />
+          <Route path="/god/roles" component={RoleManagement} />
+          <Route path="/god/user-roles" component={UserRoleAssignment} />
+          <Route path="/god/audit" component={AuditLogViewer} />
           <Route component={NotFound} />
         </Switch>
       </main>
