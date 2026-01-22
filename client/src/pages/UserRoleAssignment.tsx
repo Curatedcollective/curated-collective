@@ -26,6 +26,7 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ROLE_COLOR_MAP, DEFAULT_ROLE_COLOR } from "@/lib/roleConstants";
 
 interface Role {
   id: number;
@@ -46,22 +47,6 @@ interface UserRole {
   isActive: boolean;
   role: Role;
 }
-
-// Map color names to actual Tailwind classes (for proper CSS generation)
-const colorMap: Record<string, string> = {
-  purple: "bg-purple-600",
-  emerald: "bg-emerald-600",
-  blue: "bg-blue-600",
-  amber: "bg-amber-600",
-  gray: "bg-gray-600",
-  red: "bg-red-600",
-  green: "bg-green-600",
-  indigo: "bg-indigo-600",
-  pink: "bg-pink-600",
-  cyan: "bg-cyan-600",
-  teal: "bg-teal-600",
-  orange: "bg-orange-600",
-};
 
 export default function UserRoleAssignment() {
   const { user } = useAuth();
@@ -379,7 +364,7 @@ export default function UserRoleAssignment() {
                           <div className="flex items-center justify-between">
                             <div>
                               <div className="flex items-center gap-2 mb-2">
-                                <Badge className={colorMap[userRole.role.color] || colorMap.gray}>
+                                <Badge className={ROLE_COLOR_MAP[userRole.role.color] || ROLE_COLOR_MAP[DEFAULT_ROLE_COLOR]}>
                                   {userRole.role.displayName}
                                 </Badge>
                                 {userRole.isActive ? (

@@ -25,6 +25,7 @@ import {
   X
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { ROLE_COLOR_GRADIENTS, DEFAULT_ROLE_COLOR } from "@/lib/roleConstants";
 
 interface Role {
   id: number;
@@ -48,22 +49,6 @@ const iconMap: Record<string, any> = {
   "book-open": BookOpen,
   eye: Eye,
   shield: Shield,
-};
-
-// Map color names to actual Tailwind classes (for proper CSS generation)
-const colorMap: Record<string, string> = {
-  purple: "from-purple-600 to-purple-700",
-  emerald: "from-emerald-600 to-emerald-700",
-  blue: "from-blue-600 to-blue-700",
-  amber: "from-amber-600 to-amber-700",
-  gray: "from-gray-600 to-gray-700",
-  red: "from-red-600 to-red-700",
-  green: "from-green-600 to-green-700",
-  indigo: "from-indigo-600 to-indigo-700",
-  pink: "from-pink-600 to-pink-700",
-  cyan: "from-cyan-600 to-cyan-700",
-  teal: "from-teal-600 to-teal-700",
-  orange: "from-orange-600 to-orange-700",
 };
 
 export default function RoleManagement() {
@@ -237,7 +222,7 @@ export default function RoleManagement() {
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-3">
                       <div
-                        className={`p-2 rounded-lg bg-gradient-to-br ${colorMap[role.color] || colorMap.gray}`}
+                        className={`p-2 rounded-lg bg-gradient-to-br ${ROLE_COLOR_GRADIENTS[role.color] || ROLE_COLOR_GRADIENTS[DEFAULT_ROLE_COLOR]}`}
                       >
                         <Icon className="w-5 h-5 text-white" />
                       </div>
