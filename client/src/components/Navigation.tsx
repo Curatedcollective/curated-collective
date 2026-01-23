@@ -4,7 +4,7 @@ import { useTheme } from "@/hooks/use-theme";
 import { Code, Bot, MessageSquare, LogOut, Menu, Lock, Sparkles, Palette, Eye, Radio, Shield, Leaf, BookOpen, Star } from "lucide-react";
 import logoImage from "@assets/generated_images/constellation_seedling_logo_design.png";
 import { Button } from "@/components/ui/button";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import {
   DropdownMenu,
@@ -45,6 +45,15 @@ function NavContent({ user, logout, location, theme, setTheme }: any) {
     return localStorage.getItem('cosmosUnlocked') === 'true';
   });
 
+  // Cleanup timer on unmount
+  useEffect(() => {
+    return () => {
+      if (logoClickTimerRef.current) {
+        clearTimeout(logoClickTimerRef.current);
+      }
+    };
+  }, []);
+
   const handleLogoClick = () => {
     logoClickCountRef.current += 1;
 
@@ -60,8 +69,6 @@ function NavContent({ user, logout, location, theme, setTheme }: any) {
     if (logoClickCountRef.current >= 5 && !cosmosUnlocked) {
       setCosmosUnlocked(true);
       localStorage.setItem('cosmosUnlocked', 'true');
-      // Optionally show a notification or easter egg message
-      console.log('🌌 The Cosmos theme has been unlocked!');
     }
   };
 

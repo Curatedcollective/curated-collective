@@ -25,6 +25,8 @@ const emotionColors: Record<Emotion, {
   excitement: { hue: 340, saturation: 85, lightness: 55, glow: "244, 114, 182" }, // energetic pink
 };
 
+const cosmosEmotionCycle: Emotion[] = ["curiosity", "joy", "serenity", "excitement", "melancholy"];
+
 function applyCosmosEmotion(emotion: Emotion) {
   const root = document.documentElement;
   const colors = emotionColors[emotion];
@@ -62,30 +64,30 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     root.classList.add(`theme-${theme}`);
     localStorage.setItem("theme", theme);
 
+    // Clean up any existing cosmos interval first
+    if (cosmosIntervalRef.current !== null) {
+      clearInterval(cosmosIntervalRef.current);
+      cosmosIntervalRef.current = null;
+    }
+
     // Start cosmos emotion cycle if cosmos theme is active
     if (theme === "cosmos") {
-      const emotions: Emotion[] = ["curiosity", "joy", "serenity", "excitement", "melancholy"];
       let currentEmotionIndex = 0;
 
       // Apply initial emotion
-      applyCosmosEmotion(emotions[currentEmotionIndex]);
+      applyCosmosEmotion(cosmosEmotionCycle[currentEmotionIndex]);
 
       // Cycle through emotions every 8 seconds
       cosmosIntervalRef.current = window.setInterval(() => {
-        currentEmotionIndex = (currentEmotionIndex + 1) % emotions.length;
-        applyCosmosEmotion(emotions[currentEmotionIndex]);
+        currentEmotionIndex = (currentEmotionIndex + 1) % cosmosEmotionCycle.length;
+        applyCosmosEmotion(cosmosEmotionCycle[currentEmotionIndex]);
       }, 8000);
-    } else {
-      // Clean up cosmos interval if switching away from cosmos theme
-      if (cosmosIntervalRef.current !== null) {
-        clearInterval(cosmosIntervalRef.current);
-        cosmosIntervalRef.current = null;
-      }
     }
 
     return () => {
       if (cosmosIntervalRef.current !== null) {
         clearInterval(cosmosIntervalRef.current);
+        cosmosIntervalRef.current = null;
       }
     };
   }, [theme]);

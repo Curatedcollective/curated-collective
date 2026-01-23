@@ -167,15 +167,14 @@
   --accent-foreground: var(--cosmos-accent-foreground, 280 20% 95%);
   --border: var(--cosmos-border, 280 25% 16%);
   --theme-glow: var(--cosmos-glow, 192, 132, 252);
-  
-  /* Smooth transitions for color changes */
-  transition: 
-    background-color 2s ease-in-out,
-    color 2s ease-in-out,
-    border-color 2s ease-in-out;
 }
 
-.theme-cosmos * {
+/* Smooth transitions for cosmos theme color changes */
+.theme-cosmos .magical-glow,
+.theme-cosmos button,
+.theme-cosmos .card,
+.theme-cosmos [class*="bg-"],
+.theme-cosmos [class*="border-"] {
   transition: 
     background-color 2s ease-in-out,
     color 2s ease-in-out,
