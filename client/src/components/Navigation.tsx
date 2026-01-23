@@ -97,7 +97,7 @@ export function Navigation() {
           <div className="mt-4 px-2">
             <p className="text-[10px] text-zinc-500 uppercase tracking-widest mb-2">theme</p>
             <div className="flex items-center">
-              <ThemePicker />
+              <ThemePicker cosmosUnlocked={cosmosUnlocked} />
             </div>
           </div>
 
