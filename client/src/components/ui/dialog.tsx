@@ -6,6 +6,9 @@ import { X } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 
+// Hook to generate stable IDs
+const { useId } = React
+
 const Dialog = DialogPrimitive.Root
 
 const DialogTrigger = DialogPrimitive.Trigger
@@ -29,28 +32,80 @@ const DialogOverlay = React.forwardRef<
 ))
 DialogOverlay.displayName = DialogPrimitive.Overlay.displayName
 
+/**
+ * DialogContent component with accessibility fallbacks.
+ * 
+ * Radix Dialog requires aria-labelledby and aria-describedby to be set via DialogTitle
+ * and DialogDescription. If these are not provided by the consumer, this component
+ * automatically generates stable IDs and renders visually-hidden fallback elements
+ * to prevent Radix warnings and ensure screen reader accessibility. This also prevents
+ * TypeErrors in client code that reads these aria attribute IDs.
+ */
 const DialogContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content>
->(({ className, children, ...props }, ref) => (
-  <DialogPortal>
-    <DialogOverlay />
-    <DialogPrimitive.Content
-      ref={ref}
-      className={cn(
-        "fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:rounded-lg",
-        className
-      )}
-      {...props}
-    >
-      {children}
-      <DialogPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground">
-        <X className="h-4 w-4" />
-        <span className="sr-only">Close</span>
-      </DialogPrimitive.Close>
-    </DialogPrimitive.Content>
-  </DialogPortal>
-))
+>(({ className, children, ...props }, ref) => {
+  // Generate stable IDs for aria-labelledby and aria-describedby
+  const generatedTitleId = useId()
+  const generatedDescId = useId()
+  
+  // Use consumer-provided IDs if available, otherwise use generated ones
+  const titleId = props['aria-labelledby'] || generatedTitleId
+  const descId = props['aria-describedby'] || generatedDescId
+  
+  // Check if consumer provided Title or Description elements
+  const hasExplicitTitle = React.Children.toArray(children).some(
+    (child) =>
+      React.isValidElement(child) &&
+      typeof child.type !== 'string' &&
+      (child.type === DialogPrimitive.Title || 
+       (child.type as any)?.displayName === DialogPrimitive.Title.displayName)
+  )
+  
+  const hasExplicitDescription = React.Children.toArray(children).some(
+    (child) =>
+      React.isValidElement(child) &&
+      typeof child.type !== 'string' &&
+      (child.type === DialogPrimitive.Description ||
+       (child.type as any)?.displayName === DialogPrimitive.Description.displayName)
+  )
+
+  return (
+    <DialogPortal>
+      <DialogOverlay />
+      <DialogPrimitive.Content
+        ref={ref}
+        className={cn(
+          "fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:rounded-lg",
+          className
+        )}
+        aria-labelledby={titleId}
+        aria-describedby={descId}
+        {...props}
+      >
+        {/* Render visually-hidden fallback title if no explicit title provided */}
+        {!hasExplicitTitle && (
+          <DialogPrimitive.Title id={titleId} className="sr-only">
+            Dialog
+          </DialogPrimitive.Title>
+        )}
+        
+        {/* Render visually-hidden fallback description if no explicit description provided */}
+        {!hasExplicitDescription && (
+          <DialogPrimitive.Description id={descId} className="sr-only">
+            Dialog content
+          </DialogPrimitive.Description>
+        )}
+        
+        {children}
+        <DialogPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground">
+          <X className="h-4 w-4" />
+          <span className="sr-only">Close</span>
+        </DialogPrimitive.Close>
+      </DialogPrimitive.Content>
+    </DialogPortal>
+  )
+})
 DialogContent.displayName = DialogPrimitive.Content.displayName
 
 const DialogHeader = ({
