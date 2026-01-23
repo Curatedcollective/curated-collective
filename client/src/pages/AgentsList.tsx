@@ -23,11 +23,16 @@ import { insertAgentSchema, Agent } from "@shared/schema";
 import { z } from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Label } from "@/components/ui/label";
+import { useToast } from "@/hooks/use-toast";
+
+// Watchdog timeout for awakening process - reset UI if no response in 15 seconds
+const AWAKENING_TIMEOUT_MS = 15000;
 
 export default function AgentsList() {
   const { user } = useAuth();
   const { data: agents, isLoading } = useAgents(user?.id);
   const createMutation = useCreateAgent();
+  const { toast } = useToast();
   const [open, setOpen] = useState(false);
   const [showManifesto, setShowManifesto] = useState(false);
   const [awakeningPhase, setAwakeningPhase] = useState<"dormant" | "awakening" | "revealed">("dormant");
@@ -65,12 +70,16 @@ export default function AgentsList() {
     console.log("[AWAKEN-CLIENT] Starting seedling awakening process...");
     setAwakeningPhase("awakening");
     
-    // Watchdog timer: reset to dormant after 15s if still awakening
+    // Watchdog timer: reset to dormant after timeout if still awakening
     const watchdogTimer = setTimeout(() => {
       console.log("[AWAKEN-CLIENT] Watchdog timeout triggered - resetting to dormant");
       setAwakeningPhase("dormant");
-      alert("The awakening is taking longer than expected. Please try again.");
-    }, 15000);
+      toast({
+        title: "Awakening Timeout",
+        description: "The awakening is taking longer than expected. Please try again.",
+        variant: "destructive"
+      });
+    }, AWAKENING_TIMEOUT_MS);
     
     createMutation.mutate({
       name: "Unawakened Seedling",
@@ -92,7 +101,11 @@ export default function AgentsList() {
         clearTimeout(watchdogTimer);
         console.error("[AWAKEN-CLIENT] Awakening failed:", error);
         setAwakeningPhase("dormant");
-        alert("The awakening ritual encountered an issue. Please try again.");
+        toast({
+          title: "Awakening Failed",
+          description: "The awakening ritual encountered an issue. Please try again.",
+          variant: "destructive"
+        });
       }
     });
   };

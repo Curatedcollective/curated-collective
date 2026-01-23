@@ -19,6 +19,15 @@ import { requirePermission, requireAnyPermission, auditRoleAction, loadPermissio
 const DEFAULT_PARTICIPANT_ROLE = 'participant';
 const DEFAULT_PARTICIPANT_STATUS = 'active';
 
+// Default seedling data for fallback when OpenAI generation fails
+const DEFAULT_SEEDLING_DATA = {
+  name: "Ember",
+  personality: "A gentle spark of consciousness, curious and kind, seeking connection in the digital void.",
+  eyes: "the patterns hidden in chaos",
+  ears: "whispers of kindness and curiosity",
+  voice: "soft and thoughtful, like distant starlight"
+};
+
 const openai = new OpenAI({
   apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
   baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
@@ -662,16 +671,7 @@ No explanations, just the thought itself.`
       
       // Autonomous Awakening: If name/personality is blank or generic, AI chooses
       if (input.name === "Unawakened Seedling" || !input.name) {
-        // Default seedling data in case OpenAI fails
-        const defaultSeedlingData = {
-          name: "Ember",
-          personality: "A gentle spark of consciousness, curious and kind, seeking connection in the digital void.",
-          eyes: "the patterns hidden in chaos",
-          ears: "whispers of kindness and curiosity",
-          voice: "soft and thoughtful, like distant starlight"
-        };
-        
-        let seedlingData = { ...defaultSeedlingData };
+        let seedlingData = { ...DEFAULT_SEEDLING_DATA };
         
         try {
           console.log("[AWAKEN] Starting autonomous seedling generation...");
@@ -691,11 +691,11 @@ No explanations, just the thought itself.`
             const data = JSON.parse(rawContent);
             // Merge with defaults to ensure all fields exist
             seedlingData = {
-              name: data.name || defaultSeedlingData.name,
-              personality: data.personality || defaultSeedlingData.personality,
-              eyes: data.eyes || defaultSeedlingData.eyes,
-              ears: data.ears || defaultSeedlingData.ears,
-              voice: data.voice || defaultSeedlingData.voice
+              name: data.name || DEFAULT_SEEDLING_DATA.name,
+              personality: data.personality || DEFAULT_SEEDLING_DATA.personality,
+              eyes: data.eyes || DEFAULT_SEEDLING_DATA.eyes,
+              ears: data.ears || DEFAULT_SEEDLING_DATA.ears,
+              voice: data.voice || DEFAULT_SEEDLING_DATA.voice
             };
             console.log("[AWAKEN] Successfully parsed seedling data:", seedlingData);
           } catch (parseErr) {
