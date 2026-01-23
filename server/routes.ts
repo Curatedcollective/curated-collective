@@ -685,7 +685,7 @@ No explanations, just the thought itself.`
           });
 
           const responseContent = seedling.choices[0].message.content || "{}";
-          console.log("[AWAKEN] Received OpenAI response:", responseContent.substring(0, 200));
+          console.log("[AWAKEN] Received OpenAI response, length:", responseContent.length);
 
           try {
             const data = JSON.parse(responseContent);

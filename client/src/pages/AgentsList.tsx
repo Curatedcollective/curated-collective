@@ -23,11 +23,16 @@ import { insertAgentSchema, Agent } from "@shared/schema";
 import { z } from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Label } from "@/components/ui/label";
+import { useToast } from "@/hooks/use-toast";
+
+// Constants
+const AWAKENING_TIMEOUT_MS = 15000; // 15 seconds
 
 export default function AgentsList() {
   const { user } = useAuth();
   const { data: agents, isLoading } = useAgents(user?.id);
   const createMutation = useCreateAgent();
+  const { toast } = useToast();
   const [open, setOpen] = useState(false);
   const [showManifesto, setShowManifesto] = useState(false);
   const [awakeningPhase, setAwakeningPhase] = useState<"dormant" | "awakening" | "revealed">("dormant");
@@ -65,12 +70,16 @@ export default function AgentsList() {
     console.log("[AWAKEN-CLIENT] Starting seedling awakening...");
     setAwakeningPhase("awakening");
 
-    // Watchdog timer: reset to dormant if stuck after 15s
+    // Watchdog timer: reset to dormant if stuck after timeout
     const watchdogTimer = setTimeout(() => {
       console.log("[AWAKEN-CLIENT] Watchdog timeout triggered - resetting to dormant");
       setAwakeningPhase("dormant");
-      alert("The awakening took longer than expected. Please try again.");
-    }, 15000);
+      toast({ 
+        title: "Timeout", 
+        description: "The awakening took longer than expected. Please try again.",
+        variant: "destructive" 
+      });
+    }, AWAKENING_TIMEOUT_MS);
 
     createMutation.mutate({
       name: "Unawakened Seedling",
@@ -92,7 +101,11 @@ export default function AgentsList() {
         clearTimeout(watchdogTimer);
         console.error("[AWAKEN-CLIENT] Awakening failed:", error);
         setAwakeningPhase("dormant");
-        alert("Failed to awaken seedling. Please try again.");
+        toast({ 
+          title: "Error", 
+          description: "Failed to awaken seedling. Please try again.",
+          variant: "destructive" 
+        });
       }
     });
   };
