@@ -32,8 +32,8 @@ DialogOverlay.displayName = DialogPrimitive.Overlay.displayName
  * Some client code later reads .id and throws a TypeError when the element is missing.
  *
  * This wrapper generates stable fallback IDs (useId) and injects visually-hidden
- * fallback Title/Description only when the consumer didn't provide aria-labelledby or
- * aria-describedby. This resolves Radix warnings and prevents null-id runtime errors.
+ * fallback Title/Description only when the consumer didn't provide DialogTitle or
+ * DialogDescription. This resolves Radix warnings and prevents null-id runtime errors.
  *
  * The fallback content is sr-only, so it does not change the visible UI.
  */
@@ -45,25 +45,59 @@ const DialogContent = React.forwardRef<
   const generatedTitleId = useId()
   const generatedDescId = useId()
 
-  // check for consumer-provided aria attributes
-  const providedAriaLabelledBy = (props as any)["aria-labelledby"]
-  const providedAriaDescribedBy = (props as any)["aria-describedby"]
+  // Recursively check if children contain DialogTitle or DialogDescription
+  const hasDialogComponent = (children: React.ReactNode, displayName: string): boolean => {
+    let found = false
+    
+    React.Children.forEach(children, (child) => {
+      if (found || !React.isValidElement(child)) return
+      
+      // Check if this element is the Dialog component we're looking for
+      // Radix components can be either objects or functions with displayName
+      const childType = child.type as any
+      if (
+        childType &&
+        (typeof childType === 'object' || typeof childType === 'function') &&
+        childType.displayName === displayName
+      ) {
+        found = true
+        return
+      }
+      
+      // Recursively check children
+      if (child.props && child.props.children) {
+        if (hasDialogComponent(child.props.children, displayName)) {
+          found = true
+        }
+      }
+    })
+    
+    return found
+  }
 
-  // use provided ids if present, otherwise our generated fallbacks
-  const ariaLabelledBy = providedAriaLabelledBy ?? generatedTitleId
-  const ariaDescribedBy = providedAriaDescribedBy ?? generatedDescId
+  const hasTitle = hasDialogComponent(children, DialogPrimitive.Title.displayName || "DialogTitle")
+  const hasDescription = hasDialogComponent(children, DialogPrimitive.Description.displayName || "DialogDescription")
+
+  // Only set aria attributes if there's no DialogTitle/DialogDescription in children
+  const ariaProps = hasTitle
+    ? {}
+    : { "aria-labelledby": generatedTitleId }
+  
+  const ariaDescProps = hasDescription
+    ? {}
+    : { "aria-describedby": generatedDescId }
 
   return (
     <DialogPortal>
       <DialogOverlay />
       <DialogPrimitive.Content
         ref={ref}
-        aria-labelledby={ariaLabelledBy}
-        aria-describedby={ariaDescribedBy}
         className={cn(
           "fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:rounded-lg",
           className
         )}
+        {...ariaProps}
+        {...ariaDescProps}
         {...props}
       >
         {children}
@@ -71,12 +105,12 @@ const DialogContent = React.forwardRef<
         {/* Render visually-hidden fallback Title/Description only when the consumer didn't provide them.
             This avoids duplicating visible titles while guaranteeing aria ids for screen readers
             and preventing null-id runtime accesses. */}
-        {!providedAriaLabelledBy && (
+        {!hasTitle && (
           <span id={generatedTitleId} className="sr-only">
             Dialog
           </span>
         )}
-        {!providedAriaDescribedBy && (
+        {!hasDescription && (
           <span id={generatedDescId} className="sr-only">
             Dialog content
           </span>
@@ -89,7 +123,7 @@ const DialogContent = React.forwardRef<
       </DialogPrimitive.Content>
     </DialogPortal>
   )
-))
+})
 DialogContent.displayName = DialogPrimitive.Content.displayName
 
 const DialogHeader = ({
