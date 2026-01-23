@@ -50,12 +50,15 @@ const DialogContent = React.forwardRef<
     let found = false
     
     React.Children.forEach(children, (child) => {
-      if (!React.isValidElement(child)) return
+      if (found || !React.isValidElement(child)) return
       
       // Check if this element is the Dialog component we're looking for
+      // Radix components can be either objects or functions with displayName
+      const childType = child.type as any
       if (
-        typeof child.type === 'object' &&
-        (child.type as any).displayName === displayName
+        childType &&
+        (typeof childType === 'object' || typeof childType === 'function') &&
+        childType.displayName === displayName
       ) {
         found = true
         return
