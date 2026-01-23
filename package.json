@@ -1,4 +1,7 @@
-{
+"overrides": {
+  "rimraf": "^4.0.0",
+  "glob": "^9.0.0"
+}{
   "name": "rest-express",
   "version": "1.0.0",
   "type": "module",
