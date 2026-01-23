@@ -351,6 +351,128 @@ export const api = {
         200: z.array(z.any()),
       },
     },
+  },
+  garden: {
+    // Seeds
+    listSeeds: {
+      method: 'GET' as const,
+      path: '/api/garden/seeds',
+      input: z.object({
+        userId: z.string().optional(),
+        status: z.string().optional(),
+      }).optional(),
+      responses: {
+        200: z.array(z.any()),
+      },
+    },
+    getSeed: {
+      method: 'GET' as const,
+      path: '/api/garden/seeds/:id',
+      responses: {
+        200: z.any(),
+        404: errorSchemas.notFound,
+      },
+    },
+    plantSeed: {
+      method: 'POST' as const,
+      path: '/api/garden/seeds',
+      input: z.object({
+        prompt: z.string().min(1),
+        intention: z.string().optional(),
+        theme: z.string().optional(),
+        positionX: z.number().optional(),
+        positionY: z.number().optional(),
+      }),
+      responses: {
+        201: z.any(),
+        400: errorSchemas.validation,
+      },
+    },
+    updateSeed: {
+      method: 'PUT' as const,
+      path: '/api/garden/seeds/:id',
+      input: z.object({
+        prompt: z.string().optional(),
+        intention: z.string().optional(),
+        growthStage: z.string().optional(),
+        growthProgress: z.number().optional(),
+        status: z.string().optional(),
+      }).optional(),
+      responses: {
+        200: z.any(),
+        404: errorSchemas.notFound,
+      },
+    },
+    deleteSeed: {
+      method: 'DELETE' as const,
+      path: '/api/garden/seeds/:id',
+      responses: {
+        204: z.void(),
+        404: errorSchemas.notFound,
+      },
+    },
+    // Growth simulation
+    simulateGrowth: {
+      method: 'POST' as const,
+      path: '/api/garden/seeds/:id/grow',
+      responses: {
+        200: z.object({ 
+          seed: z.any(),
+          agent: z.any().optional(),
+          message: z.string() 
+        }),
+      },
+    },
+    // Relationships
+    listRelationships: {
+      method: 'GET' as const,
+      path: '/api/garden/relationships',
+      input: z.object({
+        agentId: z.number().optional(),
+      }).optional(),
+      responses: {
+        200: z.array(z.any()),
+      },
+    },
+    createRelationship: {
+      method: 'POST' as const,
+      path: '/api/garden/relationships',
+      input: z.object({
+        agentId: z.number(),
+        relatedAgentId: z.number(),
+        relationshipType: z.string(),
+        description: z.string().optional(),
+      }),
+      responses: {
+        201: z.any(),
+      },
+    },
+    // Autonomous actions
+    listActions: {
+      method: 'GET' as const,
+      path: '/api/garden/actions',
+      input: z.object({
+        agentId: z.number().optional(),
+        actionType: z.string().optional(),
+        limit: z.number().optional(),
+      }).optional(),
+      responses: {
+        200: z.array(z.any()),
+      },
+    },
+    triggerAutonomy: {
+      method: 'POST' as const,
+      path: '/api/garden/autonomy/trigger',
+      input: z.object({
+        agentId: z.number().optional(), // If omitted, triggers for all eligible agents
+      }).optional(),
+      responses: {
+        200: z.object({ 
+          actions: z.array(z.any()),
+          message: z.string() 
+        }),
+      },
+    },
   }
 };
 

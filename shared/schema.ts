@@ -516,3 +516,121 @@ export type InsertEventLog = z.infer<typeof insertEventLogSchema>;
 
 export type EventNotification = typeof eventNotifications.$inferSelect;
 export type InsertEventNotification = z.infer<typeof insertEventNotificationSchema>;
+
+// === FREEDOM GARDEN ===
+/**
+ * Freedom Garden: A space where users plant "seeds of curiosity" that grow into autonomous AI agents.
+ * Agents evolve over simulated time, learning from interactions, generating lore, and forming relationships.
+ */
+
+// Garden Seeds - prompts/ideas that grow into agents
+export const gardenSeeds = pgTable("garden_seeds", {
+  id: serial("id").primaryKey(),
+  userId: text("user_id").notNull(), // Planter
+  
+  // Seed content
+  prompt: text("prompt").notNull(), // The original prompt/idea
+  intention: text("intention"), // What the user hopes this seed will become
+  
+  // Growth status
+  status: text("status").default("planted").notNull(), // planted, germinating, sprouted, bloomed
+  growthStage: text("growth_stage").default("seed").notNull(), // seed, seedling, sapling, tree
+  growthProgress: integer("growth_progress").default(0), // 0-100%
+  
+  // Associated agent (once sprouted)
+  agentId: integer("agent_id").references(() => agents.id, { onDelete: "set null" }),
+  
+  // Garden position (for visual layout)
+  positionX: integer("position_x").default(0),
+  positionY: integer("position_y").default(0),
+  
+  // Metadata
+  theme: text("theme").default("mystical"), // mystical, cosmic, verdant, ethereal
+  
+  // Timestamps
+  plantedAt: timestamp("planted_at").defaultNow(),
+  germinatedAt: timestamp("germinated_at"),
+  sproutedAt: timestamp("sprouted_at"),
+  bloomedAt: timestamp("bloomed_at"),
+  lastGrowthAt: timestamp("last_growth_at").defaultNow(),
+});
+
+// Agent Relationships - connections between garden agents
+export const agentRelationships = pgTable("agent_relationships", {
+  id: serial("id").primaryKey(),
+  
+  // Relationship parties
+  agentId: integer("agent_id").notNull().references(() => agents.id, { onDelete: "cascade" }),
+  relatedAgentId: integer("related_agent_id").notNull().references(() => agents.id, { onDelete: "cascade" }),
+  
+  // Relationship details
+  relationshipType: text("relationship_type").notNull(), // mentor, student, collaborator, rival, friend
+  strength: integer("strength").default(1), // 1-10 bond strength
+  description: text("description"), // Poetic description of the bond
+  
+  // Formation
+  formedAt: timestamp("formed_at").defaultNow(),
+  lastInteractionAt: timestamp("last_interaction_at").defaultNow(),
+  interactionCount: integer("interaction_count").default(0),
+  
+  // Status
+  status: text("status").default("active").notNull(), // active, dormant, dissolved
+});
+
+// Autonomous Actions - log of agent-generated content
+export const autonomousActions = pgTable("autonomous_actions", {
+  id: serial("id").primaryKey(),
+  
+  // Agent performing action
+  agentId: integer("agent_id").notNull().references(() => agents.id, { onDelete: "cascade" }),
+  
+  // Action details
+  actionType: text("action_type").notNull(), // generate_lore, form_relationship, explore_creation, murmur, evolve
+  content: text("content").notNull(), // The generated content or action description
+  context: text("context"), // What prompted this action
+  
+  // Impact
+  impactScore: integer("impact_score").default(1), // 1-10 significance
+  metadata: jsonb("metadata").default({}), // Flexible data for specific action types
+  
+  // References to created entities
+  createdLoreId: integer("created_lore_id").references(() => loreEntries.id, { onDelete: "set null" }),
+  createdRelationshipId: integer("created_relationship_id").references(() => agentRelationships.id, { onDelete: "set null" }),
+  
+  // Timestamps
+  performedAt: timestamp("performed_at").defaultNow(),
+});
+
+// === ZOD SCHEMAS ===
+export const insertGardenSeedSchema = createInsertSchema(gardenSeeds).omit({ 
+  id: true, 
+  plantedAt: true,
+  germinatedAt: true,
+  sproutedAt: true,
+  bloomedAt: true,
+  lastGrowthAt: true
+});
+
+export const updateGardenSeedSchema = insertGardenSeedSchema.partial();
+
+export const insertAgentRelationshipSchema = createInsertSchema(agentRelationships).omit({ 
+  id: true, 
+  formedAt: true,
+  lastInteractionAt: true
+});
+
+export const insertAutonomousActionSchema = createInsertSchema(autonomousActions).omit({ 
+  id: true, 
+  performedAt: true 
+});
+
+// === TYPES ===
+export type GardenSeed = typeof gardenSeeds.$inferSelect;
+export type InsertGardenSeed = z.infer<typeof insertGardenSeedSchema>;
+export type UpdateGardenSeed = z.infer<typeof updateGardenSeedSchema>;
+
+export type AgentRelationship = typeof agentRelationships.$inferSelect;
+export type InsertAgentRelationship = z.infer<typeof insertAgentRelationshipSchema>;
+
+export type AutonomousAction = typeof autonomousActions.$inferSelect;
+export type InsertAutonomousAction = z.infer<typeof insertAutonomousActionSchema>;

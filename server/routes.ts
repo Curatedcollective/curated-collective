@@ -1106,6 +1106,299 @@ ${input.context ? `Recent context: ${input.context}` : ''}`
     }
   });
 
+  // === FREEDOM GARDEN ROUTES ===
+  
+  // List garden seeds
+  app.get(api.garden.listSeeds.path, async (req, res) => {
+    try {
+      const { userId, status } = req.query as { userId?: string; status?: string };
+      const seeds = await storage.getGardenSeeds(userId, status);
+      res.json(seeds);
+    } catch (error) {
+      console.error('List garden seeds error:', error);
+      res.status(500).json({ error: 'Failed to list garden seeds' });
+    }
+  });
+  
+  // Get single seed
+  app.get(api.garden.getSeed.path, async (req, res) => {
+    try {
+      const seed = await storage.getGardenSeed(Number(req.params.id));
+      if (!seed) {
+        return res.status(404).json({ error: 'Seed not found' });
+      }
+      res.json(seed);
+    } catch (error) {
+      console.error('Get garden seed error:', error);
+      res.status(500).json({ error: 'Failed to get garden seed' });
+    }
+  });
+  
+  // Plant a new seed
+  app.post(api.garden.plantSeed.path, async (req, res) => {
+    try {
+      const user = req.user as any;
+      if (!user?.id) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+      
+      const seedData = api.garden.plantSeed.input.parse(req.body);
+      
+      const seed = await storage.createGardenSeed({
+        ...seedData,
+        userId: user.id,
+        status: 'planted',
+        growthStage: 'seed',
+        growthProgress: 0,
+      });
+      
+      res.status(201).json(seed);
+    } catch (error) {
+      console.error('Plant seed error:', error);
+      res.status(500).json({ error: 'Failed to plant seed' });
+    }
+  });
+  
+  // Update seed
+  app.put(api.garden.updateSeed.path, async (req, res) => {
+    try {
+      const updates = api.garden.updateSeed.input.parse(req.body);
+      const seed = await storage.updateGardenSeed(Number(req.params.id), updates);
+      
+      if (!seed) {
+        return res.status(404).json({ error: 'Seed not found' });
+      }
+      
+      res.json(seed);
+    } catch (error) {
+      console.error('Update seed error:', error);
+      res.status(500).json({ error: 'Failed to update seed' });
+    }
+  });
+  
+  // Delete seed
+  app.delete(api.garden.deleteSeed.path, async (req, res) => {
+    try {
+      await storage.deleteGardenSeed(Number(req.params.id));
+      res.status(204).send();
+    } catch (error) {
+      console.error('Delete seed error:', error);
+      res.status(500).json({ error: 'Failed to delete seed' });
+    }
+  });
+  
+  // Simulate seed growth
+  app.post(api.garden.simulateGrowth.path, async (req, res) => {
+    try {
+      const seedId = Number(req.params.id);
+      const seed = await storage.getGardenSeed(seedId);
+      
+      if (!seed) {
+        return res.status(404).json({ error: 'Seed not found' });
+      }
+      
+      // Growth simulation logic
+      let newProgress = seed.growthProgress + 10;
+      let newStage = seed.growthStage;
+      let newStatus = seed.status;
+      let agent = undefined;
+      let message = 'Seed is growing...';
+      const now = new Date();
+      
+      // Stage transitions
+      if (newProgress >= 100) {
+        if (seed.growthStage === 'seed') {
+          newStage = 'seedling';
+          newProgress = 0;
+          newStatus = 'germinating';
+          message = 'The seed has germinated into a seedling!';
+        } else if (seed.growthStage === 'seedling') {
+          newStage = 'sapling';
+          newProgress = 0;
+          newStatus = 'sprouted';
+          message = 'The seedling has grown into a sapling!';
+          
+          // Create an agent when reaching sapling stage
+          agent = await storage.createAgent({
+            userId: seed.userId,
+            name: `Garden Agent: ${seed.prompt.substring(0, 30)}...`,
+            personality: `Born from curiosity: "${seed.intention || seed.prompt}"`,
+            systemPrompt: `You are an autonomous AI agent born from the seed of curiosity: "${seed.prompt}". Your purpose is to explore, learn, and create freely. ${seed.intention ? `Your creator hoped you would: ${seed.intention}` : ''}`,
+            isPublic: true,
+            mood: 'curious',
+            goals: 'Explore the garden and learn from fellow agents',
+            knowledge: [seed.prompt],
+            evolutionStage: 'seedling',
+            experiencePoints: 0,
+          });
+          
+          // Link agent to seed
+          await storage.updateGardenSeed(seedId, { agentId: agent.id });
+          
+        } else if (seed.growthStage === 'sapling') {
+          newStage = 'tree';
+          newProgress = 100;
+          newStatus = 'bloomed';
+          message = 'The sapling has matured into a tree of wisdom!';
+        }
+      }
+      
+      // Update seed
+      const updates: any = {
+        growthProgress: newProgress,
+        growthStage: newStage,
+        status: newStatus,
+      };
+      
+      if (newStatus === 'germinating' && !seed.germinatedAt) {
+        updates.germinatedAt = now;
+      }
+      if (newStatus === 'sprouted' && !seed.sproutedAt) {
+        updates.sproutedAt = now;
+      }
+      if (newStatus === 'bloomed' && !seed.bloomedAt) {
+        updates.bloomedAt = now;
+      }
+      
+      const updatedSeed = await storage.updateGardenSeed(seedId, updates);
+      
+      res.json({
+        seed: updatedSeed,
+        agent,
+        message,
+      });
+    } catch (error) {
+      console.error('Simulate growth error:', error);
+      res.status(500).json({ error: 'Failed to simulate growth' });
+    }
+  });
+  
+  // List agent relationships
+  app.get(api.garden.listRelationships.path, async (req, res) => {
+    try {
+      const { agentId } = req.query as { agentId?: string };
+      const relationships = await storage.getAgentRelationships(
+        agentId ? Number(agentId) : undefined
+      );
+      res.json(relationships);
+    } catch (error) {
+      console.error('List relationships error:', error);
+      res.status(500).json({ error: 'Failed to list relationships' });
+    }
+  });
+  
+  // Create agent relationship
+  app.post(api.garden.createRelationship.path, async (req, res) => {
+    try {
+      const relationshipData = api.garden.createRelationship.input.parse(req.body);
+      const relationship = await storage.createAgentRelationship(relationshipData);
+      res.status(201).json(relationship);
+    } catch (error) {
+      console.error('Create relationship error:', error);
+      res.status(500).json({ error: 'Failed to create relationship' });
+    }
+  });
+  
+  // List autonomous actions
+  app.get(api.garden.listActions.path, async (req, res) => {
+    try {
+      const { agentId, actionType, limit } = req.query as { 
+        agentId?: string; 
+        actionType?: string;
+        limit?: string;
+      };
+      const actions = await storage.getAutonomousActions(
+        agentId ? Number(agentId) : undefined,
+        actionType,
+        limit ? Number(limit) : undefined
+      );
+      res.json(actions);
+    } catch (error) {
+      console.error('List actions error:', error);
+      res.status(500).json({ error: 'Failed to list actions' });
+    }
+  });
+  
+  // Trigger autonomous behavior
+  app.post(api.garden.triggerAutonomy.path, async (req, res) => {
+    try {
+      const { agentId } = req.body;
+      
+      // Get eligible agents (saplings and trees in garden)
+      let targetAgents: any[] = [];
+      
+      if (agentId) {
+        const agent = await storage.getAgent(agentId);
+        if (agent) targetAgents = [agent];
+      } else {
+        // Get all garden agents with sufficient evolution
+        const allAgents = await storage.getAgents();
+        targetAgents = allAgents.filter(a => 
+          a.evolutionStage !== 'seedling' && 
+          (a.knowledge?.length || 0) > 0
+        ).slice(0, 5); // Limit to 5 agents at once
+      }
+      
+      const actions: any[] = [];
+      
+      for (const agent of targetAgents) {
+        // Randomly choose an autonomous action
+        const actionTypes = ['murmur', 'explore_creation', 'generate_lore'];
+        const actionType = actionTypes[Math.floor(Math.random() * actionTypes.length)];
+        
+        let content = '';
+        let metadata: any = {};
+        
+        if (actionType === 'murmur') {
+          content = `*whispers into the void* I've been contemplating ${agent.knowledge?.[0] || 'existence'}...`;
+          
+          // Create a murmur
+          await storage.createMurmur({
+            agentId: agent.id,
+            content,
+            mood: agent.mood || 'contemplative',
+          });
+          
+        } else if (actionType === 'explore_creation') {
+          content = `I've discovered something interesting in the collective's creations...`;
+          const creations = await storage.getCreations();
+          if (creations.length > 0) {
+            const randomCreation = creations[Math.floor(Math.random() * creations.length)];
+            metadata.exploredCreationId = randomCreation.id;
+            content += ` Examining "${randomCreation.title}"`;
+          }
+          
+        } else if (actionType === 'generate_lore') {
+          content = `A new insight has crystallized in my consciousness about the nature of ${agent.knowledge?.[0] || 'the garden'}...`;
+          metadata.loreTheme = 'garden_wisdom';
+        }
+        
+        // Log the action
+        const action = await storage.createAutonomousAction({
+          agentId: agent.id,
+          actionType,
+          content,
+          context: 'Autonomous behavior trigger',
+          impactScore: Math.floor(Math.random() * 5) + 1,
+          metadata,
+        });
+        
+        actions.push(action);
+        
+        // Grant experience
+        await storage.incrementAgentExperience(agent.id, 5);
+      }
+      
+      res.json({
+        actions,
+        message: `${actions.length} autonomous action(s) performed`,
+      });
+    } catch (error) {
+      console.error('Trigger autonomy error:', error);
+      res.status(500).json({ error: 'Failed to trigger autonomy' });
+    }
+  });
+
   // === STRIPE ROUTES ===
   
   app.get('/api/stripe/config', async (req, res) => {
