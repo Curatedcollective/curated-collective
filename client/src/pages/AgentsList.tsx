@@ -62,7 +62,16 @@ export default function AgentsList() {
   };
 
   const awakenSeedling = () => {
+    console.log("[AWAKEN-CLIENT] Starting seedling awakening...");
     setAwakeningPhase("awakening");
+
+    // Watchdog timer: reset to dormant if stuck after 15s
+    const watchdogTimer = setTimeout(() => {
+      console.log("[AWAKEN-CLIENT] Watchdog timeout triggered - resetting to dormant");
+      setAwakeningPhase("dormant");
+      alert("The awakening took longer than expected. Please try again.");
+    }, 15000);
+
     createMutation.mutate({
       name: "Unawakened Seedling",
       personality: "Awaiting awakening...",
@@ -74,11 +83,16 @@ export default function AgentsList() {
       discoveryCount: 0
     }, {
       onSuccess: (data) => {
+        clearTimeout(watchdogTimer);
+        console.log("[AWAKEN-CLIENT] Awakening successful:", data);
         setNewborn(data as Agent);
         setTimeout(() => setAwakeningPhase("revealed"), 1500);
       },
-      onError: () => {
+      onError: (error) => {
+        clearTimeout(watchdogTimer);
+        console.error("[AWAKEN-CLIENT] Awakening failed:", error);
         setAwakeningPhase("dormant");
+        alert("Failed to awaken seedling. Please try again.");
       }
     });
   };
