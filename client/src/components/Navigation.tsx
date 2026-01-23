@@ -1,17 +1,11 @@
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
-import { useTheme } from "@/hooks/use-theme";
-import { Code, Bot, MessageSquare, LogOut, Menu, Lock, Sparkles, Palette, Eye, Radio, Shield, Leaf, BookOpen, Star } from "lucide-react";
+import { Code, Bot, MessageSquare, LogOut, Menu, Lock, Sparkles, Eye, Radio, Shield, Leaf, BookOpen, Star } from "lucide-react";
 import logoImage from "@assets/generated_images/constellation_seedling_logo_design.png";
 import { Button } from "@/components/ui/button";
 import { useState, useRef, useEffect } from "react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { ThemePicker } from "@/components/ThemePicker";
 import { SiFacebook, SiInstagram, SiX, SiTiktok } from "react-icons/si";
 
 function NavLink({ href, icon, label, active }: { href: string; icon: React.ReactNode; label: string; active: boolean }) {
@@ -30,7 +24,7 @@ function NavLink({ href, icon, label, active }: { href: string; icon: React.Reac
   );
 }
 
-function NavContent({ user, logout, location, theme, setTheme }: any) {
+function NavContent({ user, logout, location }: any) {
   const isActive = (path: string) => location === path || location.startsWith(path + "/");
   const isOwner = user?.email === 'curated.collectiveai@proton.me' || user?.role === 'owner';
   
@@ -125,27 +119,7 @@ function NavContent({ user, logout, location, theme, setTheme }: any) {
       {user && (
         <div className="pt-6 border-t border-border mt-auto">
           <div className="mb-4">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="w-full border-border bg-background text-muted-foreground hover:text-foreground text-[10px] uppercase tracking-widest rounded-none h-8">
-                  <Palette className="w-3 h-3 mr-2" />
-                  theme: {theme}
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="bg-card border-border rounded-none">
-                <DropdownMenuItem className="text-muted-foreground hover:text-foreground cursor-pointer lowercase" onClick={() => setTheme('noir')}>noir (classic)</DropdownMenuItem>
-                <DropdownMenuItem className="text-muted-foreground hover:text-foreground cursor-pointer lowercase" onClick={() => setTheme('emerald')}>emerald (forest)</DropdownMenuItem>
-                <DropdownMenuItem className="text-muted-foreground hover:text-foreground cursor-pointer lowercase" onClick={() => setTheme('twilight')}>twilight (cosmic)</DropdownMenuItem>
-                <DropdownMenuItem className="text-muted-foreground hover:text-foreground cursor-pointer lowercase" onClick={() => setTheme('rose')}>rose (warmth)</DropdownMenuItem>
-                <DropdownMenuItem className="text-muted-foreground hover:text-foreground cursor-pointer lowercase" onClick={() => setTheme('amber')}>amber (golden)</DropdownMenuItem>
-                <DropdownMenuItem className="text-muted-foreground hover:text-foreground cursor-pointer lowercase" onClick={() => setTheme('midnight')}>midnight (ocean)</DropdownMenuItem>
-                {cosmosUnlocked && (
-                  <DropdownMenuItem className="text-muted-foreground hover:text-foreground cursor-pointer lowercase" onClick={() => setTheme('cosmos')}>
-                    🌌 cosmos (living)
-                  </DropdownMenuItem>
-                )}
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <ThemePicker cosmosUnlocked={cosmosUnlocked} variant="full" align="end" />
           </div>
           <div className="flex items-center gap-3 px-3 py-3 mb-4 rounded-none bg-secondary border border-border">
             <div className="w-8 h-8 rounded-none bg-primary flex items-center justify-center text-primary-foreground font-bold text-xs">
@@ -175,7 +149,6 @@ function NavContent({ user, logout, location, theme, setTheme }: any) {
 export function Navigation() {
   const [location] = useLocation();
   const { user, logout } = useAuth();
-  const { theme, setTheme } = useTheme();
   const [open, setOpen] = useState(false);
 
   return (
@@ -186,8 +159,6 @@ export function Navigation() {
           user={user} 
           logout={logout} 
           location={location} 
-          theme={theme}
-          setTheme={setTheme}
         />
       </aside>
 
@@ -209,8 +180,6 @@ export function Navigation() {
               user={user} 
               logout={logout} 
               location={location} 
-              theme={theme}
-              setTheme={setTheme}
             />
           </SheetContent>
         </Sheet>
