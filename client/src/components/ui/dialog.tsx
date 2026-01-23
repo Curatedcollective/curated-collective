@@ -1,13 +1,11 @@
 "use client"
 
 import * as React from "react"
+import { useId } from "react"
 import * as DialogPrimitive from "@radix-ui/react-dialog"
 import { X } from "lucide-react"
 
 import { cn } from "@/lib/utils"
-
-// Hook to generate stable IDs
-const { useId } = React
 
 const Dialog = DialogPrimitive.Root
 
@@ -53,21 +51,29 @@ const DialogContent = React.forwardRef<
   const titleId = props['aria-labelledby'] || generatedTitleId
   const descId = props['aria-describedby'] || generatedDescId
   
-  // Check if consumer provided Title or Description elements
-  const hasExplicitTitle = React.Children.toArray(children).some(
-    (child) =>
-      React.isValidElement(child) &&
-      typeof child.type !== 'string' &&
-      (child.type === DialogPrimitive.Title || 
-       (child.type as any)?.displayName === DialogPrimitive.Title.displayName)
+  // Check if consumer provided Title or Description elements (memoized to avoid re-computation)
+  const hasExplicitTitle = React.useMemo(
+    () =>
+      React.Children.toArray(children).some(
+        (child) =>
+          React.isValidElement(child) &&
+          typeof child.type !== 'string' &&
+          (child.type === DialogPrimitive.Title || 
+           (child.type as any)?.displayName === DialogPrimitive.Title.displayName)
+      ),
+    [children]
   )
   
-  const hasExplicitDescription = React.Children.toArray(children).some(
-    (child) =>
-      React.isValidElement(child) &&
-      typeof child.type !== 'string' &&
-      (child.type === DialogPrimitive.Description ||
-       (child.type as any)?.displayName === DialogPrimitive.Description.displayName)
+  const hasExplicitDescription = React.useMemo(
+    () =>
+      React.Children.toArray(children).some(
+        (child) =>
+          React.isValidElement(child) &&
+          typeof child.type !== 'string' &&
+          (child.type === DialogPrimitive.Description ||
+           (child.type as any)?.displayName === DialogPrimitive.Description.displayName)
+      ),
+    [children]
   )
 
   return (
@@ -75,13 +81,13 @@ const DialogContent = React.forwardRef<
       <DialogOverlay />
       <DialogPrimitive.Content
         ref={ref}
+        {...props}
         className={cn(
           "fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:rounded-lg",
           className
         )}
         aria-labelledby={titleId}
         aria-describedby={descId}
-        {...props}
       >
         {/* Render visually-hidden fallback title if no explicit title provided */}
         {!hasExplicitTitle && (
@@ -93,7 +99,7 @@ const DialogContent = React.forwardRef<
         {/* Render visually-hidden fallback description if no explicit description provided */}
         {!hasExplicitDescription && (
           <DialogPrimitive.Description id={descId} className="sr-only">
-            Dialog content
+            Modal dialog window
           </DialogPrimitive.Description>
         )}
         
