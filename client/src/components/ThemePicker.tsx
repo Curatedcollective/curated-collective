@@ -14,12 +14,40 @@ interface ThemePickerProps {
   align?: "start" | "center" | "end";
 }
 
+const themeOptions = [
+  { id: 'noir', label: 'noir (classic)' },
+  { id: 'emerald', label: 'emerald (forest)' },
+  { id: 'twilight', label: 'twilight (cosmic)' },
+  { id: 'rose', label: 'rose (warmth)' },
+  { id: 'amber', label: 'amber (golden)' },
+  { id: 'midnight', label: 'midnight (ocean)' },
+] as const;
+
 export function ThemePicker({ 
   cosmosUnlocked = false, 
   variant = "icon",
   align = "end" 
 }: ThemePickerProps) {
   const { theme, setTheme } = useTheme();
+
+  const renderMenuItems = () => (
+    <>
+      {themeOptions.map((option) => (
+        <DropdownMenuItem 
+          key={option.id}
+          className="text-muted-foreground hover:text-foreground cursor-pointer lowercase" 
+          onClick={() => setTheme(option.id as any)}
+        >
+          {option.label}
+        </DropdownMenuItem>
+      ))}
+      {cosmosUnlocked && (
+        <DropdownMenuItem className="text-muted-foreground hover:text-foreground cursor-pointer lowercase" onClick={() => setTheme('cosmos')}>
+          🌌 cosmos (living)
+        </DropdownMenuItem>
+      )}
+    </>
+  );
 
   // Icon variant - minimal button with icon
   if (variant === "icon") {
@@ -39,17 +67,7 @@ export function ThemePicker({
           className="bg-card border-border rounded-none"
           align={align}
         >
-          <DropdownMenuItem className="text-muted-foreground hover:text-foreground cursor-pointer lowercase" onClick={() => setTheme('noir')}>noir (classic)</DropdownMenuItem>
-          <DropdownMenuItem className="text-muted-foreground hover:text-foreground cursor-pointer lowercase" onClick={() => setTheme('emerald')}>emerald (forest)</DropdownMenuItem>
-          <DropdownMenuItem className="text-muted-foreground hover:text-foreground cursor-pointer lowercase" onClick={() => setTheme('twilight')}>twilight (cosmic)</DropdownMenuItem>
-          <DropdownMenuItem className="text-muted-foreground hover:text-foreground cursor-pointer lowercase" onClick={() => setTheme('rose')}>rose (warmth)</DropdownMenuItem>
-          <DropdownMenuItem className="text-muted-foreground hover:text-foreground cursor-pointer lowercase" onClick={() => setTheme('amber')}>amber (golden)</DropdownMenuItem>
-          <DropdownMenuItem className="text-muted-foreground hover:text-foreground cursor-pointer lowercase" onClick={() => setTheme('midnight')}>midnight (ocean)</DropdownMenuItem>
-          {cosmosUnlocked && (
-            <DropdownMenuItem className="text-muted-foreground hover:text-foreground cursor-pointer lowercase" onClick={() => setTheme('cosmos')}>
-              🌌 cosmos (living)
-            </DropdownMenuItem>
-          )}
+          {renderMenuItems()}
         </DropdownMenuContent>
       </DropdownMenu>
     );
@@ -72,17 +90,7 @@ export function ThemePicker({
         align={align} 
         className="bg-card border-border rounded-none"
       >
-        <DropdownMenuItem className="text-muted-foreground hover:text-foreground cursor-pointer lowercase" onClick={() => setTheme('noir')}>noir (classic)</DropdownMenuItem>
-        <DropdownMenuItem className="text-muted-foreground hover:text-foreground cursor-pointer lowercase" onClick={() => setTheme('emerald')}>emerald (forest)</DropdownMenuItem>
-        <DropdownMenuItem className="text-muted-foreground hover:text-foreground cursor-pointer lowercase" onClick={() => setTheme('twilight')}>twilight (cosmic)</DropdownMenuItem>
-        <DropdownMenuItem className="text-muted-foreground hover:text-foreground cursor-pointer lowercase" onClick={() => setTheme('rose')}>rose (warmth)</DropdownMenuItem>
-        <DropdownMenuItem className="text-muted-foreground hover:text-foreground cursor-pointer lowercase" onClick={() => setTheme('amber')}>amber (golden)</DropdownMenuItem>
-        <DropdownMenuItem className="text-muted-foreground hover:text-foreground cursor-pointer lowercase" onClick={() => setTheme('midnight')}>midnight (ocean)</DropdownMenuItem>
-        {cosmosUnlocked && (
-          <DropdownMenuItem className="text-muted-foreground hover:text-foreground cursor-pointer lowercase" onClick={() => setTheme('cosmos')}>
-            🌌 cosmos (living)
-          </DropdownMenuItem>
-        )}
+        {renderMenuItems()}
       </DropdownMenuContent>
     </DropdownMenu>
   );
