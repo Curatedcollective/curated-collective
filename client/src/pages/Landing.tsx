@@ -124,7 +124,7 @@ export default function Landing() {
         </div>
       )}
 
-      <div className="relative z-10 max-w-7xl mx-auto px-6 w-full flex flex-col items-center justify-center text-center space-y-12">
+      <div className="relative z-10 max-w-7xl mx-auto px-6 w-full flex flex-col items-center justify-center text-center space-y-12 pb-48">
         <div className="space-y-8 max-w-5xl">
           <div className="flex items-center justify-center gap-3 mb-4 opacity-50">
             <Sparkles className="w-8 h-8 text-primary magical-glow" />
