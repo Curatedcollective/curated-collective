@@ -133,6 +133,56 @@
   --theme-glow: 251, 191, 36;
 }
 
+/* Midnight - Deep ocean blue */
+.theme-midnight {
+  --background: 220 50% 3%;
+  --foreground: 220 20% 95%;
+  --card: 220 45% 6%;
+  --card-foreground: 220 20% 95%;
+  --primary: 220 80% 55%;
+  --primary-foreground: 220 50% 3%;
+  --secondary: 220 30% 12%;
+  --secondary-foreground: 220 20% 90%;
+  --muted: 220 25% 15%;
+  --muted-foreground: 220 15% 55%;
+  --accent: 220 40% 22%;
+  --accent-foreground: 220 20% 95%;
+  --border: 220 30% 15%;
+  --theme-glow: 59, 130, 246;
+}
+
+/* Cosmos - Dynamic emotional theme */
+.theme-cosmos {
+  --background: var(--cosmos-background, 280 40% 3%);
+  --foreground: var(--cosmos-foreground, 280 20% 95%);
+  --card: var(--cosmos-card, 280 35% 7%);
+  --card-foreground: var(--cosmos-card-foreground, 280 20% 95%);
+  --primary: var(--cosmos-primary, 280 70% 55%);
+  --primary-foreground: var(--cosmos-primary-foreground, 280 40% 3%);
+  --secondary: var(--cosmos-secondary, 280 25% 13%);
+  --secondary-foreground: var(--cosmos-secondary-foreground, 280 20% 90%);
+  --muted: var(--cosmos-muted, 280 20% 16%);
+  --muted-foreground: var(--cosmos-muted-foreground, 280 15% 55%);
+  --accent: var(--cosmos-accent, 280 35% 23%);
+  --accent-foreground: var(--cosmos-accent-foreground, 280 20% 95%);
+  --border: var(--cosmos-border, 280 25% 16%);
+  --theme-glow: var(--cosmos-glow, 192, 132, 252);
+  
+  /* Smooth transitions for color changes */
+  transition: 
+    background-color 2s ease-in-out,
+    color 2s ease-in-out,
+    border-color 2s ease-in-out;
+}
+
+.theme-cosmos * {
+  transition: 
+    background-color 2s ease-in-out,
+    color 2s ease-in-out,
+    border-color 2s ease-in-out,
+    box-shadow 2s ease-in-out;
+}
+
 .magical-glow {
   box-shadow: 0 0 20px rgba(var(--theme-glow), 0.15), 0 0 40px rgba(var(--theme-glow), 0.05);
 }

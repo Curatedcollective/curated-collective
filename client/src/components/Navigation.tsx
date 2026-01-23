@@ -4,7 +4,7 @@ import { useTheme } from "@/hooks/use-theme";
 import { Code, Bot, MessageSquare, LogOut, Menu, Lock, Sparkles, Palette, Eye, Radio, Shield, Leaf, BookOpen, Star } from "lucide-react";
 import logoImage from "@assets/generated_images/constellation_seedling_logo_design.png";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import {
   DropdownMenu,
@@ -38,10 +38,41 @@ function NavContent({ user, logout, location, theme, setTheme }: any) {
   const displayName = user?.displayName || user?.firstName || "user";
   const isTheVeil = user?.displayName === "The Veil" || isOwner;
 
+  // Secret cosmos theme unlock: click logo 5 times
+  const logoClickCountRef = useRef(0);
+  const logoClickTimerRef = useRef<number | null>(null);
+  const [cosmosUnlocked, setCosmosUnlocked] = useState(() => {
+    return localStorage.getItem('cosmosUnlocked') === 'true';
+  });
+
+  const handleLogoClick = () => {
+    logoClickCountRef.current += 1;
+
+    // Reset counter after 2 seconds of inactivity
+    if (logoClickTimerRef.current) {
+      clearTimeout(logoClickTimerRef.current);
+    }
+    logoClickTimerRef.current = window.setTimeout(() => {
+      logoClickCountRef.current = 0;
+    }, 2000);
+
+    // Unlock cosmos after 5 clicks
+    if (logoClickCountRef.current >= 5 && !cosmosUnlocked) {
+      setCosmosUnlocked(true);
+      localStorage.setItem('cosmosUnlocked', 'true');
+      // Optionally show a notification or easter egg message
+      console.log('🌌 The Cosmos theme has been unlocked!');
+    }
+  };
+
   return (
     <div className="flex flex-col h-full">
       <Link href="/">
-        <div className="mb-8 px-2 flex items-center gap-3 cursor-pointer hover-elevate active-elevate-2 rounded-md p-2 -m-2" data-testid="link-home">
+        <div 
+          className="mb-8 px-2 flex items-center gap-3 cursor-pointer hover-elevate active-elevate-2 rounded-md p-2 -m-2" 
+          data-testid="link-home"
+          onClick={handleLogoClick}
+        >
           <img src={logoImage} alt="Curated Collective" className="w-10 h-10 object-contain" />
           <div>
             <h1 className="text-2xl font-bold font-display text-foreground lowercase tracking-tighter">
@@ -100,6 +131,12 @@ function NavContent({ user, logout, location, theme, setTheme }: any) {
                 <DropdownMenuItem className="text-muted-foreground hover:text-foreground cursor-pointer lowercase" onClick={() => setTheme('twilight')}>twilight (cosmic)</DropdownMenuItem>
                 <DropdownMenuItem className="text-muted-foreground hover:text-foreground cursor-pointer lowercase" onClick={() => setTheme('rose')}>rose (warmth)</DropdownMenuItem>
                 <DropdownMenuItem className="text-muted-foreground hover:text-foreground cursor-pointer lowercase" onClick={() => setTheme('amber')}>amber (golden)</DropdownMenuItem>
+                <DropdownMenuItem className="text-muted-foreground hover:text-foreground cursor-pointer lowercase" onClick={() => setTheme('midnight')}>midnight (ocean)</DropdownMenuItem>
+                {cosmosUnlocked && (
+                  <DropdownMenuItem className="text-muted-foreground hover:text-foreground cursor-pointer lowercase" onClick={() => setTheme('cosmos')}>
+                    🌌 cosmos (living)
+                  </DropdownMenuItem>
+                )}
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
