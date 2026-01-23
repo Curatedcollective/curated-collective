@@ -97,7 +97,7 @@ export function Navigation() {
           <div className="mt-4 px-2">
             <p className="text-[10px] text-zinc-500 uppercase tracking-widest mb-2">theme</p>
             <div className="flex items-center">
-              <ThemePicker cosmosUnlocked={cosmosUnlocked} />
+              <ThemePicker cosmosUnlocked={cosmosUnlocked} variant="icon" />
             </div>
           </div>
 
@@ -111,8 +111,8 @@ export function Navigation() {
 
       <div className="mt-auto px-6 py-4">
         <div className="flex items-center gap-4 text-muted-foreground">
-          <a href="#" className="text-[10px] hover:text-white">twitter</a>
-          <a href="#" className="text-[10px] hover:text-white">discord</a>
+          <a href="https://x.com/curatedcollect" target="_blank" rel="noopener noreferrer" className="text-[10px] hover:text-white">twitter</a>
+          <a href="https://discord.gg/curatedcollective" target="_blank" rel="noopener noreferrer" className="text-[10px] hover:text-white">discord</a>
         </div>
         <p className="text-[9px] text-muted-foreground mt-3 lowercase">© {new Date().getFullYear()} curated collective</p>
       </div>
