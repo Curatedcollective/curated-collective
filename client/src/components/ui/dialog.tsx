@@ -49,9 +49,12 @@ const DialogContent = React.forwardRef<
   const titleId = React.useId();
   const descId = React.useId();
 
-  // Check if consumer provided aria-labelledby or aria-describedby
-  const ariaLabelledBy = props["aria-labelledby"] ?? titleId;
-  const ariaDescribedBy = props["aria-describedby"] ?? descId;
+  // Extract aria attributes from props to handle them separately
+  const { "aria-labelledby": ariaLabelledByProp, "aria-describedby": ariaDescribedByProp, ...restProps } = props;
+  
+  // Use consumer-provided aria attributes or fallback to generated IDs
+  const ariaLabelledBy = ariaLabelledByProp ?? titleId;
+  const ariaDescribedBy = ariaDescribedByProp ?? descId;
 
   return (
     <DialogPortal>
@@ -64,17 +67,17 @@ const DialogContent = React.forwardRef<
         )}
         aria-labelledby={ariaLabelledBy}
         aria-describedby={ariaDescribedBy}
-        {...props}
+        {...restProps}
       >
         {/* Visually-hidden fallback title - only rendered if consumer doesn't provide aria-labelledby */}
-        {!props["aria-labelledby"] && (
+        {!ariaLabelledByProp && (
           <DialogPrimitive.Title id={titleId} className="sr-only">
             Dialog
           </DialogPrimitive.Title>
         )}
         
         {/* Visually-hidden fallback description - only rendered if consumer doesn't provide aria-describedby */}
-        {!props["aria-describedby"] && (
+        {!ariaDescribedByProp && (
           <DialogPrimitive.Description id={descId} className="sr-only">
             Dialog content
           </DialogPrimitive.Description>
