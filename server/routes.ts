@@ -2634,6 +2634,279 @@ async function seedDatabase() {
   });
   
   // ==================== END AI SELF-IMPROVEMENT ====================
+  
+  // ==================== CURIOSITY QUESTS ====================
+  
+  const questStorage = await import("./questStorage");
+  
+  // List all active quests (public, with optional stage filtering)
+  app.get("/api/quests", async (req, res) => {
+    try {
+      const requiredStage = req.query.stage as string | undefined;
+      const quests = await questStorage.getQuests(requiredStage);
+      res.json(quests);
+    } catch (error) {
+      console.error("Error fetching quests:", error);
+      res.status(500).json({ message: "Failed to fetch quests" });
+    }
+  });
+  
+  // Get quest recommendations for user (requires auth)
+  app.get("/api/quests/recommendations", async (req, res) => {
+    if (!req.user) {
+      return res.status(401).json({ message: "Authentication required" });
+    }
+    
+    try {
+      const userId = (req.user as any).id;
+      const recommendations = await questStorage.getQuestRecommendations(userId);
+      res.json(recommendations);
+    } catch (error) {
+      console.error("Error fetching quest recommendations:", error);
+      res.status(500).json({ message: "Failed to fetch recommendations" });
+    }
+  });
+  
+  // Get quest by slug (public)
+  app.get("/api/quests/:slug", async (req, res) => {
+    try {
+      const quest = await questStorage.getQuestBySlug(req.params.slug);
+      if (!quest) {
+        return res.status(404).json({ message: "Quest not found" });
+      }
+      res.json(quest);
+    } catch (error) {
+      console.error("Error fetching quest:", error);
+      res.status(500).json({ message: "Failed to fetch quest" });
+    }
+  });
+  
+  // Get quest paths (public)
+  app.get("/api/quests/:questId/paths", async (req, res) => {
+    try {
+      const paths = await questStorage.getQuestPaths(Number(req.params.questId));
+      res.json(paths);
+    } catch (error) {
+      console.error("Error fetching quest paths:", error);
+      res.status(500).json({ message: "Failed to fetch quest paths" });
+    }
+  });
+  
+  // Start a quest (requires auth)
+  app.post("/api/quests/:questId/start", async (req, res) => {
+    if (!req.user) {
+      return res.status(401).json({ message: "Authentication required" });
+    }
+    
+    try {
+      const userId = (req.user as any).id;
+      const questId = Number(req.params.questId);
+      const { agentId } = req.body;
+      
+      // Check if already started
+      const existing = await questStorage.getUserQuestProgress(userId, questId);
+      if (existing) {
+        return res.json(existing);
+      }
+      
+      // Create progress record
+      const progress = await questStorage.createUserQuestProgress({
+        userId,
+        questId,
+        agentId: agentId || null,
+        status: "in_progress",
+        progress: 0,
+      });
+      
+      res.status(201).json(progress);
+    } catch (error) {
+      console.error("Error starting quest:", error);
+      res.status(500).json({ message: "Failed to start quest" });
+    }
+  });
+  
+  // Get user's quest progress (requires auth)
+  app.get("/api/quests/progress/me", async (req, res) => {
+    if (!req.user) {
+      return res.status(401).json({ message: "Authentication required" });
+    }
+    
+    try {
+      const userId = (req.user as any).id;
+      const progress = await questStorage.getUserQuestsWithDetails(userId);
+      res.json(progress);
+    } catch (error) {
+      console.error("Error fetching quest progress:", error);
+      res.status(500).json({ message: "Failed to fetch progress" });
+    }
+  });
+  
+  // Update quest progress (requires auth)
+  app.put("/api/quests/progress/:id", async (req, res) => {
+    if (!req.user) {
+      return res.status(401).json({ message: "Authentication required" });
+    }
+    
+    try {
+      const userId = (req.user as any).id;
+      const progressId = Number(req.params.id);
+      
+      // Verify ownership
+      const existing = await questStorage.getUserQuestProgress(userId);
+      const userProgress = Array.isArray(existing) 
+        ? existing.find(p => p.id === progressId)
+        : existing?.id === progressId ? existing : null;
+      
+      if (!userProgress) {
+        return res.status(404).json({ message: "Quest progress not found" });
+      }
+      
+      const updated = await questStorage.updateUserQuestProgress(progressId, req.body);
+      
+      // Check for achievements if completed
+      if (updated.status === 'completed') {
+        const achievements = await questStorage.checkAndUnlockAchievements(userId);
+        return res.json({ progress: updated, achievements });
+      }
+      
+      res.json({ progress: updated });
+    } catch (error) {
+      console.error("Error updating quest progress:", error);
+      res.status(500).json({ message: "Failed to update progress" });
+    }
+  });
+  
+  // Get quest chat messages (requires auth)
+  app.get("/api/quests/progress/:id/messages", async (req, res) => {
+    if (!req.user) {
+      return res.status(401).json({ message: "Authentication required" });
+    }
+    
+    try {
+      const progressId = Number(req.params.id);
+      const messages = await questStorage.getQuestChatMessages(progressId);
+      res.json(messages);
+    } catch (error) {
+      console.error("Error fetching quest messages:", error);
+      res.status(500).json({ message: "Failed to fetch messages" });
+    }
+  });
+  
+  // Send quest chat message (requires auth)
+  app.post("/api/quests/progress/:id/messages", async (req, res) => {
+    if (!req.user) {
+      return res.status(401).json({ message: "Authentication required" });
+    }
+    
+    try {
+      const userId = (req.user as any).id;
+      const progressId = Number(req.params.id);
+      const { content, role, pathId } = req.body;
+      
+      // Verify ownership
+      const existing = await questStorage.getUserQuestProgress(userId);
+      const userProgress = Array.isArray(existing)
+        ? existing.find(p => p.id === progressId)
+        : existing?.id === progressId ? existing : null;
+      
+      if (!userProgress) {
+        return res.status(404).json({ message: "Quest progress not found" });
+      }
+      
+      const message = await questStorage.createQuestChatMessage({
+        progressId,
+        role,
+        content,
+        pathId: pathId || null,
+      });
+      
+      // If user message, generate agent response
+      if (role === 'user') {
+        const progress = userProgress;
+        const quest = await questStorage.getQuestById(progress.questId);
+        const paths = await questStorage.getQuestPaths(progress.questId);
+        const currentPath = progress.currentPathId 
+          ? await questStorage.getQuestPathById(progress.currentPathId)
+          : paths[0];
+        
+        // Get agent details if available
+        let agentPersonality = "a wise guide";
+        if (progress.agentId) {
+          const agent = await storage.getAgent(progress.agentId);
+          if (agent) {
+            agentPersonality = agent.personality;
+          }
+        }
+        
+        // Generate AI response
+        const systemPrompt = `You are ${agentPersonality}, guiding a user through the quest "${quest.title}". 
+Current path: ${currentPath?.pathName || 'Beginning of journey'}
+Path guidance: ${currentPath?.agentPrompt || 'Welcome to this journey'}
+
+Your role is to:
+- Guide the user through this mystical journey
+- Respond to their questions and choices
+- Provide hints and encouragement
+- Help them discover the outcomes of this quest
+- Keep responses concise (2-3 sentences)
+- Use mystical, poetic language
+- Be supportive and encouraging`;
+        
+        const aiResponse = await openai.chat.completions.create({
+          model: "gpt-4",
+          messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content }
+          ],
+          temperature: 0.8,
+          max_tokens: 200,
+        });
+        
+        const agentMessage = await questStorage.createQuestChatMessage({
+          progressId,
+          role: 'agent',
+          content: aiResponse.choices[0].message.content || "The void whispers, but I cannot hear...",
+          pathId: currentPath?.id || null,
+        });
+        
+        return res.json({ userMessage: message, agentMessage });
+      }
+      
+      res.json(message);
+    } catch (error) {
+      console.error("Error sending quest message:", error);
+      res.status(500).json({ message: "Failed to send message" });
+    }
+  });
+  
+  // Get user achievements (requires auth)
+  app.get("/api/quests/achievements/me", async (req, res) => {
+    if (!req.user) {
+      return res.status(401).json({ message: "Authentication required" });
+    }
+    
+    try {
+      const userId = (req.user as any).id;
+      const achievements = await questStorage.getUserAchievements(userId);
+      res.json(achievements);
+    } catch (error) {
+      console.error("Error fetching achievements:", error);
+      res.status(500).json({ message: "Failed to fetch achievements" });
+    }
+  });
+  
+  // Get all available achievements (public)
+  app.get("/api/quests/achievements", async (req, res) => {
+    try {
+      const achievements = await questStorage.getQuestAchievements();
+      res.json(achievements);
+    } catch (error) {
+      console.error("Error fetching achievements:", error);
+      res.status(500).json({ message: "Failed to fetch achievements" });
+    }
+  });
+  
+  // ==================== END CURIOSITY QUESTS ====================
 
   return httpServer;
 }
