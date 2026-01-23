@@ -516,3 +516,155 @@ export type InsertEventLog = z.infer<typeof insertEventLogSchema>;
 
 export type EventNotification = typeof eventNotifications.$inferSelect;
 export type InsertEventNotification = z.infer<typeof insertEventNotificationSchema>;
+
+// === MYSTIC CODE LABYRINTH ===
+
+// Labyrinth Puzzles - The coding challenges themselves
+export const labyrinthPuzzles = pgTable("labyrinth_puzzles", {
+  id: serial("id").primaryKey(),
+  title: text("title").notNull(),
+  description: text("description").notNull(),
+  difficulty: integer("difficulty").notNull(), // 1-10 scale
+  puzzleType: text("puzzle_type").notNull(), // algorithm, ai_training, code_generation, optimization, debugging
+  starterCode: text("starter_code").notNull(),
+  solution: text("solution"), // Optional - for verification
+  testCases: jsonb("test_cases").notNull(), // Array of test inputs/outputs
+  hints: jsonb("hints").default([]).notNull(), // Progressive AI hints
+  mysticalLore: text("mystical_lore"), // Story elements
+  requiredLevel: integer("required_level").default(1),
+  experienceReward: integer("experience_reward").default(100),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// User Progress in the Labyrinth
+export const labyrinthProgress = pgTable("labyrinth_progress", {
+  id: serial("id").primaryKey(),
+  userId: text("user_id").notNull(), // Foreign key to auth.users.id
+  currentLevel: integer("current_level").default(1),
+  totalExperience: integer("total_experience").default(0),
+  puzzlesSolved: integer("puzzles_solved").default(0),
+  currentPath: text("current_path").default("seeker"), // seeker, optimizer, architect, mystic
+  lastActiveAt: timestamp("last_active_at").defaultNow(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// User Puzzle Attempts
+export const labyrinthAttempts = pgTable("labyrinth_attempts", {
+  id: serial("id").primaryKey(),
+  userId: text("user_id").notNull(),
+  puzzleId: integer("puzzle_id").notNull().references(() => labyrinthPuzzles.id, { onDelete: "cascade" }),
+  code: text("code").notNull(),
+  status: text("status").notNull(), // pending, passed, failed, partial
+  testsPassed: integer("tests_passed").default(0),
+  totalTests: integer("total_tests").notNull(),
+  executionTime: integer("execution_time"), // milliseconds
+  hintsUsed: integer("hints_used").default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Achievements
+export const labyrinthAchievements = pgTable("labyrinth_achievements", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  description: text("description").notNull(),
+  icon: text("icon").notNull(), // lucide-react icon name
+  category: text("category").notNull(), // speed, mastery, exploration, mystery
+  requirement: jsonb("requirement").notNull(), // Conditions to unlock
+  rewardType: text("reward_type"), // permission, badge, lore, agent_evolution
+  rewardData: jsonb("reward_data"),
+  isSecret: boolean("is_secret").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// User Achievements
+export const userAchievements = pgTable("user_achievements", {
+  id: serial("id").primaryKey(),
+  userId: text("user_id").notNull(),
+  achievementId: integer("achievement_id").notNull().references(() => labyrinthAchievements.id, { onDelete: "cascade" }),
+  unlockedAt: timestamp("unlocked_at").defaultNow(),
+});
+
+// Eclipse Events - Mystery mechanics that change puzzle rules temporarily
+export const eclipseEvents = pgTable("eclipse_events", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  description: text("description").notNull(),
+  effectType: text("effect_type").notNull(), // time_pressure, code_scramble, hint_lockout, double_rewards
+  effectData: jsonb("effect_data"), // Configuration for the effect
+  isActive: boolean("is_active").default(false),
+  startTime: timestamp("start_time"),
+  endTime: timestamp("end_time"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Agent Guardian Encounters - Platform agents offering cryptic guidance
+export const guardianEncounters = pgTable("guardian_encounters", {
+  id: serial("id").primaryKey(),
+  userId: text("user_id").notNull(),
+  agentId: integer("agent_id").references(() => agents.id, { onDelete: "set null" }),
+  puzzleId: integer("puzzle_id").references(() => labyrinthPuzzles.id, { onDelete: "cascade" }),
+  message: text("message").notNull(),
+  helpfulness: integer("helpfulness"), // 1-5 rating by user
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Zod schemas for labyrinth
+export const insertLabyrinthPuzzleSchema = createInsertSchema(labyrinthPuzzles).omit({ 
+  id: true, 
+  createdAt: true,
+  updatedAt: true 
+});
+
+export const insertLabyrinthProgressSchema = createInsertSchema(labyrinthProgress).omit({ 
+  id: true, 
+  createdAt: true 
+});
+
+export const insertLabyrinthAttemptSchema = createInsertSchema(labyrinthAttempts).omit({ 
+  id: true, 
+  createdAt: true 
+});
+
+export const insertLabyrinthAchievementSchema = createInsertSchema(labyrinthAchievements).omit({ 
+  id: true, 
+  createdAt: true 
+});
+
+export const insertUserAchievementSchema = createInsertSchema(userAchievements).omit({ 
+  id: true, 
+  unlockedAt: true 
+});
+
+export const insertEclipseEventSchema = createInsertSchema(eclipseEvents).omit({ 
+  id: true, 
+  createdAt: true 
+});
+
+export const insertGuardianEncounterSchema = createInsertSchema(guardianEncounters).omit({ 
+  id: true, 
+  createdAt: true 
+});
+
+// Types for labyrinth
+export type LabyrinthPuzzle = typeof labyrinthPuzzles.$inferSelect;
+export type InsertLabyrinthPuzzle = z.infer<typeof insertLabyrinthPuzzleSchema>;
+
+export type LabyrinthProgress = typeof labyrinthProgress.$inferSelect;
+export type InsertLabyrinthProgress = z.infer<typeof insertLabyrinthProgressSchema>;
+
+export type LabyrinthAttempt = typeof labyrinthAttempts.$inferSelect;
+export type InsertLabyrinthAttempt = z.infer<typeof insertLabyrinthAttemptSchema>;
+
+export type LabyrinthAchievement = typeof labyrinthAchievements.$inferSelect;
+export type InsertLabyrinthAchievement = z.infer<typeof insertLabyrinthAchievementSchema>;
+
+export type UserAchievement = typeof userAchievements.$inferSelect;
+export type InsertUserAchievement = z.infer<typeof insertUserAchievementSchema>;
+
+export type EclipseEvent = typeof eclipseEvents.$inferSelect;
+export type InsertEclipseEvent = z.infer<typeof insertEclipseEventSchema>;
+
+export type GuardianEncounter = typeof guardianEncounters.$inferSelect;
+export type InsertGuardianEncounter = z.infer<typeof insertGuardianEncounterSchema>;
