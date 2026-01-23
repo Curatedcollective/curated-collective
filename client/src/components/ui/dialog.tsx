@@ -1,7 +1,6 @@
 "use client"
 
 import * as React from "react"
-import { useId } from "react"
 import * as DialogPrimitive from "@radix-ui/react-dialog"
 import { X } from "lucide-react"
 
@@ -44,12 +43,23 @@ const DialogContent = React.forwardRef<
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content>
 >(({ className, children, ...props }, ref) => {
   // Generate stable IDs for aria-labelledby and aria-describedby
-  const generatedTitleId = useId()
-  const generatedDescId = useId()
+  const generatedTitleId = React.useId()
+  const generatedDescId = React.useId()
   
   // Use consumer-provided IDs if available, otherwise use generated ones
   const titleId = props['aria-labelledby'] || generatedTitleId
   const descId = props['aria-describedby'] || generatedDescId
+  
+  // Type guard to check if a component is a Radix Primitive component
+  const isRadixComponent = (
+    child: React.ReactElement,
+    primitive: typeof DialogPrimitive.Title | typeof DialogPrimitive.Description
+  ): boolean => {
+    if (typeof child.type === 'string') return false
+    return child.type === primitive || 
+           (child.type && typeof child.type === 'object' && 'displayName' in child.type && 
+            child.type.displayName === primitive.displayName)
+  }
   
   // Check if consumer provided Title or Description elements (memoized to avoid re-computation)
   const hasExplicitTitle = React.useMemo(
@@ -57,9 +67,7 @@ const DialogContent = React.forwardRef<
       React.Children.toArray(children).some(
         (child) =>
           React.isValidElement(child) &&
-          typeof child.type !== 'string' &&
-          (child.type === DialogPrimitive.Title || 
-           (child.type as any)?.displayName === DialogPrimitive.Title.displayName)
+          isRadixComponent(child, DialogPrimitive.Title)
       ),
     [children]
   )
@@ -69,9 +77,7 @@ const DialogContent = React.forwardRef<
       React.Children.toArray(children).some(
         (child) =>
           React.isValidElement(child) &&
-          typeof child.type !== 'string' &&
-          (child.type === DialogPrimitive.Description ||
-           (child.type as any)?.displayName === DialogPrimitive.Description.displayName)
+          isRadixComponent(child, DialogPrimitive.Description)
       ),
     [children]
   )
