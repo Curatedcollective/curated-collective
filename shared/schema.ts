@@ -602,6 +602,10 @@ export const autonomousActions = pgTable("autonomous_actions", {
 });
 
 // === ZOD SCHEMAS ===
+const validStatuses = ['planted', 'germinating', 'sprouted', 'bloomed'] as const;
+const validGrowthStages = ['seed', 'seedling', 'sapling', 'tree'] as const;
+const validThemes = ['mystical', 'cosmic', 'verdant', 'ethereal'] as const;
+
 export const insertGardenSeedSchema = createInsertSchema(gardenSeeds).omit({ 
   id: true, 
   plantedAt: true,
@@ -609,19 +613,34 @@ export const insertGardenSeedSchema = createInsertSchema(gardenSeeds).omit({
   sproutedAt: true,
   bloomedAt: true,
   lastGrowthAt: true
+}).extend({
+  status: z.enum(validStatuses).optional(),
+  growthStage: z.enum(validGrowthStages).optional(),
+  theme: z.enum(validThemes).optional(),
+  growthProgress: z.number().min(0).max(100).optional(),
 });
 
 export const updateGardenSeedSchema = insertGardenSeedSchema.partial();
+
+const validRelationshipTypes = ['mentor', 'student', 'collaborator', 'rival', 'friend'] as const;
 
 export const insertAgentRelationshipSchema = createInsertSchema(agentRelationships).omit({ 
   id: true, 
   formedAt: true,
   lastInteractionAt: true
+}).extend({
+  relationshipType: z.enum(validRelationshipTypes),
+  strength: z.number().min(1).max(10).optional(),
 });
+
+const validActionTypes = ['generate_lore', 'form_relationship', 'explore_creation', 'murmur', 'evolve'] as const;
 
 export const insertAutonomousActionSchema = createInsertSchema(autonomousActions).omit({ 
   id: true, 
   performedAt: true 
+}).extend({
+  actionType: z.enum(validActionTypes),
+  impactScore: z.number().min(1).max(10).optional(),
 });
 
 // === TYPES ===

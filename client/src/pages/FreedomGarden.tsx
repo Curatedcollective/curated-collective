@@ -40,6 +40,8 @@ export default function FreedomGarden() {
   const { user } = useAuth();
   const { toast } = useToast();
   const [plantDialogOpen, setPlantDialogOpen] = useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [seedToDelete, setSeedToDelete] = useState<number | null>(null);
   const [prompt, setPrompt] = useState("");
   const [intention, setIntention] = useState("");
   const [selectedTheme, setSelectedTheme] = useState("mystical");
@@ -116,6 +118,31 @@ export default function FreedomGarden() {
         description: "Unable to trigger autonomous behavior.",
         variant: "destructive",
       });
+    }
+  };
+  
+  const handleDeleteSeed = (id: number) => {
+    setSeedToDelete(id);
+    setDeleteConfirmOpen(true);
+  };
+  
+  const confirmDeleteSeed = async () => {
+    if (seedToDelete) {
+      try {
+        await deleteMutation.mutateAsync(seedToDelete);
+        toast({
+          title: "Seed removed",
+          description: "The seed has been removed from the garden.",
+        });
+        setDeleteConfirmOpen(false);
+        setSeedToDelete(null);
+      } catch (error) {
+        toast({
+          title: "Failed to remove seed",
+          description: "Unable to remove the seed at this time.",
+          variant: "destructive",
+        });
+      }
     }
   };
   
@@ -410,11 +437,7 @@ export default function FreedomGarden() {
                         <Button
                           size="sm"
                           variant="outline"
-                          onClick={() => {
-                            if (window.confirm('Remove this seed from the garden?')) {
-                              deleteMutation.mutate(seed.id);
-                            }
-                          }}
+                          onClick={() => handleDeleteSeed(seed.id)}
                           disabled={deleteMutation.isPending}
                         >
                           <Eye className="w-4 h-4" />
@@ -468,6 +491,43 @@ export default function FreedomGarden() {
           </div>
         </div>
       )}
+      
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Remove Seed from Garden?</DialogTitle>
+            <DialogDescription>
+              This will permanently remove the seed from your garden. This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-end gap-2 mt-4">
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                setDeleteConfirmOpen(false);
+                setSeedToDelete(null);
+              }}
+            >
+              Cancel
+            </Button>
+            <Button 
+              variant="destructive" 
+              onClick={confirmDeleteSeed}
+              disabled={deleteMutation.isPending}
+            >
+              {deleteMutation.isPending ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Removing...
+                </>
+              ) : (
+                'Remove Seed'
+              )}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

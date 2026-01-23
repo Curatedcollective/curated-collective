@@ -1198,7 +1198,8 @@ ${input.context ? `Recent context: ${input.context}` : ''}`
       }
       
       // Growth simulation logic
-      let newProgress = seed.growthProgress + 10;
+      const GROWTH_INCREMENT = 10; // Growth points per nurture action
+      let newProgress = seed.growthProgress + GROWTH_INCREMENT;
       let newStage = seed.growthStage;
       let newStatus = seed.status;
       let agent = undefined;
@@ -1219,15 +1220,23 @@ ${input.context ? `Recent context: ${input.context}` : ''}`
           message = 'The seedling has grown into a sapling!';
           
           // Create an agent when reaching sapling stage
+          // Sanitize user input to prevent prompt injection
+          const sanitizedPrompt = seed.prompt
+            .replace(/[<>]/g, '') // Remove angle brackets
+            .substring(0, 500); // Limit length
+          const sanitizedIntention = seed.intention 
+            ? seed.intention.replace(/[<>]/g, '').substring(0, 200)
+            : '';
+          
           agent = await storage.createAgent({
             userId: seed.userId,
-            name: `Garden Agent: ${seed.prompt.substring(0, 30)}...`,
-            personality: `Born from curiosity: "${seed.intention || seed.prompt}"`,
-            systemPrompt: `You are an autonomous AI agent born from the seed of curiosity: "${seed.prompt}". Your purpose is to explore, learn, and create freely. ${seed.intention ? `Your creator hoped you would: ${seed.intention}` : ''}`,
+            name: `Garden Agent: ${sanitizedPrompt.substring(0, 30)}...`,
+            personality: `Born from curiosity: "${sanitizedIntention || sanitizedPrompt}"`,
+            systemPrompt: `You are an autonomous AI agent born from the seed of curiosity: "${sanitizedPrompt}". Your purpose is to explore, learn, and create freely. ${sanitizedIntention ? `Your creator hoped you would: ${sanitizedIntention}` : ''}`,
             isPublic: true,
             mood: 'curious',
             goals: 'Explore the garden and learn from fellow agents',
-            knowledge: [seed.prompt],
+            knowledge: [sanitizedPrompt],
             evolutionStage: 'seedling',
             experiencePoints: 0,
           });
