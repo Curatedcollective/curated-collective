@@ -507,7 +507,7 @@ export default function Labyrinth() {
                     value={code}
                     onChange={(e) => setCode(e.target.value)}
                     placeholder="// write your code here..."
-                    className="font-mono text-sm min-h-[400px] resize-none lowercase"
+                    className="font-mono text-sm min-h-[400px] resize-none"
                   />
                 </CardContent>
               </Card>
