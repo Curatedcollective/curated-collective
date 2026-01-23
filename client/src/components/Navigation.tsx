@@ -63,8 +63,8 @@ function NavContent({ user, logout, location }: any) {
     if (logoClickCountRef.current >= 5 && !cosmosUnlocked) {
       setCosmosUnlocked(true);
       localStorage.setItem('cosmosUnlocked', 'true');
-      // Force ThemePicker to re-render by triggering a storage event
-      window.dispatchEvent(new Event('storage'));
+      // Notify ThemePicker of cosmos unlock via custom event
+      window.dispatchEvent(new CustomEvent('cosmosUnlocked'));
     }
   };
 

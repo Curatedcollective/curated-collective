@@ -26,11 +26,11 @@ export function ThemePicker() {
 
   // Listen for cosmos unlock
   useEffect(() => {
-    const handleStorageChange = () => {
+    const handleCosmosUnlock = () => {
       setCosmosUnlocked(localStorage.getItem('cosmosUnlocked') === 'true');
     };
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
+    window.addEventListener('cosmosUnlocked', handleCosmosUnlock);
+    return () => window.removeEventListener('cosmosUnlocked', handleCosmosUnlock);
   }, []);
 
   return (
