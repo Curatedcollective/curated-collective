@@ -1,7 +1,4 @@
-"overrides": {
-  "rimraf": "^4.0.0",
-  "glob": "^9.0.0"
-}{
+{
   "name": "rest-express",
   "version": "1.0.0",
   "type": "module",
@@ -13,6 +10,10 @@
     "check": "tsc",
     "db:push": "drizzle-kit push"
   },
+  "overrides": {
+  "rimraf": "^4.0.0",
+  "glob": "^9.0.0"
+}
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
     "@jridgewell/trace-mapping": "^0.3.25",
