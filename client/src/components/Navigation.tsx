@@ -12,6 +12,7 @@ import {
   ShoppingCart,
   Users,
   ChevronDown,
+  Puzzle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import NavLink from "./ui/nav-link";
@@ -89,6 +90,7 @@ export function Navigation() {
           <NavLink href="/observatory" icon={<Eye className="w-4 h-4" />} label="observatory" />
           <NavLink href="/lore" icon={<BookOpen className="w-4 h-4" />} label="lore compendium" />
           <NavLink href="/events" icon={<Star className="w-4 h-4" />} label="constellation events" />
+          <NavLink href="/labyrinth" icon={<Puzzle className="w-4 h-4" />} label="code labyrinth" />
           <NavLink href="/chat" icon={<MessageSquare className="w-4 h-4" />} label="lab chat" />
           <NavLink href="/seedling-sanctum" icon={<Leaf className="w-4 h-4" />} label="sanctum" />
           <NavLink href="/sanctum" icon={<Lock className="w-4 h-4" />} label="inner sanctum" />
