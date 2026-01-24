@@ -3059,3 +3059,104 @@ Your role is to:
 
   return httpServer;
 }
+/* ======================================================
+   Veil admin endpoints (owner-only)
+   - GET  /api/god/agents
+   - POST /api/god/agent/:id/autonomy
+   - POST /api/god/ai-assist
+   Notes: adapt isOwnerReq to your auth/session helper if necessary
+====================================================== */
+
+function isOwnerReq(req: any) {
+  return !!(req.user && req.user.isOwner);
+}
+
+import { logger } from "./utils/logger";
+import { checkAiAssistRateLimit } from "./utils/rateLimiter";
+
+// GET agents for Veil (owner-only)
+app.get("/api/god/agents", async (req, res) => {
+  try {
+    if (!isOwnerReq(req)) return res.status(403).json({ message: "forbidden" });
+    const agents = await db.select().from("agents").orderBy("id", "asc");
+    res.json({ agents });
+  } catch (err) {
+    logger.error("[GOD] GET /api/god/agents error", err);
+    res.status(500).json({ message: "failed to fetch agents" });
+  }
+});
+
+// Update agent autonomy (owner-only)
+app.post("/api/god/agent/:id/autonomy", async (req, res) => {
+  try {
+    if (!isOwnerReq(req)) return res.status(403).json({ message: "forbidden" });
+    const id = Number(req.params.id);
+    const { autonomy_level, scope } = req.body;
+    if (Number.isNaN(id) || typeof autonomy_level !== "number") {
+      return res.status(400).json({ message: "invalid payload" });
+    }
+    await db("agents").where({ id }).update({
+      autonomy_level,
+      autonomy_scope: JSON.stringify(scope || {}),
+      autonomy_granted_by: req.user?.id || null,
+      autonomy_granted_at: new Date()
+    });
+    const updated = await db("agents").where({ id }).first();
+    res.json({ agent: updated });
+  } catch (err) {
+    logger.error("[GOD] POST /api/god/agent/:id/autonomy error", err);
+    res.status(500).json({ message: "failed to set autonomy" });
+  }
+});
+
+// AI assist: owner-only proxy to OpenAI with simple in-memory rate-limiting
+app.post("/api/god/ai-assist", async (req, res) => {
+  try {
+    if (!isOwnerReq(req)) return res.status(403).json({ message: "forbidden" });
+    const { context = "", question = "" } = req.body;
+    if (!question || typeof question !== "string") return res.status(400).json({ message: "question required" });
+
+    const MAX_CONTEXT = 12000;
+    const MAX_QUESTION = 2000;
+    const safeContext = String(context).slice(0, MAX_CONTEXT);
+    const safeQuestion = String(question).slice(0, MAX_QUESTION);
+
+    const rateKey = String(req.user?.id || req.ip || "anon");
+    const allowed = checkAiAssistRateLimit(rateKey);
+    if (!allowed) {
+      logger.warn("[GOD][AI_ASSIST] rate limit exceeded for", rateKey);
+      return res.status(429).json({ message: "rate limit exceeded" });
+    }
+
+    logger.info("[GOD][AI_ASSIST] request by", req.user?.id, { ctxLen: safeContext.length, qLen: safeQuestion.length });
+
+    const systemPrompt = `
+You are a secure developer assistant helping the Veil admin fix code and config issues.
+- Do NOT invent or reveal secrets (API keys, tokens).
+- When suggesting code, return minimal patches/diffs and explain why.
+- Prefer concise answers; if risky, recommend manual steps and rollback plan.
+Return a concise answer; include code blocks for patches when needed.
+`;
+
+    try {
+      const resp = await openai.chat.completions.create({
+        model: "gpt-4o",
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: `Context:\n${safeContext}\n\nQuestion:\n${safeQuestion}` }
+        ],
+        max_tokens: 800
+      });
+
+      const text = resp?.choices?.[0]?.message?.content || "";
+      logger.info("[GOD][AI_ASSIST] OpenAI response length:", text.length);
+      res.json({ answer: text });
+    } catch (openErr) {
+      logger.error("[GOD][AI_ASSIST] OpenAI error", openErr);
+      res.status(500).json({ message: "AI assist failed" });
+    }
+  } catch (err) {
+    logger.error("[GOD][AI_ASSIST] error", err);
+    res.status(500).json({ message: "internal error" });
+  }
+});
