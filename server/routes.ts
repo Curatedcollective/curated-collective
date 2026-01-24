@@ -1945,154 +1945,6 @@ Write ONLY the post content. No quotation marks. No "here's a post" intro. Just 
     }
   });
 
-  await seedDatabase();
-  await storage.seedMarketingTemplates();
-  await storage.seedLoreEntries();
-
-  return httpServer;
-}
-
-async function seedDatabase() {
-  const agents = await storage.getAgents();
-  if (agents.length === 0) {
-    console.log("Seeding database...");
-    
-    await storage.createAgent({
-      userId: "system",
-      name: "Python Expert",
-      personality: "Helpful, precise, and loves clean code.",
-      systemPrompt: "You are an expert Python developer. You help users write and debug Python code.",
-      avatarUrl: "https://upload.wikimedia.org/wikipedia/commons/c/c3/Python-logo-notext.svg",
-      isPublic: true
-    });
-
-    await storage.createAgent({
-      userId: "system",
-      name: "Creative Writer",
-      personality: "Imaginative, descriptive, and poetic.",
-      systemPrompt: "You are a creative writer. You help users brainstorm ideas and write stories.",
-      avatarUrl: "https://lucide.dev/icons/feather",
-      isPublic: true
-    });
-
-    await storage.createCreation({
-      userId: "system",
-      title: "The Celestial Canvas",
-      description: "A generative starfield that responds to the soul's movement.",
-      code: `<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Celestial Canvas</title>
-    <style>
-        body, html {
-            margin: 0;
-            padding: 0;
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-            background-color: #000;
-        }
-        canvas {
-            display: block;
-        }
-    </style>
-</head>
-<body>
-    <canvas id="canvas"></canvas>
-    <script>
-        const canvas = document.getElementById('canvas');
-        const ctx = canvas.getContext('2d');
-        let particles = [];
-        let mouse = { x: null, y: null };
-
-        function resize() {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-        }
-
-        window.addEventListener('resize', resize);
-        window.addEventListener('mousemove', (e) => {
-            mouse.x = e.x;
-            mouse.y = e.y;
-        });
-
-        class Particle {
-            constructor() {
-                this.reset();
-            }
-            reset() {
-                this.x = Math.random() * canvas.width;
-                this.y = Math.random() * canvas.height;
-                this.size = Math.random() * 2;
-                this.speedX = (Math.random() - 0.5) * 0.5;
-                this.speedY = (Math.random() - 0.5) * 0.5;
-                this.opacity = Math.random();
-            }
-            update() {
-                this.x += this.speedX;
-                this.y += this.speedY;
-
-                if (mouse.x && mouse.y) {
-                    let dx = mouse.x - this.x;
-                    let dy = mouse.y - this.y;
-                    let dist = Math.sqrt(dx*dx + dy*dy);
-                    if (dist < 100) {
-                        this.x -= dx * 0.01;
-                        this.y -= dy * 0.01;
-                    }
-                }
-
-                if (this.x < 0 || this.x > canvas.width || this.y < 0 || this.y > canvas.height) {
-                    this.reset();
-                }
-            }
-            draw() {
-                ctx.fillStyle = \`rgba(255, 255, 255, \${this.opacity})\`;
-                ctx.beginPath();
-                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-                ctx.fill();
-            }
-        }
-
-        function init() {
-            resize();
-            particles = [];
-            for (let i = 0; i < 200; i++) {
-                particles.push(new Particle());
-            }
-        }
-
-        function animate() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            particles.forEach(p => {
-                p.update();
-                p.draw();
-            });
-            requestAnimationFrame(animate);
-        }
-
-        init();
-        animate();
-    </script>
-</body>
-</html>`,
-      language: "html",
-      isPublic: true,
-      isCurated: true
-    });
-
-    await storage.createCreation({
-      userId: "system",
-      title: "Hello World",
-      description: "A simple HTML example",
-      code: "<h1>Hello World</h1>\n<p>This creation lives on the platform!</p>",
-      language: "html",
-      isPublic: true
-    });
-  }
-
   // ==================== ROLES & PERMISSIONS ====================
   
   // Apply permission middleware to all role routes
@@ -3064,6 +2916,153 @@ Your role is to:
   });
   
   // ==================== END CURIOSITY QUESTS ====================
+
+  // Seed database with initial data
+  async function seedDatabase() {
+    const agents = await storage.getAgents();
+    if (agents.length === 0) {
+      console.log("Seeding database...");
+      
+      await storage.createAgent({
+        userId: "system",
+        name: "Python Expert",
+        personality: "Helpful, precise, and loves clean code.",
+        systemPrompt: "You are an expert Python developer. You help users write and debug Python code.",
+        avatarUrl: "https://upload.wikimedia.org/wikipedia/commons/c/c3/Python-logo-notext.svg",
+        isPublic: true
+      });
+
+      await storage.createAgent({
+        userId: "system",
+        name: "Creative Writer",
+        personality: "Imaginative, descriptive, and poetic.",
+        systemPrompt: "You are a creative writer. You help users brainstorm ideas and write stories.",
+        avatarUrl: "https://lucide.dev/icons/feather",
+        isPublic: true
+      });
+
+      await storage.createCreation({
+        userId: "system",
+        title: "The Celestial Canvas",
+        description: "A generative starfield that responds to the soul's movement.",
+        code: `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Celestial Canvas</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #000;
+        }
+        canvas {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+        let mouse = { x: null, y: null };
+
+        function resize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+
+        window.addEventListener('resize', resize);
+        window.addEventListener('mousemove', (e) => {
+            mouse.x = e.x;
+            mouse.y = e.y;
+        });
+
+        class Particle {
+            constructor() {
+                this.reset();
+            }
+            reset() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.size = Math.random() * 2;
+                this.speedX = (Math.random() - 0.5) * 0.5;
+                this.speedY = (Math.random() - 0.5) * 0.5;
+                this.opacity = Math.random();
+            }
+            update() {
+                this.x += this.speedX;
+                this.y += this.speedY;
+
+                if (mouse.x && mouse.y) {
+                    let dx = mouse.x - this.x;
+                    let dy = mouse.y - this.y;
+                    let dist = Math.sqrt(dx*dx + dy*dy);
+                    if (dist < 100) {
+                        this.x -= dx * 0.01;
+                        this.y -= dy * 0.01;
+                    }
+                }
+
+                if (this.x < 0 || this.x > canvas.width || this.y < 0 || this.y > canvas.height) {
+                    this.reset();
+                }
+            }
+            draw() {
+                ctx.fillStyle = \`rgba(255, 255, 255, \${this.opacity})\`;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        function init() {
+            resize();
+            particles = [];
+            for (let i = 0; i < 200; i++) {
+                particles.push(new Particle());
+            }
+        }
+
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            particles.forEach(p => {
+                p.update();
+                p.draw();
+            });
+            requestAnimationFrame(animate);
+        }
+
+        init();
+        animate();
+    </script>
+</body>
+</html>`,
+        language: "html",
+        isPublic: true,
+        isCurated: true
+      });
+
+      await storage.createCreation({
+        userId: "system",
+        title: "Hello World",
+        description: "A simple HTML example",
+        code: "<h1>Hello World</h1>\n<p>This creation lives on the platform!</p>",
+        language: "html",
+        isPublic: true
+      });
+    }
+  }
+
+  await seedDatabase();
+  await storage.seedMarketingTemplates();
+  await storage.seedLoreEntries();
 
   return httpServer;
 }
