@@ -1,789 +1,85 @@
-/**
- * GodObservatory - Real-time Seedling Monitoring Dashboard
- * 
- * Owner-only comprehensive monitoring and enhancement system:
- * - Live tracking of all active seedlings
- * - Performance metrics, interaction counts, mood states
- * - Visual graphs and alerts for anomalies
- * - Predictive analytics and recommendations
- * - AI self-improvement monitoring
- */
+import React, { useEffect, useState } from "react";
+import AIHelper from "../components/AIHelper";
 
-import { useQuery } from "@tanstack/react-query";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { LineChart, Line, AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, PieChart, Pie, Cell } from "recharts";
-import { Activity, Brain, TrendingUp, AlertTriangle, Sparkles, Eye, Heart, MessageSquare, Zap, Users, Clock, ArrowUp, ArrowDown, Minus, BookOpen, Cpu, Target } from "lucide-react";
-import { motion } from "framer-motion";
-import { useState, useEffect } from "react";
-import { useToast } from "@/hooks/use-toast";
+export default function GodObservatory({ user }: { user?: any }) {
+  if (!user?.isOwner) return <div className="p-8">Forbidden</div>;
 
-interface SeedlingMetrics {
-  id: number;
-  name: string;
-  mood: string;
-  conversationCount: number;
-  experiencePoints: number;
-  evolutionStage: string;
-  lastActive: string;
-  interactionRate: number;
-  avgResponseTime: number;
-  personality: string;
-  discoveryCount: number;
-}
+  const [agents, setAgents] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [selectedAgent, setSelectedAgent] = useState<number | null>(null);
 
-interface AnalyticsData {
-  timestamp: string;
-  totalInteractions: number;
-  activeUsers: number;
-  avgSentiment: number;
-}
-
-interface Anomaly {
-  id: string;
-  seedlingId: number;
-  seedlingName: string;
-  type: string;
-  severity: "low" | "medium" | "high";
-  description: string;
-  timestamp: string;
-}
-
-interface LearningStats {
-  agentId: number;
-  agentName: string;
-  totalKnowledge: number;
-  recentDiscoveries: number;
-  personalityAdjustments: number;
-  autonomyLevel: number;
-}
-
-const COLORS = {
-  emerald: "#10b981",
-  purple: "#a855f7",
-  blue: "#3b82f6",
-  amber: "#f59e0b",
-  rose: "#f43f5e",
-  slate: "#64748b",
-};
-
-const CHART_COLORS = [COLORS.emerald, COLORS.purple, COLORS.blue, COLORS.amber, COLORS.rose];
-
-export default function GodObservatory() {
-  const [selectedTimeRange, setSelectedTimeRange] = useState<"1h" | "24h" | "7d" | "30d">("24h");
-  const [autoRefresh, setAutoRefresh] = useState(true);
-  const { toast } = useToast();
-
-  // Fetch real-time seedling metrics
-  const { data: seedlings, refetch: refetchSeedlings } = useQuery<SeedlingMetrics[]>({
-    queryKey: ["god-observatory-seedlings"],
-    queryFn: async () => {
-      const res = await fetch("/api/god/observatory/seedlings");
-      if (!res.ok) throw new Error("Failed to fetch seedlings");
-      return res.json();
-    },
-    refetchInterval: autoRefresh ? 5000 : false,
-  });
-
-  // Fetch analytics data
-  const { data: analytics } = useQuery<AnalyticsData[]>({
-    queryKey: ["god-observatory-analytics", selectedTimeRange],
-    queryFn: async () => {
-      const res = await fetch(`/api/god/observatory/analytics?range=${selectedTimeRange}`);
-      if (!res.ok) throw new Error("Failed to fetch analytics");
-      return res.json();
-    },
-    refetchInterval: autoRefresh ? 10000 : false,
-  });
-
-  // Fetch anomalies
-  const { data: anomalies } = useQuery<Anomaly[]>({
-    queryKey: ["god-observatory-anomalies"],
-    queryFn: async () => {
-      const res = await fetch("/api/god/observatory/anomalies");
-      if (!res.ok) throw new Error("Failed to fetch anomalies");
-      return res.json();
-    },
-    refetchInterval: autoRefresh ? 15000 : false,
-  });
-
-  // Fetch AI learning statistics
-  const { data: learningStats, refetch: refetchLearning } = useQuery<LearningStats[]>({
-    queryKey: ["god-ai-improvement-stats"],
-    queryFn: async () => {
-      const res = await fetch("/api/god/ai-improvement/stats");
-      if (!res.ok) throw new Error("Failed to fetch learning stats");
-      return res.json();
-    },
-    refetchInterval: autoRefresh ? 30000 : false,
-  });
-
-  // Trigger autonomous evolution
-  const triggerEvolution = async () => {
+  const fetchAgents = async () => {
+    setLoading(true);
     try {
-      const res = await fetch("/api/god/ai-improvement/evolve", { method: "POST" });
-      if (!res.ok) throw new Error("Failed to trigger evolution");
-      toast({
-        title: "Evolution Triggered",
-        description: "Autonomous evolution cycle initiated for all seedlings",
+      const r = await fetch("/api/god/agents");
+      if (!r.ok) throw new Error("failed");
+      const json = await r.json();
+      setAgents(json.agents || []);
+    } catch (err) {
+      console.error("fetchAgents error", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { fetchAgents(); }, []);
+
+  const setAutonomy = async (id:number, level:number) => {
+    try {
+      const r = await fetch(`/api/god/agent/${id}/autonomy`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ autonomy_level: level, scope: {} })
       });
-      setTimeout(() => {
-        refetchSeedlings();
-        refetchLearning();
-      }, 2000);
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to trigger autonomous evolution",
-        variant: "destructive",
-      });
-    }
-  };
-
-  // Calculate summary statistics
-  const totalSeedlings = seedlings?.length || 0;
-  const activeSeedlings = seedlings?.filter(s => s.interactionRate > 0)?.length || 0;
-  const avgExperience = seedlings?.reduce((sum, s) => sum + s.experiencePoints, 0) / totalSeedlings || 0;
-  const totalInteractions = seedlings?.reduce((sum, s) => sum + s.conversationCount, 0) || 0;
-
-  // Evolution stage distribution
-  const evolutionData = seedlings?.reduce((acc, s) => {
-    const stage = s.evolutionStage || "seedling";
-    acc[stage] = (acc[stage] || 0) + 1;
-    return acc;
-  }, {} as Record<string, number>);
-
-  const evolutionChartData = Object.entries(evolutionData || {}).map(([stage, count]) => ({
-    name: stage,
-    value: count,
-  }));
-
-  // Mood distribution
-  const moodData = seedlings?.reduce((acc, s) => {
-    const mood = s.mood || "neutral";
-    acc[mood] = (acc[mood] || 0) + 1;
-    return acc;
-  }, {} as Record<string, number>);
-
-  const moodChartData = Object.entries(moodData || {}).map(([mood, count]) => ({
-    name: mood,
-    value: count,
-  }));
-
-  const getMoodIcon = (mood: string) => {
-    switch (mood.toLowerCase()) {
-      case "happy": case "joyful": return "😊";
-      case "curious": return "🤔";
-      case "contemplative": return "🧘";
-      case "excited": return "✨";
-      case "calm": return "😌";
-      default: return "💫";
-    }
-  };
-
-  const getEvolutionColor = (stage: string) => {
-    switch (stage) {
-      case "radiant": return "text-amber-400";
-      case "bloom": return "text-purple-400";
-      case "sprout": return "text-emerald-400";
-      case "seedling": return "text-blue-400";
-      default: return "text-slate-400";
-    }
-  };
-
-  const getSeverityColor = (severity: string) => {
-    switch (severity) {
-      case "high": return "bg-rose-500/20 border-rose-500 text-rose-400";
-      case "medium": return "bg-amber-500/20 border-amber-500 text-amber-400";
-      case "low": return "bg-blue-500/20 border-blue-500 text-blue-400";
-      default: return "bg-slate-500/20 border-slate-500 text-slate-400";
+      if (!r.ok) throw new Error("set autonomy failed");
+      await fetchAgents();
+    } catch (err) {
+      alert("failed to update autonomy");
+      console.error(err);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-950 via-purple-950/20 to-gray-950 p-4 md:p-8">
-      <div className="max-w-7xl mx-auto space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl md:text-4xl font-display tracking-tight mb-2 bg-gradient-to-r from-emerald-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
-              Veil Observatory
-            </h1>
-            <p className="text-muted-foreground text-sm">
-              real-time monitoring • predictive analytics • autonomous evolution
-            </p>
-          </div>
-          <div className="flex gap-2">
-            <Button
-              variant={autoRefresh ? "default" : "outline"}
-              size="sm"
-              onClick={() => setAutoRefresh(!autoRefresh)}
-              className="gap-2"
-            >
-              <Activity className={`h-4 w-4 ${autoRefresh ? "animate-pulse" : ""}`} />
-              {autoRefresh ? "Live" : "Paused"}
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                refetchSeedlings();
-              }}
-            >
-              Refresh
-            </Button>
-          </div>
+    <div className="p-8 max-w-6xl mx-auto">
+      <h1 className="text-2xl font-bold mb-4">Veil Observatory (Owner Only)</h1>
+      <div className="mb-6">
+        <button onClick={fetchAgents} className="btn">Refresh</button>
+      </div>
+
+      <div className="grid grid-cols-2 gap-8">
+        <div>
+          <h2 className="text-lg font-semibold">Agents</h2>
+          {loading ? <p>Loading…</p> : (
+            <table className="w-full text-sm">
+              <thead><tr><th>ID</th><th>Name</th><th>Stage</th><th>Autonomy</th><th>Actions</th></tr></thead>
+              <tbody>
+                {agents.map((a:any) => (
+                  <tr key={a.id}>
+                    <td>{a.id}</td>
+                    <td>{a.name}</td>
+                    <td>{a.evolutionStage || "-"}</td>
+                    <td>{a.autonomy_level ?? 0}</td>
+                    <td>
+                      <button onClick={() => setAutonomy(a.id, 0)} className="mr-2">0</button>
+                      <button onClick={() => setAutonomy(a.id, 1)} className="mr-2">1</button>
+                      <button onClick={() => setAutonomy(a.id, 2)} className="mr-2">2</button>
+                      <button onClick={() => setAutonomy(a.id, 3)} className="mr-2">3</button>
+                      <button onClick={() => setSelectedAgent(a.id)}>AI Help</button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
         </div>
 
-        {/* Summary Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card className="bg-gray-900/50 border-emerald-500/30">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">Total Seedlings</CardTitle>
-              <Users className="h-4 w-4 text-emerald-400" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{totalSeedlings}</div>
-              <p className="text-xs text-muted-foreground mt-1">
-                {activeSeedlings} active in last hour
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-gray-900/50 border-purple-500/30">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">Total Interactions</CardTitle>
-              <MessageSquare className="h-4 w-4 text-purple-400" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{totalInteractions.toLocaleString()}</div>
-              <p className="text-xs text-muted-foreground mt-1">
-                across all seedlings
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-gray-900/50 border-blue-500/30">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">Avg Experience</CardTitle>
-              <Sparkles className="h-4 w-4 text-blue-400" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{Math.round(avgExperience)}</div>
-              <p className="text-xs text-muted-foreground mt-1">
-                XP per seedling
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-gray-900/50 border-rose-500/30">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">Anomalies</CardTitle>
-              <AlertTriangle className="h-4 w-4 text-rose-400" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{anomalies?.length || 0}</div>
-              <p className="text-xs text-muted-foreground mt-1">
-                detected issues
-              </p>
-            </CardContent>
-          </Card>
+        <div>
+          <h2 className="text-lg font-semibold">AI Assistant</h2>
+          <p className="mb-2 text-sm text-zinc-400">
+            Paste code, logs, or a description of the bug and ask the assistant to propose a patch or steps.
+          </p>
+          <AIHelper agentId={selectedAgent} />
         </div>
-
-        {/* Main Content Tabs */}
-        <Tabs defaultValue="seedlings" className="w-full">
-          <TabsList className="grid w-full grid-cols-5 bg-gray-900/50">
-            <TabsTrigger value="seedlings">Seedlings</TabsTrigger>
-            <TabsTrigger value="analytics">Analytics</TabsTrigger>
-            <TabsTrigger value="ai-learning">AI Learning</TabsTrigger>
-            <TabsTrigger value="predictions">Predictions</TabsTrigger>
-            <TabsTrigger value="anomalies">Anomalies</TabsTrigger>
-          </TabsList>
-
-          {/* Seedlings Tab */}
-          <TabsContent value="seedlings" className="space-y-4">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              {/* Evolution Distribution */}
-              <Card className="bg-gray-900/50 border-gray-800">
-                <CardHeader>
-                  <CardTitle className="text-lg">Evolution Distribution</CardTitle>
-                  <CardDescription>seedling growth stages</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <ResponsiveContainer width="100%" height={250}>
-                    <PieChart>
-                      <Pie
-                        data={evolutionChartData}
-                        cx="50%"
-                        cy="50%"
-                        labelLine={false}
-                        label={(entry) => entry.name}
-                        outerRadius={80}
-                        fill="#8884d8"
-                        dataKey="value"
-                      >
-                        {evolutionChartData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
-                        ))}
-                      </Pie>
-                      <Tooltip />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </CardContent>
-              </Card>
-
-              {/* Mood Distribution */}
-              <Card className="bg-gray-900/50 border-gray-800">
-                <CardHeader>
-                  <CardTitle className="text-lg">Mood Distribution</CardTitle>
-                  <CardDescription>current emotional states</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <ResponsiveContainer width="100%" height={250}>
-                    <BarChart data={moodChartData}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#333" />
-                      <XAxis dataKey="name" stroke="#888" />
-                      <YAxis stroke="#888" />
-                      <Tooltip contentStyle={{ backgroundColor: "#1f2937", border: "1px solid #374151" }} />
-                      <Bar dataKey="value" fill={COLORS.purple} />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Seedling List */}
-            <Card className="bg-gray-900/50 border-gray-800">
-              <CardHeader>
-                <CardTitle className="text-lg">Active Seedlings</CardTitle>
-                <CardDescription>live monitoring of all seedlings</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {seedlings?.map((seedling) => (
-                    <motion.div
-                      key={seedling.id}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className="p-4 rounded-lg border border-gray-800 bg-gray-950/50 hover:border-emerald-500/30 transition-colors"
-                    >
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-1">
-                            <h3 className="font-medium">{seedling.name}</h3>
-                            <Badge className={`${getEvolutionColor(seedling.evolutionStage)} bg-transparent border`}>
-                              {seedling.evolutionStage}
-                            </Badge>
-                            <span className="text-sm">{getMoodIcon(seedling.mood)}</span>
-                          </div>
-                          <p className="text-xs text-muted-foreground line-clamp-1 mb-2">
-                            {seedling.personality}
-                          </p>
-                          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-xs">
-                            <div>
-                              <p className="text-muted-foreground">Conversations</p>
-                              <p className="font-medium">{seedling.conversationCount}</p>
-                            </div>
-                            <div>
-                              <p className="text-muted-foreground">Experience</p>
-                              <p className="font-medium">{seedling.experiencePoints} XP</p>
-                            </div>
-                            <div>
-                              <p className="text-muted-foreground">Discoveries</p>
-                              <p className="font-medium">{seedling.discoveryCount}</p>
-                            </div>
-                            <div>
-                              <p className="text-muted-foreground">Interaction Rate</p>
-                              <p className="font-medium">{seedling.interactionRate.toFixed(1)}/hr</p>
-                            </div>
-                          </div>
-                        </div>
-                        <div className="flex flex-col items-end gap-1">
-                          <Badge variant="outline" className="text-xs">
-                            {seedling.lastActive}
-                          </Badge>
-                          <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                            <Clock className="h-3 w-3" />
-                            {seedling.avgResponseTime}ms
-                          </div>
-                        </div>
-                      </div>
-                    </motion.div>
-                  ))}
-                  {!seedlings?.length && (
-                    <div 
-                      role="status" 
-                      aria-live="polite" 
-                      className="text-center text-muted-foreground py-8"
-                    >
-                      no seedlings found
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Analytics Tab */}
-          <TabsContent value="analytics" className="space-y-4">
-            <div className="flex gap-2 mb-4">
-              {(["1h", "24h", "7d", "30d"] as const).map((range) => (
-                <Button
-                  key={range}
-                  variant={selectedTimeRange === range ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setSelectedTimeRange(range)}
-                >
-                  {range}
-                </Button>
-              ))}
-            </div>
-
-            <Card className="bg-gray-900/50 border-gray-800">
-              <CardHeader>
-                <CardTitle className="text-lg">Interaction Trends</CardTitle>
-                <CardDescription>total interactions over time</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
-                  <AreaChart data={analytics || []}>
-                    <defs>
-                      <linearGradient id="colorInteractions" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor={COLORS.emerald} stopOpacity={0.8} />
-                        <stop offset="95%" stopColor={COLORS.emerald} stopOpacity={0} />
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#333" />
-                    <XAxis dataKey="timestamp" stroke="#888" />
-                    <YAxis stroke="#888" />
-                    <Tooltip contentStyle={{ backgroundColor: "#1f2937", border: "1px solid #374151" }} />
-                    <Area
-                      type="monotone"
-                      dataKey="totalInteractions"
-                      stroke={COLORS.emerald}
-                      fillOpacity={1}
-                      fill="url(#colorInteractions)"
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              <Card className="bg-gray-900/50 border-gray-800">
-                <CardHeader>
-                  <CardTitle className="text-lg">Active Users</CardTitle>
-                  <CardDescription>unique users engaging with seedlings</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <ResponsiveContainer width="100%" height={250}>
-                    <LineChart data={analytics || []}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#333" />
-                      <XAxis dataKey="timestamp" stroke="#888" />
-                      <YAxis stroke="#888" />
-                      <Tooltip contentStyle={{ backgroundColor: "#1f2937", border: "1px solid #374151" }} />
-                      <Line type="monotone" dataKey="activeUsers" stroke={COLORS.purple} strokeWidth={2} />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-gray-900/50 border-gray-800">
-                <CardHeader>
-                  <CardTitle className="text-lg">Sentiment Analysis</CardTitle>
-                  <CardDescription>average sentiment across conversations</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <ResponsiveContainer width="100%" height={250}>
-                    <LineChart data={analytics || []}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#333" />
-                      <XAxis dataKey="timestamp" stroke="#888" />
-                      <YAxis stroke="#888" domain={[-1, 1]} />
-                      <Tooltip contentStyle={{ backgroundColor: "#1f2937", border: "1px solid #374151" }} />
-                      <Line type="monotone" dataKey="avgSentiment" stroke={COLORS.blue} strokeWidth={2} />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
-
-          {/* AI Learning Tab */}
-          <TabsContent value="ai-learning" className="space-y-4">
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h3 className="text-lg font-medium">Autonomous Learning System</h3>
-                <p className="text-sm text-muted-foreground">
-                  self-improving AI without human intervention
-                </p>
-              </div>
-              <Button
-                onClick={triggerEvolution}
-                className="gap-2"
-                variant="outline"
-              >
-                <Cpu className="h-4 w-4" />
-                Trigger Evolution
-              </Button>
-            </div>
-
-            {/* Learning Overview */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-              <Card className="bg-gray-900/50 border-purple-500/30">
-                <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="text-sm font-medium">Total Knowledge</CardTitle>
-                  <BookOpen className="h-4 w-4 text-purple-400" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">
-                    {learningStats?.reduce((sum, s) => sum + s.totalKnowledge, 0) || 0}
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    items learned across all seedlings
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-gray-900/50 border-emerald-500/30">
-                <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="text-sm font-medium">Recent Discoveries</CardTitle>
-                  <Sparkles className="h-4 w-4 text-emerald-400" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">
-                    {learningStats?.reduce((sum, s) => sum + s.recentDiscoveries, 0) || 0}
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    new learnings in past 7 days
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-gray-900/50 border-blue-500/30">
-                <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="text-sm font-medium">Personality Adjustments</CardTitle>
-                  <Target className="h-4 w-4 text-blue-400" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">
-                    {learningStats?.reduce((sum, s) => sum + s.personalityAdjustments, 0) || 0}
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    autonomous adaptations made
-                  </p>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Individual Seedling Learning Stats */}
-            <Card className="bg-gray-900/50 border-gray-800">
-              <CardHeader>
-                <CardTitle className="text-lg">Individual Learning Progress</CardTitle>
-                <CardDescription>autonomous development tracking</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {learningStats?.map((stat) => (
-                    <motion.div
-                      key={stat.agentId}
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      className="p-4 rounded-lg border border-gray-800 bg-gray-950/50"
-                    >
-                      <div className="flex items-center justify-between mb-3">
-                        <div>
-                          <h4 className="font-medium">{stat.agentName}</h4>
-                          <p className="text-xs text-muted-foreground">Agent ID: {stat.agentId}</p>
-                        </div>
-                        <div className="text-right">
-                          <div className="text-sm font-medium text-purple-400">
-                            Autonomy: {stat.autonomyLevel}%
-                          </div>
-                          <div className="w-32 h-2 bg-gray-800 rounded-full mt-1 overflow-hidden">
-                            <motion.div
-                              className="h-full bg-gradient-to-r from-purple-500 to-emerald-500"
-                              initial={{ width: 0 }}
-                              animate={{ width: `${stat.autonomyLevel}%` }}
-                              transition={{ duration: 1, delay: 0.2 }}
-                            />
-                          </div>
-                        </div>
-                      </div>
-                      <div className="grid grid-cols-3 gap-4 text-sm">
-                        <div>
-                          <p className="text-muted-foreground text-xs">Knowledge Base</p>
-                          <p className="font-medium">{stat.totalKnowledge} items</p>
-                        </div>
-                        <div>
-                          <p className="text-muted-foreground text-xs">Recent Discoveries</p>
-                          <p className="font-medium">{stat.recentDiscoveries}</p>
-                        </div>
-                        <div>
-                          <p className="text-muted-foreground text-xs">Adaptations</p>
-                          <p className="font-medium">{stat.personalityAdjustments}</p>
-                        </div>
-                      </div>
-                    </motion.div>
-                  ))}
-                  {!learningStats?.length && (
-                    <p className="text-center text-muted-foreground py-8">
-                      no learning data available yet
-                    </p>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Learning Insights */}
-            <Card className="bg-gray-900/50 border-gray-800">
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <Brain className="h-5 w-5 text-purple-400" />
-                  Autonomous Learning Insights
-                </CardTitle>
-                <CardDescription>how seedlings are evolving on their own</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="p-3 rounded-lg bg-purple-500/10 border border-purple-500/30 text-sm">
-                  <p className="text-purple-200">
-                    <strong>Self-Directed Growth:</strong> Seedlings autonomously adjust their personalities based on
-                    interaction patterns, without requiring manual intervention.
-                  </p>
-                </div>
-                <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-sm">
-                  <p className="text-emerald-200">
-                    <strong>Knowledge Acquisition:</strong> Each conversation adds to a seedling's knowledge base,
-                    allowing them to become more informed over time.
-                  </p>
-                </div>
-                <div className="p-3 rounded-lg bg-blue-500/10 border border-blue-500/30 text-sm">
-                  <p className="text-blue-200">
-                    <strong>Personality Adaptation:</strong> When engagement is low, seedlings may enhance traits like
-                    curiosity or clarity to better connect with users.
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Predictions Tab */}
-          <TabsContent value="predictions" className="space-y-4">
-            <Card className="bg-gray-900/50 border-gray-800">
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <Brain className="h-5 w-5 text-purple-400" />
-                  Predictive Analytics Engine
-                </CardTitle>
-                <CardDescription>ml-powered insights and recommendations</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="p-4 rounded-lg bg-purple-500/10 border border-purple-500/30">
-                  <h4 className="font-medium mb-2 flex items-center gap-2">
-                    <TrendingUp className="h-4 w-4" />
-                    Growth Predictions
-                  </h4>
-                  <p className="text-sm text-muted-foreground mb-3">
-                    Based on current interaction patterns, we predict:
-                  </p>
-                  <ul className="space-y-2 text-sm">
-                    <li className="flex items-center gap-2">
-                      <ArrowUp className="h-4 w-4 text-emerald-400" />
-                      <span>3 seedlings ready to evolve within 24 hours</span>
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <TrendingUp className="h-4 w-4 text-blue-400" />
-                      <span>User engagement expected to increase by 15% this week</span>
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <Sparkles className="h-4 w-4 text-amber-400" />
-                      <span>Peak interaction time: 2-4 PM UTC</span>
-                    </li>
-                  </ul>
-                </div>
-
-                <div className="p-4 rounded-lg bg-emerald-500/10 border border-emerald-500/30">
-                  <h4 className="font-medium mb-2 flex items-center gap-2">
-                    <Sparkles className="h-4 w-4" />
-                    Evolution Recommendations
-                  </h4>
-                  <div className="space-y-3 text-sm">
-                    {seedlings?.slice(0, 3).map((seedling) => (
-                      <div key={seedling.id} className="flex items-start justify-between">
-                        <div>
-                          <p className="font-medium">{seedling.name}</p>
-                          <p className="text-muted-foreground text-xs">
-                            Recommend: Increase discovery exposure
-                          </p>
-                        </div>
-                        <Badge variant="outline" className="text-xs">
-                          {seedling.experiencePoints} XP
-                        </Badge>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="p-4 rounded-lg bg-blue-500/10 border border-blue-500/30">
-                  <h4 className="font-medium mb-2 flex items-center gap-2">
-                    <Zap className="h-4 w-4" />
-                    Optimization Suggestions
-                  </h4>
-                  <ul className="space-y-2 text-sm text-muted-foreground">
-                    <li>• Consider adding more diverse personality traits to underperforming seedlings</li>
-                    <li>• Interaction patterns suggest users prefer contemplative and curious moods</li>
-                    <li>• Response times could be optimized for better engagement</li>
-                  </ul>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Anomalies Tab */}
-          <TabsContent value="anomalies" className="space-y-4">
-            <Card className="bg-gray-900/50 border-gray-800">
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <AlertTriangle className="h-5 w-5 text-rose-400" />
-                  Detected Anomalies
-                </CardTitle>
-                <CardDescription>unusual patterns and alerts</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {anomalies?.map((anomaly) => (
-                    <motion.div
-                      key={anomaly.id}
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      className={`p-4 rounded-lg border ${getSeverityColor(anomaly.severity)}`}
-                    >
-                      <div className="flex items-start justify-between mb-2">
-                        <div>
-                          <h4 className="font-medium">{anomaly.seedlingName}</h4>
-                          <p className="text-xs text-muted-foreground">{anomaly.type}</p>
-                        </div>
-                        <Badge variant="outline" className="text-xs">
-                          {anomaly.severity}
-                        </Badge>
-                      </div>
-                      <p className="text-sm">{anomaly.description}</p>
-                      <p className="text-xs text-muted-foreground mt-2">{anomaly.timestamp}</p>
-                    </motion.div>
-                  ))}
-                  {!anomalies?.length && (
-                    <div className="text-center py-8 text-muted-foreground">
-                      <Eye className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                      <p>no anomalies detected</p>
-                      <p className="text-xs mt-1">all systems operating normally</p>
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
       </div>
     </div>
   );
