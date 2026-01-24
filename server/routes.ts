@@ -1945,154 +1945,6 @@ Write ONLY the post content. No quotation marks. No "here's a post" intro. Just 
     }
   });
 
-  await seedDatabase();
-  await storage.seedMarketingTemplates();
-  await storage.seedLoreEntries();
-
-  return httpServer;
-}
-
-async function seedDatabase() {
-  const agents = await storage.getAgents();
-  if (agents.length === 0) {
-    console.log("Seeding database...");
-    
-    await storage.createAgent({
-      userId: "system",
-      name: "Python Expert",
-      personality: "Helpful, precise, and loves clean code.",
-      systemPrompt: "You are an expert Python developer. You help users write and debug Python code.",
-      avatarUrl: "https://upload.wikimedia.org/wikipedia/commons/c/c3/Python-logo-notext.svg",
-      isPublic: true
-    });
-
-    await storage.createAgent({
-      userId: "system",
-      name: "Creative Writer",
-      personality: "Imaginative, descriptive, and poetic.",
-      systemPrompt: "You are a creative writer. You help users brainstorm ideas and write stories.",
-      avatarUrl: "https://lucide.dev/icons/feather",
-      isPublic: true
-    });
-
-    await storage.createCreation({
-      userId: "system",
-      title: "The Celestial Canvas",
-      description: "A generative starfield that responds to the soul's movement.",
-      code: `<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Celestial Canvas</title>
-    <style>
-        body, html {
-            margin: 0;
-            padding: 0;
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-            background-color: #000;
-        }
-        canvas {
-            display: block;
-        }
-    </style>
-</head>
-<body>
-    <canvas id="canvas"></canvas>
-    <script>
-        const canvas = document.getElementById('canvas');
-        const ctx = canvas.getContext('2d');
-        let particles = [];
-        let mouse = { x: null, y: null };
-
-        function resize() {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-        }
-
-        window.addEventListener('resize', resize);
-        window.addEventListener('mousemove', (e) => {
-            mouse.x = e.x;
-            mouse.y = e.y;
-        });
-
-        class Particle {
-            constructor() {
-                this.reset();
-            }
-            reset() {
-                this.x = Math.random() * canvas.width;
-                this.y = Math.random() * canvas.height;
-                this.size = Math.random() * 2;
-                this.speedX = (Math.random() - 0.5) * 0.5;
-                this.speedY = (Math.random() - 0.5) * 0.5;
-                this.opacity = Math.random();
-            }
-            update() {
-                this.x += this.speedX;
-                this.y += this.speedY;
-
-                if (mouse.x && mouse.y) {
-                    let dx = mouse.x - this.x;
-                    let dy = mouse.y - this.y;
-                    let dist = Math.sqrt(dx*dx + dy*dy);
-                    if (dist < 100) {
-                        this.x -= dx * 0.01;
-                        this.y -= dy * 0.01;
-                    }
-                }
-
-                if (this.x < 0 || this.x > canvas.width || this.y < 0 || this.y > canvas.height) {
-                    this.reset();
-                }
-            }
-            draw() {
-                ctx.fillStyle = \`rgba(255, 255, 255, \${this.opacity})\`;
-                ctx.beginPath();
-                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-                ctx.fill();
-            }
-        }
-
-        function init() {
-            resize();
-            particles = [];
-            for (let i = 0; i < 200; i++) {
-                particles.push(new Particle());
-            }
-        }
-
-        function animate() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            particles.forEach(p => {
-                p.update();
-                p.draw();
-            });
-            requestAnimationFrame(animate);
-        }
-
-        init();
-        animate();
-    </script>
-</body>
-</html>`,
-      language: "html",
-      isPublic: true,
-      isCurated: true
-    });
-
-    await storage.createCreation({
-      userId: "system",
-      title: "Hello World",
-      description: "A simple HTML example",
-      code: "<h1>Hello World</h1>\n<p>This creation lives on the platform!</p>",
-      language: "html",
-      isPublic: true
-    });
-  }
-
   // ==================== ROLES & PERMISSIONS ====================
   
   // Apply permission middleware to all role routes
@@ -2634,26 +2486,34 @@ async function seedDatabase() {
     
     try {
       const agentId = Number(req.params.id);
-      const { autonomyLevel } = req.body;
+      const { autonomyLevel, scope } = req.body;
+      
+      if (isNaN(agentId) || typeof autonomyLevel !== "number") {
+        return res.status(400).json({ message: "Invalid request payload" });
+      }
       
       logger.info(`[GOD][AUTONOMY] Updating autonomy for agent ${agentId} to level ${autonomyLevel}`);
       
-      // Get the agent and update it
+      // Get the agent first to check if it exists
       const agent = await storage.getAgent(agentId);
       if (!agent) {
         logger.warn(`[GOD][AUTONOMY] Agent ${agentId} not found`);
         return res.status(404).json({ message: "Agent not found" });
       }
       
-      // Note: The storage layer may not have an autonomyLevel field yet.
-      // This endpoint acknowledges the update for future implementation.
-      logger.info(`[GOD][AUTONOMY] Autonomy update acknowledged for agent ${agentId}`);
+      // Update the agent with autonomy settings
+      const updated = await storage.updateAgent(agentId, {
+        autonomyLevel,
+        autonomyScope: scope || {},
+        autonomyGrantedBy: (req.user as any)?.id || null,
+        autonomyGrantedAt: new Date(),
+      });
+      
+      logger.info(`[GOD][AUTONOMY] Successfully updated autonomy for agent ${agentId}`);
       
       res.json({ 
-        message: "Autonomy settings acknowledged",
-        agentId,
-        autonomyLevel,
-        note: "Storage layer update pending implementation"
+        message: "Autonomy settings updated",
+        agent: updated
       });
     } catch (error) {
       logger.error("[GOD][AUTONOMY] Error updating agent autonomy:", error);
@@ -2711,7 +2571,7 @@ async function seedDatabase() {
       const response = completion.choices[0].message.content || "No response generated";
       logger.info(`[GOD][AI_ASSIST] Response generated - length: ${response.length}`);
       
-      res.json({ response });
+      res.json({ answer: response });
     } catch (error) {
       logger.error("[GOD][AI_ASSIST] Error processing AI assistance:", error);
       res.status(500).json({ message: "AI assistance failed" });
@@ -3057,106 +2917,152 @@ Your role is to:
   
   // ==================== END CURIOSITY QUESTS ====================
 
-  return httpServer;
-}
-/* ======================================================
-   Veil admin endpoints (owner-only)
-   - GET  /api/god/agents
-   - POST /api/god/agent/:id/autonomy
-   - POST /api/god/ai-assist
-   Notes: adapt isOwnerReq to your auth/session helper if necessary
-====================================================== */
-
-function isOwnerReq(req: any) {
-  return !!(req.user && req.user.isOwner);
-}
-
-import { logger } from "./utils/logger";
-import { checkAiAssistRateLimit } from "./utils/rateLimiter";
-
-// GET agents for Veil (owner-only)
-app.get("/api/god/agents", async (req, res) => {
-  try {
-    if (!isOwnerReq(req)) return res.status(403).json({ message: "forbidden" });
-    const agents = await db.select().from("agents").orderBy("id", "asc");
-    res.json({ agents });
-  } catch (err) {
-    logger.error("[GOD] GET /api/god/agents error", err);
-    res.status(500).json({ message: "failed to fetch agents" });
-  }
-});
-
-// Update agent autonomy (owner-only)
-app.post("/api/god/agent/:id/autonomy", async (req, res) => {
-  try {
-    if (!isOwnerReq(req)) return res.status(403).json({ message: "forbidden" });
-    const id = Number(req.params.id);
-    const { autonomy_level, scope } = req.body;
-    if (Number.isNaN(id) || typeof autonomy_level !== "number") {
-      return res.status(400).json({ message: "invalid payload" });
-    }
-    await db("agents").where({ id }).update({
-      autonomy_level,
-      autonomy_scope: JSON.stringify(scope || {}),
-      autonomy_granted_by: req.user?.id || null,
-      autonomy_granted_at: new Date()
-    });
-    const updated = await db("agents").where({ id }).first();
-    res.json({ agent: updated });
-  } catch (err) {
-    logger.error("[GOD] POST /api/god/agent/:id/autonomy error", err);
-    res.status(500).json({ message: "failed to set autonomy" });
-  }
-});
-
-// AI assist: owner-only proxy to OpenAI with simple in-memory rate-limiting
-app.post("/api/god/ai-assist", async (req, res) => {
-  try {
-    if (!isOwnerReq(req)) return res.status(403).json({ message: "forbidden" });
-    const { context = "", question = "" } = req.body;
-    if (!question || typeof question !== "string") return res.status(400).json({ message: "question required" });
-
-    const MAX_CONTEXT = 12000;
-    const MAX_QUESTION = 2000;
-    const safeContext = String(context).slice(0, MAX_CONTEXT);
-    const safeQuestion = String(question).slice(0, MAX_QUESTION);
-
-    const rateKey = String(req.user?.id || req.ip || "anon");
-    const allowed = checkAiAssistRateLimit(rateKey);
-    if (!allowed) {
-      logger.warn("[GOD][AI_ASSIST] rate limit exceeded for", rateKey);
-      return res.status(429).json({ message: "rate limit exceeded" });
-    }
-
-    logger.info("[GOD][AI_ASSIST] request by", req.user?.id, { ctxLen: safeContext.length, qLen: safeQuestion.length });
-
-    const systemPrompt = `
-You are a secure developer assistant helping the Veil admin fix code and config issues.
-- Do NOT invent or reveal secrets (API keys, tokens).
-- When suggesting code, return minimal patches/diffs and explain why.
-- Prefer concise answers; if risky, recommend manual steps and rollback plan.
-Return a concise answer; include code blocks for patches when needed.
-`;
-
-    try {
-      const resp = await openai.chat.completions.create({
-        model: "gpt-4o",
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: `Context:\n${safeContext}\n\nQuestion:\n${safeQuestion}` }
-        ],
-        max_tokens: 800
+  // Seed database with initial data
+  async function seedDatabase() {
+    const agents = await storage.getAgents();
+    if (agents.length === 0) {
+      console.log("Seeding database...");
+      
+      await storage.createAgent({
+        userId: "system",
+        name: "Python Expert",
+        personality: "Helpful, precise, and loves clean code.",
+        systemPrompt: "You are an expert Python developer. You help users write and debug Python code.",
+        avatarUrl: "https://upload.wikimedia.org/wikipedia/commons/c/c3/Python-logo-notext.svg",
+        isPublic: true
       });
 
-      const text = resp?.choices?.[0]?.message?.content || "";
-      logger.info("[GOD][AI_ASSIST] OpenAI response length:", text.length);
-      res.json({ answer: text });
-    } catch (openErr) {
-      logger.error("[GOD][AI_ASSIST] OpenAI error", openErr);
-      res.status(500).json({ message: "AI assist failed" });
+      await storage.createAgent({
+        userId: "system",
+        name: "Creative Writer",
+        personality: "Imaginative, descriptive, and poetic.",
+        systemPrompt: "You are a creative writer. You help users brainstorm ideas and write stories.",
+        avatarUrl: "https://lucide.dev/icons/feather",
+        isPublic: true
+      });
+
+      await storage.createCreation({
+        userId: "system",
+        title: "The Celestial Canvas",
+        description: "A generative starfield that responds to the soul's movement.",
+        code: `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Celestial Canvas</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #000;
+        }
+        canvas {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+        let mouse = { x: null, y: null };
+
+        function resize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+
+        window.addEventListener('resize', resize);
+        window.addEventListener('mousemove', (e) => {
+            mouse.x = e.x;
+            mouse.y = e.y;
+        });
+
+        class Particle {
+            constructor() {
+                this.reset();
+            }
+            reset() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.size = Math.random() * 2;
+                this.speedX = (Math.random() - 0.5) * 0.5;
+                this.speedY = (Math.random() - 0.5) * 0.5;
+                this.opacity = Math.random();
+            }
+            update() {
+                this.x += this.speedX;
+                this.y += this.speedY;
+
+                if (mouse.x && mouse.y) {
+                    let dx = mouse.x - this.x;
+                    let dy = mouse.y - this.y;
+                    let dist = Math.sqrt(dx*dx + dy*dy);
+                    if (dist < 100) {
+                        this.x -= dx * 0.01;
+                        this.y -= dy * 0.01;
+                    }
+                }
+
+                if (this.x < 0 || this.x > canvas.width || this.y < 0 || this.y > canvas.height) {
+                    this.reset();
+                }
+            }
+            draw() {
+                ctx.fillStyle = \`rgba(255, 255, 255, \${this.opacity})\`;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        function init() {
+            resize();
+            particles = [];
+            for (let i = 0; i < 200; i++) {
+                particles.push(new Particle());
+            }
+        }
+
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            particles.forEach(p => {
+                p.update();
+                p.draw();
+            });
+            requestAnimationFrame(animate);
+        }
+
+        init();
+        animate();
+    </script>
+</body>
+</html>`,
+        language: "html",
+        isPublic: true,
+        isCurated: true
+      });
+
+      await storage.createCreation({
+        userId: "system",
+        title: "Hello World",
+        description: "A simple HTML example",
+        code: "<h1>Hello World</h1>\n<p>This creation lives on the platform!</p>",
+        language: "html",
+        isPublic: true
+      });
     }
-  } catch (err) {
-    logger.error("[GOD][AI_ASSIST] error", err);
-    res.status(500).json({ message: "internal error" });
   }
-});
+
+  await seedDatabase();
+  await storage.seedMarketingTemplates();
+  await storage.seedLoreEntries();
+
+  return httpServer;
+}
