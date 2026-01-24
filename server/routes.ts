@@ -3068,7 +3068,7 @@ Your role is to:
 ====================================================== */
 
 function isOwnerReq(req: any) {
-  return !!(req.user && req.user.isOwner);
+  return !!(req.user && isOwner(req.user));
 }
 
 import { logger } from "./utils/logger";
