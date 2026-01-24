@@ -20,11 +20,9 @@ export function checkAiAssistRateLimit(key: string) {
     // reset window
     entry.windowStart = now;
     entry.count = 1;
-    map.set(key, entry);
     return true;
   }
 
   entry.count += 1;
-  map.set(key, entry);
   return entry.count <= MAX_PER_WINDOW;
 }

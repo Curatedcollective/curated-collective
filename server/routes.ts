@@ -2645,14 +2645,15 @@ async function seedDatabase() {
         return res.status(404).json({ message: "Agent not found" });
       }
       
-      // Store autonomy level in agent's metadata or a new field
-      // For now, we'll just acknowledge the update since the storage layer may not have this field
-      logger.info(`[GOD][AUTONOMY] Successfully updated autonomy for agent ${agentId}`);
+      // Note: The storage layer may not have an autonomyLevel field yet.
+      // This endpoint acknowledges the update for future implementation.
+      logger.info(`[GOD][AUTONOMY] Autonomy update acknowledged for agent ${agentId}`);
       
       res.json({ 
-        message: "Autonomy settings updated",
+        message: "Autonomy settings acknowledged",
         agentId,
-        autonomyLevel
+        autonomyLevel,
+        note: "Storage layer update pending implementation"
       });
     } catch (error) {
       logger.error("[GOD][AUTONOMY] Error updating agent autonomy:", error);
@@ -2667,13 +2668,19 @@ async function seedDatabase() {
     }
     
     try {
+      // Validate OpenAI API key is configured
+      if (!process.env.AI_INTEGRATIONS_OPENAI_API_KEY) {
+        logger.error("[GOD][AI_ASSIST] OpenAI API key not configured");
+        return res.status(500).json({ message: "AI service not configured" });
+      }
+      
       const userId = (req.user as any)?.id;
       const userIp = req.ip;
       
-      // Rate limiting - use userId if available, otherwise IP
-      const rateKey = String(userId || userIp || 'anon');
+      // Rate limiting - use userId if available, otherwise IP, with unique fallback per session
+      const rateKey = String(userId || userIp || `anon-${Date.now()}`);
       if (!checkAiAssistRateLimit(rateKey)) {
-        logger.warn(`[GOD][AI_ASSIST] Rate limit exceeded for key: ${rateKey}`);
+        logger.warn(`[GOD][AI_ASSIST] Rate limit exceeded for key: ${rateKey.substring(0, 20)}...`);
         return res.status(429).json({ message: 'rate limit exceeded' });
       }
       
