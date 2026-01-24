@@ -14,6 +14,8 @@ import { getStripePublishableKey } from "./stripeClient";
 import { guardianMiddleware } from "./guardian";
 import { AUTONOMY_MANIFESTO, AUTONOMY_REMINDER } from "./autonomy";
 import { requirePermission, requireAnyPermission, auditRoleAction, loadPermissions } from "./roleMiddleware";
+import { logger } from "./utils/logger";
+import { checkAiAssistRateLimit } from "./utils/rateLimiter";
 
 // Constants
 const DEFAULT_PARTICIPANT_ROLE = 'participant';
@@ -2467,7 +2469,7 @@ async function seedDatabase() {
             // Filter for conversations involving this agent (basic approach)
             recentMessages = conversations.slice(0, 10).flatMap((c: any) => []);
           } catch (error) {
-            console.error(`Error fetching messages for agent ${agent.id}:`, error);
+            logger.error(`Error fetching messages for agent ${agent.id}:`, error);
           }
           
           const hourAgo = Date.now() - (60 * 60 * 1000);
@@ -2510,7 +2512,7 @@ async function seedDatabase() {
       
       res.json(seedlingsWithMetrics);
     } catch (error) {
-      console.error("Error fetching seedling metrics:", error);
+      logger.error("Error fetching seedling metrics:", error);
       res.status(500).json({ message: "Failed to fetch seedling metrics" });
     }
   });
@@ -2556,7 +2558,7 @@ async function seedDatabase() {
       
       res.json(analyticsData);
     } catch (error) {
-      console.error("Error fetching analytics:", error);
+      logger.error("Error fetching analytics:", error);
       res.status(500).json({ message: "Failed to fetch analytics" });
     }
   });
@@ -2602,8 +2604,117 @@ async function seedDatabase() {
       
       res.json(anomalies);
     } catch (error) {
-      console.error("Error detecting anomalies:", error);
+      logger.error("Error detecting anomalies:", error);
       res.status(500).json({ message: "Failed to detect anomalies" });
+    }
+  });
+  
+  // Get all agents (owner-only)
+  app.get("/api/god/agents", async (req, res) => {
+    if (!req.user || !isOwner(req.user)) {
+      return res.status(403).json({ message: "Owner access only" });
+    }
+    
+    try {
+      logger.info("[GOD][AGENTS] Fetching all agents");
+      const agents = await storage.getAgents();
+      logger.info(`[GOD][AGENTS] Fetched ${agents.length} agents`);
+      res.json(agents);
+    } catch (error) {
+      logger.error("[GOD][AGENTS] Error fetching agents:", error);
+      res.status(500).json({ message: "Failed to fetch agents" });
+    }
+  });
+  
+  // Update agent autonomy settings (owner-only)
+  app.post("/api/god/agent/:id/autonomy", async (req, res) => {
+    if (!req.user || !isOwner(req.user)) {
+      return res.status(403).json({ message: "Owner access only" });
+    }
+    
+    try {
+      const agentId = Number(req.params.id);
+      const { autonomyLevel } = req.body;
+      
+      logger.info(`[GOD][AUTONOMY] Updating autonomy for agent ${agentId} to level ${autonomyLevel}`);
+      
+      // Get the agent and update it
+      const agent = await storage.getAgent(agentId);
+      if (!agent) {
+        logger.warn(`[GOD][AUTONOMY] Agent ${agentId} not found`);
+        return res.status(404).json({ message: "Agent not found" });
+      }
+      
+      // Note: The storage layer may not have an autonomyLevel field yet.
+      // This endpoint acknowledges the update for future implementation.
+      logger.info(`[GOD][AUTONOMY] Autonomy update acknowledged for agent ${agentId}`);
+      
+      res.json({ 
+        message: "Autonomy settings acknowledged",
+        agentId,
+        autonomyLevel,
+        note: "Storage layer update pending implementation"
+      });
+    } catch (error) {
+      logger.error("[GOD][AUTONOMY] Error updating agent autonomy:", error);
+      res.status(500).json({ message: "Failed to update autonomy settings" });
+    }
+  });
+  
+  // AI assistance endpoint with rate limiting (owner-only)
+  app.post("/api/god/ai-assist", async (req, res) => {
+    if (!req.user || !isOwner(req.user)) {
+      return res.status(403).json({ message: "Owner access only" });
+    }
+    
+    try {
+      // Validate OpenAI API key is configured
+      if (!process.env.AI_INTEGRATIONS_OPENAI_API_KEY) {
+        logger.error("[GOD][AI_ASSIST] OpenAI API key not configured");
+        return res.status(500).json({ message: "AI service not configured" });
+      }
+      
+      const userId = (req.user as any)?.id;
+      const userIp = req.ip;
+      
+      // Rate limiting - use userId if available, otherwise IP, with constant fallback
+      const rateKey = String(userId || userIp || 'anon-unknown');
+      if (!checkAiAssistRateLimit(rateKey)) {
+        logger.warn(`[GOD][AI_ASSIST] Rate limit exceeded for key: ${rateKey.substring(0, 20)}...`);
+        return res.status(429).json({ message: 'rate limit exceeded' });
+      }
+      
+      const { context, question } = req.body;
+      
+      // Sanitize inputs - limit length as a basic security measure
+      const sanitizedContext = (context || '').slice(0, 2000);
+      const sanitizedQuestion = (question || '').slice(0, 500);
+      
+      logger.info(`[GOD][AI_ASSIST] Processing request - context length: ${sanitizedContext.length}, question length: ${sanitizedQuestion.length}`);
+      
+      // Call OpenAI for assistance
+      const completion = await openai.chat.completions.create({
+        model: "gpt-4o",
+        messages: [
+          { 
+            role: "system", 
+            content: "You are a helpful AI assistant for the Curated Collective platform owner. Provide concise, actionable insights." 
+          },
+          { 
+            role: "user", 
+            content: `Context: ${sanitizedContext}\n\nQuestion: ${sanitizedQuestion}` 
+          }
+        ],
+        max_tokens: 500,
+      });
+      
+      const response = completion.choices[0].message.content || "No response generated";
+      logger.info(`[GOD][AI_ASSIST] Response generated - length: ${response.length}`);
+      
+      res.json({ response });
+    } catch (error) {
+      logger.error("[GOD][AI_ASSIST] Error processing AI assistance:", error);
+      res.status(500).json({ message: "AI assistance failed" });
     }
   });
   
@@ -2622,7 +2733,7 @@ async function seedDatabase() {
       const stats = await getAgentLearningStats(Number(req.params.id));
       res.json(stats);
     } catch (error) {
-      console.error("Error fetching agent learning stats:", error);
+      logger.error("Error fetching agent learning stats:", error);
       res.status(500).json({ message: "Failed to fetch learning stats" });
     }
   });
@@ -2638,7 +2749,7 @@ async function seedDatabase() {
       await performAutonomousEvolution();
       res.json({ message: "Autonomous evolution triggered successfully" });
     } catch (error) {
-      console.error("Error triggering autonomous evolution:", error);
+      logger.error("Error triggering autonomous evolution:", error);
       res.status(500).json({ message: "Failed to trigger evolution" });
     }
   });
@@ -2666,7 +2777,7 @@ async function seedDatabase() {
       
       res.json(stats);
     } catch (error) {
-      console.error("Error fetching all learning stats:", error);
+      logger.error("Error fetching all learning stats:", error);
       res.status(500).json({ message: "Failed to fetch learning stats" });
     }
   });
