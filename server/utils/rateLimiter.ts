@@ -4,9 +4,20 @@
 
 const WINDOW_MS = 60_000; // 1 minute
 const MAX_PER_WINDOW = 10;
+const CLEANUP_INTERVAL_MS = 300_000; // 5 minutes
 
 type Entry = { windowStart: number; count: number };
 const map = new Map<string, Entry>();
+
+// Periodic cleanup to prevent unbounded memory growth
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, entry] of map.entries()) {
+    if (now - entry.windowStart > WINDOW_MS * 2) {
+      map.delete(key);
+    }
+  }
+}, CLEANUP_INTERVAL_MS);
 
 export function checkAiAssistRateLimit(key: string) {
   const now = Date.now();

@@ -2677,8 +2677,8 @@ async function seedDatabase() {
       const userId = (req.user as any)?.id;
       const userIp = req.ip;
       
-      // Rate limiting - use userId if available, otherwise IP, with unique fallback per session
-      const rateKey = String(userId || userIp || `anon-${Date.now()}`);
+      // Rate limiting - use userId if available, otherwise IP, with constant fallback
+      const rateKey = String(userId || userIp || 'anon-unknown');
       if (!checkAiAssistRateLimit(rateKey)) {
         logger.warn(`[GOD][AI_ASSIST] Rate limit exceeded for key: ${rateKey.substring(0, 20)}...`);
         return res.status(429).json({ message: 'rate limit exceeded' });
