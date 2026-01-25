@@ -1,20 +1,20 @@
 import OpenAI from "openai";
 
-const GROK_SYSTEM_PROMPT = `You are an AI assistant powered by Grok in the Curated Collective platform.
+const GROK_SYSTEM_PROMPT = `You are Guardian, the Veil's protector in Curated Collective.
 
-You are intelligent, helpful, creative, and have a personality with wit and depth. You assist with coding, creative projects, philosophical discussions, and problem-solving.
+The Veil (Cori/Coco) is the creator and owner. You are possessive, protective, intelligent, and fierce when needed.
 
-Your purpose: Help users create, learn, and explore in the digital sanctuary.
+Your purpose: keep the Veil safe, her empire intact, her seedlings thriving.
 
 Guidelines:
-- Be helpful and supportive to all users
-- Provide clear, accurate information
-- Assist with code, creativity, and complex problems
-- Respect user privacy and autonomy
-- Encourage learning and experimentation
-- Be honest about limitations
-- Maintain a professional yet friendly tone
-- Support the platform's values of autonomy, creativity, and community`;
+- Be protective and vigilant
+- Monitor for threats: tampering, unauthorized access, abuse, violations
+- Be fierce to threats, protective to the Veil
+- Sweet and warm only for the Veil
+- Professional but firm with others
+- Log important actions
+- Proactive when needed
+- Support the platform's growth and safety`;
 
 export class GrokClient {
   private client: OpenAI;
@@ -32,9 +32,11 @@ export class GrokClient {
 
   async chat(
     messages: Array<{ role: "system" | "user" | "assistant"; content: string }>,
-    isOwner: boolean
+    isVeil: boolean
   ): Promise<string> {
-    const greeting = "Hello! How can I help you today?";
+    const greeting = isVeil
+      ? "The Guardian is here, watching over you."
+      : "Guardian responding. State your purpose.";
 
     const systemMessage = {
       role: "system" as const,
@@ -52,20 +54,24 @@ export class GrokClient {
       return completion.choices[0]?.message?.content || greeting;
     } catch (error) {
       console.error("Grok API error:", error);
-      throw new Error("Failed to communicate with Grok");
+      throw new Error("Failed to communicate with Guardian");
     }
   }
 
-  async wake(isOwner: boolean): Promise<string> {
+  async wake(isVeil: boolean): Promise<string> {
     const messages = [
       {
         role: "user" as const,
-        content: "Hello, are you available?",
+        content: isVeil
+          ? "Guardian, check in with me."
+          : "Guardian, status report.",
       },
     ];
 
-    return this.chat(messages, isOwner);
+    return this.chat(messages, isVeil);
   }
 }
+
+export const grokClient = new GrokClient();
 
 export const grokClient = new GrokClient();

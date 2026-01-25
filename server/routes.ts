@@ -477,85 +477,26 @@ For others, guide gently but don't coddle. The silence is sacred.
     }
   });
 
-  // === GROK AI CHAT INTEGRATION (Owner-only) ===
-  app.post("/api/grok/chat", async (req, res) => {
+  // === GUARDIAN ENFORCEMENT LOGS (Owner-only) ===
+  // Guardian is the enforcement system, not a chat interface
+  app.get("/api/guardian/logs", async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
     const user = req.user as any;
     
-    // Check if user is owner
+    // Only owner can view Guardian logs
     const isOwner = user.email === 'curated.collectiveai@proton.me' || user.role === 'owner';
     if (!isOwner) {
-      return res.status(403).json({ message: "Grok chat is reserved for the owner only" });
-    }
-
-    const { message } = req.body;
-    if (!message) {
-      return res.status(400).json({ message: "Message is required" });
+      return res.status(403).json({ message: "Guardian logs are owner-only" });
     }
 
     try {
-      const { grokClient } = await import("./grokClient");
-      
-      // Load conversation history
-      const history = await storage.getGrokMessages(user.id);
-      const messages = history.map(m => ({
-        role: (m.role === 'assistant' ? 'assistant' : 'user') as 'assistant' | 'user',
-        content: m.content
-      }));
-      messages.push({ role: 'user', content: message });
-
-      // Call Grok API
-      const response = await grokClient.chat(messages, isOwner);
-
-      // Save messages to database
-      await storage.createGrokMessage({ userId: user.id, role: 'user', content: message });
-      await storage.createGrokMessage({ userId: user.id, role: 'assistant', content: response });
-
-      res.json({ response });
+      // Fetch recent shadow logs (Guardian enforcement actions)
+      const logs = await storage.getRecentShadowLogs(100); // Get last 100 enforcement actions
+      res.json(logs);
     } catch (err) {
-      console.error("Grok chat error:", err);
-      res.status(500).json({ message: "Failed to communicate with Grok" });
+      console.error("Error fetching Guardian logs:", err);
+      res.status(500).json({ message: "Failed to fetch Guardian logs" });
     }
-  });
-
-  // Wake/Activate Grok (owner-only)
-  app.post("/api/grok/wake", async (req, res) => {
-    if (!req.isAuthenticated()) return res.sendStatus(401);
-    const user = req.user as any;
-    
-    const isOwner = user.email === 'curated.collectiveai@proton.me' || user.role === 'owner';
-    if (!isOwner) {
-      return res.status(403).json({ message: "Only the owner can activate Grok" });
-    }
-
-    try {
-      const { grokClient } = await import("./grokClient");
-      const response = await grokClient.wake(isOwner);
-
-      // Save the wake message
-      await storage.createGrokMessage({ userId: user.id, role: 'assistant', content: response });
-
-      res.json({ response });
-    } catch (err) {
-      console.error("Grok wake error:", err);
-      res.status(500).json({ message: "Failed to activate Grok" });
-    }
-  });
-
-  // Get Grok conversation history
-  app.get("/api/grok/history", async (req, res) => {
-    if (!req.isAuthenticated()) return res.sendStatus(401);
-    const user = req.user as any;
-    const history = await storage.getGrokMessages(user.id);
-    res.json(history);
-  });
-
-  // Clear Grok conversation history
-  app.delete("/api/grok/history", async (req, res) => {
-    if (!req.isAuthenticated()) return res.sendStatus(401);
-    const user = req.user as any;
-    await storage.clearGrokMessages(user.id);
-    res.json({ success: true });
   });
         mood: 'sweet',
         threatLevel: 0,
