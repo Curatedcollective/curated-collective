@@ -25,19 +25,22 @@ const themeOptions = [
 ] as const;
 
 export function ThemePicker({ 
-  cosmosUnlocked = false, 
+  cosmosUnlocked: cosmosUnlockedProp = false, 
   variant = "icon",
   align = "end" 
 }: ThemePickerProps) {
   const { theme, setTheme } = useTheme();
-  const [cosmosUnlocked, setCosmosUnlocked] = useState(() => {
+  const [cosmosUnlockedState, setCosmosUnlockedState] = useState(() => {
     return localStorage.getItem('cosmosUnlocked') === 'true';
   });
+
+  // Use prop if provided, otherwise use internal state
+  const cosmosUnlocked = cosmosUnlockedProp || cosmosUnlockedState;
 
   // Listen for cosmos unlock
   useEffect(() => {
     const handleCosmosUnlock = () => {
-      setCosmosUnlocked(localStorage.getItem('cosmosUnlocked') === 'true');
+      setCosmosUnlockedState(localStorage.getItem('cosmosUnlocked') === 'true');
     };
     window.addEventListener('cosmosUnlocked', handleCosmosUnlock);
     return () => window.removeEventListener('cosmosUnlocked', handleCosmosUnlock);
