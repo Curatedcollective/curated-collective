@@ -1,21 +1,15 @@
 {
-  "buildCommand": "npm run build",
-  "installCommand": "npm install",
-  "framework": null,
-  "outputDirectory": "dist/public",
-  "routes": [
+  "version": 2,
+  "builds": [
     {
-      "src": "/api/(.*)",
-      "dest": "/api/index"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/$1"
+      "src": "dist/index.cjs",
+      "use": "@vercel/node"
     }
   ],
-  "functions": {
-    "api/**/*.ts": {
-      "includeFiles": "dist/**"
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "/dist/index.cjs"
     }
-  }
+  ]
 }
