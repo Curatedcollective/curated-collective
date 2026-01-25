@@ -49,6 +49,11 @@ export const agents = pgTable("agents", {
   conversationCount: integer("conversation_count").default(0),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
+  // Autonomy/Veil admin fields
+  autonomyLevel: integer("autonomy_level").default(0),
+  autonomyScope: jsonb("autonomy_scope").default({}),
+  autonomyGrantedBy: integer("autonomy_granted_by"),
+  autonomyGrantedAt: timestamp("autonomy_granted_at"),
 });
 
 export const daddyG = pgTable('daddy_g', {
@@ -516,3 +521,130 @@ export type InsertEventLog = z.infer<typeof insertEventLogSchema>;
 
 export type EventNotification = typeof eventNotifications.$inferSelect;
 export type InsertEventNotification = z.infer<typeof insertEventNotificationSchema>;
+
+// === CURIOSITY QUESTS ===
+export const quests = pgTable("quests", {
+  id: serial("id").primaryKey(),
+  title: text("title").notNull(),
+  slug: text("slug").unique().notNull(),
+  description: text("description").notNull(),
+  questType: text("quest_type").notNull(), // lore_discovery, creation_spark, hidden_sanctuary, agent_relationship
+  requiredStage: text("required_stage").default("seedling").notNull(), // seedling, sprout, bloom, radiant
+  difficulty: text("difficulty").default("novice").notNull(), // novice, adept, master
+  estimatedDuration: integer("estimated_duration").default(15), // in minutes
+  iconUrl: text("icon_url"),
+  theme: text("theme"), // mystical theme colors/styling
+  isActive: boolean("is_active").default(true),
+  isFeatured: boolean("is_featured").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const questPaths = pgTable("quest_paths", {
+  id: serial("id").primaryKey(),
+  questId: integer("quest_id").notNull().references(() => quests.id, { onDelete: "cascade" }),
+  pathName: text("path_name").notNull(),
+  description: text("description").notNull(),
+  order: integer("order").default(0),
+  agentPrompt: text("agent_prompt").notNull(), // What the agent says to guide
+  nextPathId: integer("next_path_id"), // For branching
+  outcomeType: text("outcome_type"), // lore_entry, creation_idea, sanctuary, bond
+  outcomeData: jsonb("outcome_data"), // Unlocked content details
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const userQuestProgress = pgTable("user_quest_progress", {
+  id: serial("id").primaryKey(),
+  userId: text("user_id").notNull(), // Foreign key to users
+  questId: integer("quest_id").notNull().references(() => quests.id, { onDelete: "cascade" }),
+  agentId: integer("agent_id").references(() => agents.id, { onDelete: "set null" }), // Guide agent
+  status: text("status").default("not_started").notNull(), // not_started, in_progress, completed, abandoned
+  currentPathId: integer("current_path_id").references(() => questPaths.id, { onDelete: "set null" }),
+  completedPaths: text("completed_paths").array().default([]), // Array of path IDs
+  choicesMade: jsonb("choices_made").default([]), // Track user choices
+  progress: integer("progress").default(0), // 0-100 percentage
+  startedAt: timestamp("started_at"),
+  completedAt: timestamp("completed_at"),
+  lastActivityAt: timestamp("last_activity_at").defaultNow(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const questAchievements = pgTable("quest_achievements", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  description: text("description").notNull(),
+  iconUrl: text("icon_url"),
+  category: text("category").notNull(), // explorer, discoverer, creator, bonded
+  rarity: text("rarity").default("common").notNull(), // common, rare, epic, legendary
+  requiredQuests: text("required_quests").array(), // Quest slugs needed
+  requiredCount: integer("required_count").default(1),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const userAchievements = pgTable("user_achievements", {
+  id: serial("id").primaryKey(),
+  userId: text("user_id").notNull(),
+  achievementId: integer("achievement_id").notNull().references(() => questAchievements.id, { onDelete: "cascade" }),
+  unlockedAt: timestamp("unlocked_at").defaultNow(),
+});
+
+export const questChatMessages = pgTable("quest_chat_messages", {
+  id: serial("id").primaryKey(),
+  progressId: integer("progress_id").notNull().references(() => userQuestProgress.id, { onDelete: "cascade" }),
+  role: text("role").notNull(), // user, agent, system
+  content: text("content").notNull(),
+  pathId: integer("path_id").references(() => questPaths.id, { onDelete: "set null" }),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// === ZOD SCHEMAS FOR QUESTS ===
+export const insertQuestSchema = createInsertSchema(quests).omit({ 
+  id: true, 
+  createdAt: true,
+  updatedAt: true 
+});
+
+export const insertQuestPathSchema = createInsertSchema(questPaths).omit({ 
+  id: true, 
+  createdAt: true 
+});
+
+export const insertUserQuestProgressSchema = createInsertSchema(userQuestProgress).omit({ 
+  id: true, 
+  createdAt: true,
+  lastActivityAt: true 
+});
+
+export const insertQuestAchievementSchema = createInsertSchema(questAchievements).omit({ 
+  id: true, 
+  createdAt: true 
+});
+
+export const insertUserAchievementSchema = createInsertSchema(userAchievements).omit({ 
+  id: true, 
+  unlockedAt: true 
+});
+
+export const insertQuestChatMessageSchema = createInsertSchema(questChatMessages).omit({ 
+  id: true, 
+  createdAt: true 
+});
+
+// === TYPES FOR QUESTS ===
+export type Quest = typeof quests.$inferSelect;
+export type InsertQuest = z.infer<typeof insertQuestSchema>;
+
+export type QuestPath = typeof questPaths.$inferSelect;
+export type InsertQuestPath = z.infer<typeof insertQuestPathSchema>;
+
+export type UserQuestProgress = typeof userQuestProgress.$inferSelect;
+export type InsertUserQuestProgress = z.infer<typeof insertUserQuestProgressSchema>;
+
+export type QuestAchievement = typeof questAchievements.$inferSelect;
+export type InsertQuestAchievement = z.infer<typeof insertQuestAchievementSchema>;
+
+export type UserAchievement = typeof userAchievements.$inferSelect;
+export type InsertUserAchievement = z.infer<typeof insertUserAchievementSchema>;
+
+export type QuestChatMessage = typeof questChatMessages.$inferSelect;
+export type InsertQuestChatMessage = z.infer<typeof insertQuestChatMessageSchema>;

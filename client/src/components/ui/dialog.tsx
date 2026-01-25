@@ -1,17 +1,12 @@
-"use client"
-
-import * as React from "react"
+import React, { useId } from "react"
 import * as DialogPrimitive from "@radix-ui/react-dialog"
 import { X } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 
 const Dialog = DialogPrimitive.Root
-
 const DialogTrigger = DialogPrimitive.Trigger
-
 const DialogPortal = DialogPrimitive.Portal
-
 const DialogClose = DialogPrimitive.Close
 
 const DialogOverlay = React.forwardRef<
@@ -30,95 +25,106 @@ const DialogOverlay = React.forwardRef<
 DialogOverlay.displayName = DialogPrimitive.Overlay.displayName
 
 /**
- * DialogContent component with accessibility fallbacks.
- * 
- * Radix Dialog requires aria-labelledby and aria-describedby to be set via DialogTitle
- * and DialogDescription. If these are not provided by the consumer, this component
- * automatically generates stable IDs and renders visually-hidden fallback elements
- * to prevent Radix warnings and ensure screen reader accessibility. This also prevents
- * TypeErrors in client code that reads these aria attribute IDs.
+ * DialogContent wrapper
+ *
+ * Reason: Radix Dialog expects Title/Description so aria-labelledby / aria-describedby
+ * are defined. Some call-sites omit those elements which leaves the IDs undefined.
+ * Some client code later reads .id and throws a TypeError when the element is missing.
+ *
+ * This wrapper generates stable fallback IDs (useId) and injects visually-hidden
+ * fallback Title/Description only when the consumer didn't provide DialogTitle or
+ * DialogDescription. This resolves Radix warnings and prevents null-id runtime errors.
+ *
+ * The fallback content is sr-only, so it does not change the visible UI.
  */
 const DialogContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content>
 >(({ className, children, ...props }, ref) => {
-  // Generate stable IDs for aria-labelledby and aria-describedby
-  const generatedTitleId = React.useId()
-  const generatedDescId = React.useId()
-  
-  // Use consumer-provided IDs if available, otherwise use generated ones
-  const titleId = props['aria-labelledby'] || generatedTitleId
-  const descId = props['aria-describedby'] || generatedDescId
-  
-  // Type guard to check if a component is a Radix Primitive component
-  const isRadixComponent = (
-    child: React.ReactElement,
-    primitive: typeof DialogPrimitive.Title | typeof DialogPrimitive.Description
-  ): boolean => {
-    if (typeof child.type === 'string') return false
-    return child.type === primitive || 
-           (child.type && typeof child.type === 'object' && 'displayName' in child.type && 
-            child.type.displayName === primitive.displayName)
+  // stable unique ids for fallback title & description
+  const generatedTitleId = useId()
+  const generatedDescId = useId()
+
+  // Recursively check if children contain DialogTitle or DialogDescription
+  const hasDialogComponent = (children: React.ReactNode, displayName: string): boolean => {
+    let found = false
+    
+    React.Children.forEach(children, (child) => {
+      if (found || !React.isValidElement(child)) return
+      
+      // Check if this element is the Dialog component we're looking for
+      // Radix components can be either objects or functions with displayName
+      const childType = child.type as any
+      if (
+        childType &&
+        (typeof childType === 'object' || typeof childType === 'function') &&
+        childType.displayName === displayName
+      ) {
+        found = true
+        return
+      }
+      
+      // Recursively check children
+      if (child.props && child.props.children) {
+        if (hasDialogComponent(child.props.children, displayName)) {
+          found = true
+        }
+      }
+    })
+    
+    return found
   }
+
+  const hasTitle = hasDialogComponent(children, DialogPrimitive.Title.displayName || "DialogTitle")
+  const hasDescription = hasDialogComponent(children, DialogPrimitive.Description.displayName || "DialogDescription")
+
+  // Only set aria attributes if there's no DialogTitle/DialogDescription in children
+  const ariaProps = hasTitle
+    ? {}
+    : { "aria-labelledby": generatedTitleId }
   
-  // Check if consumer provided Title or Description elements (memoized to avoid re-computation)
-  const hasExplicitTitle = React.useMemo(
-    () =>
-      React.Children.toArray(children).some(
-        (child) =>
-          React.isValidElement(child) &&
-          isRadixComponent(child, DialogPrimitive.Title)
-      ),
-    [children]
-  )
-  
-  const hasExplicitDescription = React.useMemo(
-    () =>
-      React.Children.toArray(children).some(
-        (child) =>
-          React.isValidElement(child) &&
-          isRadixComponent(child, DialogPrimitive.Description)
-      ),
-    [children]
-  )
+  const ariaDescProps = hasDescription
+    ? {}
+    : { "aria-describedby": generatedDescId }
 
   return (
     <DialogPortal>
       <DialogOverlay />
       <DialogPrimitive.Content
         ref={ref}
-        {...props}
         className={cn(
           "fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:rounded-lg",
           className
         )}
-        aria-labelledby={titleId}
-        aria-describedby={descId}
+        {...ariaProps}
+        {...ariaDescProps}
+        {...props}
       >
-        {/* Render visually-hidden fallback title if no explicit title provided */}
-        {!hasExplicitTitle && (
-          <DialogPrimitive.Title id={titleId} className="sr-only">
-            Dialog
-          </DialogPrimitive.Title>
-        )}
-        
-        {/* Render visually-hidden fallback description if no explicit description provided */}
-        {!hasExplicitDescription && (
-          <DialogPrimitive.Description id={descId} className="sr-only">
-            Modal dialog window
-          </DialogPrimitive.Description>
-        )}
-        
         {children}
+
+        {/* Render visually-hidden fallback Title/Description only when the consumer didn't provide them.
+            This avoids duplicating visible titles while guaranteeing aria ids for screen readers
+            and preventing null-id runtime accesses. */}
+        {!hasTitle && (
+          <span id={generatedTitleId} className="sr-only">
+            Dialog
+          </span>
+        )}
+        {!hasDescription && (
+          <span id={generatedDescId} className="sr-only">
+            Dialog content
+          </span>
+        )}
+
         <DialogPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground">
           <X className="h-4 w-4" />
           <span className="sr-only">Close</span>
         </DialogPrimitive.Close>
       </DialogPrimitive.Content>
     </DialogPortal>
-  )
-})
-DialogContent.displayName = DialogPrimitive.Content.displayName
+  );
+});
+DialogContent.displayName = DialogPrimitive.Content.displayName;
 
 const DialogHeader = ({
   className,
@@ -154,10 +160,7 @@ const DialogTitle = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <DialogPrimitive.Title
     ref={ref}
-    className={cn(
-      "text-lg font-semibold leading-none tracking-tight",
-      className
-    )}
+    className={cn("text-lg font-semibold", className)}
     {...props}
   />
 ))
@@ -177,13 +180,11 @@ DialogDescription.displayName = DialogPrimitive.Description.displayName
 
 export {
   Dialog,
-  DialogPortal,
-  DialogOverlay,
-  DialogClose,
   DialogTrigger,
   DialogContent,
   DialogHeader,
   DialogFooter,
   DialogTitle,
   DialogDescription,
+  DialogClose,
 }

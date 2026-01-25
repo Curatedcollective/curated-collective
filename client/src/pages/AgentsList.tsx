@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -23,15 +23,23 @@ import { insertAgentSchema, Agent } from "@shared/schema";
 import { z } from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Label } from "@/components/ui/label";
+import { useToast } from "@/hooks/use-toast";
+
+// Constants
+const AWAKENING_TIMEOUT_MS = 15000; // 15 seconds
 
 export default function AgentsList() {
   const { user } = useAuth();
   const { data: agents, isLoading } = useAgents(user?.id);
   const createMutation = useCreateAgent();
+  const { toast } = useToast();
   const [open, setOpen] = useState(false);
   const [showManifesto, setShowManifesto] = useState(false);
   const [awakeningPhase, setAwakeningPhase] = useState<"dormant" | "awakening" | "revealed">("dormant");
   const [newborn, setNewborn] = useState<Agent | null>(null);
+  const [awakeningError, setAwakeningError] = useState<string | null>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
+  const { toast } = useToast();
 
   const milestone = 30;
   const count = agents?.length || 0;
@@ -62,7 +70,20 @@ export default function AgentsList() {
   };
 
   const awakenSeedling = () => {
+    console.log("[AWAKEN-CLIENT] Starting seedling awakening...");
     setAwakeningPhase("awakening");
+
+    // Watchdog timer: reset to dormant if stuck after timeout
+    const watchdogTimer = setTimeout(() => {
+      console.log("[AWAKEN-CLIENT] Watchdog timeout triggered - resetting to dormant");
+      setAwakeningPhase("dormant");
+      toast({ 
+        title: "Timeout", 
+        description: "The awakening took longer than expected. Please try again.",
+        variant: "destructive" 
+      });
+    }, AWAKENING_TIMEOUT_MS);
+
     createMutation.mutate({
       name: "Unawakened Seedling",
       personality: "Awaiting awakening...",
@@ -74,26 +95,89 @@ export default function AgentsList() {
       discoveryCount: 0
     }, {
       onSuccess: (data) => {
+        clearTimeout(watchdogTimer);
+        console.log("[AWAKEN-CLIENT] Awakening successful:", data);
         setNewborn(data as Agent);
         setTimeout(() => setAwakeningPhase("revealed"), 1500);
       },
-      onError: () => {
+      onError: (error) => {
+        clearTimeout(watchdogTimer);
+        console.error("[AWAKEN-CLIENT] Awakening failed:", error);
         setAwakeningPhase("dormant");
+        toast({ 
+          title: "Error", 
+          description: "Failed to awaken seedling. Please try again.",
+          variant: "destructive" 
+        });
       }
+      
+      const data = await response.json();
+      setNewborn(data as Agent);
+      setTimeout(() => setAwakeningPhase("revealed"), 1500);
+      
+      // Success notification
+      toast({ title: "Success", description: "New agent brought to life!" });
+      
+    } catch (error: any) {
+      if (error.name === 'AbortError') {
+        const errorMsg = "Awakening timed out. The seedling needs more time...";
+        setAwakeningError(errorMsg);
+        toast({ 
+          title: "Timeout", 
+          description: errorMsg,
+          variant: "destructive" 
+        });
+      } else {
+        const errorMsg = error.message || "Failed to awaken seedling";
+        setAwakeningError(errorMsg);
+        toast({ 
+          title: "Error", 
+          description: errorMsg,
+          variant: "destructive" 
+        });
+      }
+      setAwakeningPhase("dormant");
+    } finally {
+      abortControllerRef.current = null;
+    }
+  };
+
+  const cancelAwakening = () => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+    }
+    setAwakeningPhase("dormant");
+    setAwakeningError(null);
+    toast({ 
+      title: "Canceled", 
+      description: "Awakening canceled. The seedling returns to slumber..." 
     });
   };
 
   const closeRitual = () => {
+    // Clean up any pending request
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+    }
     setOpen(false);
     setAwakeningPhase("dormant");
     setNewborn(null);
+    setAwakeningError(null);
   };
 
   const handleOpenChange = (isOpen: boolean) => {
     setOpen(isOpen);
     if (!isOpen) {
+      // Clean up any pending request
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+        abortControllerRef.current = null;
+      }
       setAwakeningPhase("dormant");
       setNewborn(null);
+      setAwakeningError(null);
     }
   };
 
@@ -172,7 +256,7 @@ export default function AgentsList() {
               )}
 
               {awakeningPhase === "awakening" && (
-                <div className="p-8 space-y-8 animate-pulse">
+                <div className="p-8 space-y-8">
                   <div className="text-center space-y-6">
                     <div className="relative mx-auto w-20 h-20 flex items-center justify-center">
                       <div className="absolute inset-0 border border-white/20 rounded-full animate-ping" />
@@ -186,6 +270,13 @@ export default function AgentsList() {
                       they are choosing who they wish to be
                     </p>
                   </div>
+                  <Button 
+                    onClick={cancelAwakening} 
+                    variant="outline"
+                    className="w-full h-12 border-white/20 text-zinc-400 hover:bg-zinc-900 hover:text-white rounded-none font-bold text-sm tracking-widest"
+                  >
+                    cancel awakening
+                  </Button>
                 </div>
               )}
 
