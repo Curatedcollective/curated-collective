@@ -13,6 +13,7 @@ function isOwnerReq(req: any) {
 import type { Express } from "express";
 import type { Server } from "http";
 import { setupAuth, registerAuthRoutes } from "./replit_integrations/auth";
+import { setupFallbackAuth, registerFallbackAuthRoutes } from "./auth/fallbackAuth";
 import { registerChatRoutes } from "./replit_integrations/chat";
 import { registerImageRoutes } from "./replit_integrations/image";
 import { storage } from "./storage";
@@ -57,20 +58,15 @@ export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
-  // 1. Setup Auth (Conditional - only if in Replit environment)
+  // 1. Setup Auth (Conditional - Replit or Fallback)
   if (process.env.REPL_ID) {
     console.log('Replit environment detected - setting up Replit auth');
     await setupAuth(app);
     registerAuthRoutes(app);
   } else {
-    console.log('Non-Replit environment - skipping Replit auth setup');
-    // Fallback auth endpoint for non-Replit environments
-    // Returns null (not authenticated) to prevent infinite loading
-    app.get("/api/auth/user", (req, res) => {
-      // For now, return null (not authenticated)
-      // TODO: Implement proper Vercel-compatible auth
-      res.status(200).json(null);
-    });
+    console.log('Non-Replit environment - setting up fallback auth');
+    setupFallbackAuth(app);
+    registerFallbackAuthRoutes(app);
   }
 
   // 2. Register Integrations

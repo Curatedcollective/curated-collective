@@ -2,14 +2,23 @@ import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/use-auth";
-import { Sparkles, Loader2, Lock, LogIn, Eye } from "lucide-react";
+import { Sparkles, Loader2, Lock, LogIn, Eye, UserPlus } from "lucide-react";
 import { motion } from "framer-motion";
+import { useToast } from "@/hooks/use-toast";
 
 export default function LoginPage() {
   const { user, isLoading } = useAuth();
   const [, setLocation] = useLocation();
   const [isAuthenticating, setIsAuthenticating] = useState(false);
+  const [mode, setMode] = useState<'login' | 'signup'>('login');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const { toast } = useToast();
   
   // Get redirect parameter from URL
   const urlParams = new URLSearchParams(window.location.search);
@@ -22,9 +31,84 @@ export default function LoginPage() {
     }
   }, [user, isLoading, redirect, setLocation]);
 
-  const handleLogin = () => {
+  const handleLogin = async (e?: React.FormEvent) => {
+    e?.preventDefault();
     setIsAuthenticating(true);
-    window.location.href = `/api/login?redirect=${encodeURIComponent(redirect)}`;
+
+    try {
+      const response = await fetch('/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+        credentials: 'include'
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        toast({
+          title: "Welcome back!",
+          description: "Successfully authenticated",
+        });
+        // Reload to get updated user session
+        window.location.href = data.redirect || redirect;
+      } else {
+        const error = await response.json();
+        toast({
+          title: "Authentication failed",
+          description: error.message || "Invalid credentials",
+          variant: "destructive"
+        });
+        setIsAuthenticating(false);
+      }
+    } catch (error) {
+      console.error("Login error:", error);
+      toast({
+        title: "Error",
+        description: "Failed to authenticate. Please try again.",
+        variant: "destructive"
+      });
+      setIsAuthenticating(false);
+    }
+  };
+
+  const handleSignup = async (e?: React.FormEvent) => {
+    e?.preventDefault();
+    setIsAuthenticating(true);
+
+    try {
+      const response = await fetch('/api/signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password, firstName, lastName }),
+        credentials: 'include'
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        toast({
+          title: "Welcome!",
+          description: data.message || "Account created successfully",
+        });
+        // Reload to get updated user session
+        window.location.href = redirect;
+      } else {
+        const error = await response.json();
+        toast({
+          title: "Signup failed",
+          description: error.message || "Could not create account",
+          variant: "destructive"
+        });
+        setIsAuthenticating(false);
+      }
+    } catch (error) {
+      console.error("Signup error:", error);
+      toast({
+        title: "Error",
+        description: "Failed to create account. Please try again.",
+        variant: "destructive"
+      });
+      setIsAuthenticating(false);
+    }
   };
 
   if (isLoading || user) {
@@ -71,32 +155,119 @@ export default function LoginPage() {
           <Card className="border-primary/20 bg-card/50 backdrop-blur-sm">
             <CardHeader className="space-y-3">
               <CardTitle className="text-2xl font-display lowercase tracking-tight">
-                authenticate
+                {mode === 'login' ? 'authenticate' : 'join the collective'}
               </CardTitle>
               <CardDescription className="text-xs lowercase tracking-wide">
-                sign in to access your agents, creations, and the inner sanctum
+                {mode === 'login' 
+                  ? 'sign in to access your agents, creations, and the inner sanctum'
+                  : 'create your account and begin your journey'}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              {/* Login button */}
-              <Button
-                onClick={handleLogin}
-                disabled={isAuthenticating}
-                className="w-full h-14 text-base font-display lowercase tracking-widest bg-primary hover:bg-primary/90 text-primary-foreground transition-all"
-                size="lg"
-              >
-                {isAuthenticating ? (
+              <form onSubmit={mode === 'login' ? handleLogin : handleSignup} className="space-y-4">
+                {mode === 'signup' && (
                   <>
-                    <Loader2 className="w-5 h-5 mr-3 animate-spin" />
-                    authenticating...
-                  </>
-                ) : (
-                  <>
-                    <LogIn className="w-5 h-5 mr-3" />
-                    sign in with provider
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="firstName" className="text-xs lowercase tracking-wide">first name</Label>
+                        <Input
+                          id="firstName"
+                          type="text"
+                          value={firstName}
+                          onChange={(e) => setFirstName(e.target.value)}
+                          className="bg-background/50 border-primary/20"
+                          required
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="lastName" className="text-xs lowercase tracking-wide">last name</Label>
+                        <Input
+                          id="lastName"
+                          type="text"
+                          value={lastName}
+                          onChange={(e) => setLastName(e.target.value)}
+                          className="bg-background/50 border-primary/20"
+                          required
+                        />
+                      </div>
+                    </div>
                   </>
                 )}
-              </Button>
+
+                <div className="space-y-2">
+                  <Label htmlFor="email" className="text-xs lowercase tracking-wide">email</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="your@email.com"
+                    className="bg-background/50 border-primary/20"
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="password" className="text-xs lowercase tracking-wide">password</Label>
+                  <Input
+                    id="password"
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="••••••••"
+                    className="bg-background/50 border-primary/20"
+                    required
+                  />
+                </div>
+
+                <Button
+                  type="submit"
+                  disabled={isAuthenticating}
+                  className="w-full h-14 text-base font-display lowercase tracking-widest bg-primary hover:bg-primary/90 text-primary-foreground transition-all"
+                  size="lg"
+                >
+                  {isAuthenticating ? (
+                    <>
+                      <Loader2 className="w-5 h-5 mr-3 animate-spin" />
+                      {mode === 'login' ? 'authenticating...' : 'creating account...'}
+                    </>
+                  ) : (
+                    <>
+                      {mode === 'login' ? (
+                        <>
+                          <LogIn className="w-5 h-5 mr-3" />
+                          sign in
+                        </>
+                      ) : (
+                        <>
+                          <UserPlus className="w-5 h-5 mr-3" />
+                          create account
+                        </>
+                      )}
+                    </>
+                  )}
+                </Button>
+
+                <div className="text-center">
+                  <button
+                    type="button"
+                    onClick={() => setMode(mode === 'login' ? 'signup' : 'login')}
+                    className="text-xs text-muted-foreground hover:text-foreground transition-colors lowercase tracking-wide"
+                  >
+                    {mode === 'login' ? "don't have an account? sign up" : 'already have an account? sign in'}
+                  </button>
+                </div>
+
+                {/* Demo credentials hint */}
+                <div className="pt-4 border-t border-primary/10">
+                  <p className="text-[10px] text-muted-foreground/60 text-center lowercase tracking-wide">
+                    demo credentials: demo@example.com / demo123
+                  </p>
+                  <p className="text-[10px] text-muted-foreground/60 text-center lowercase tracking-wide mt-1">
+                    owner access: curated.collectiveai@proton.me / demo123
+                  </p>
+                </div>
+              </form>
 
               {/* Features preview */}
               <div className="space-y-3 pt-4 border-t border-primary/10">
