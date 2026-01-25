@@ -2,9 +2,13 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { serveStatic } from "./static";
 import { createServer } from "http";
+import { config } from "dotenv";
 import { runMigrations } from 'stripe-replit-sync';
 import { getStripeSync } from './stripeClient';
 import { WebhookHandlers } from './webhookHandlers';
+
+// Load environment variables
+config();
 
 const app = express();
 const httpServer = createServer(app);
@@ -154,8 +158,7 @@ app.use((req, res, next) => {
   httpServer.listen(
     {
       port,
-      host: "0.0.0.0",
-      reusePort: true,
+      host: process.env.NODE_ENV === "development" ? "127.0.0.1" : "0.0.0.0",
     },
     () => {
       log(`serving on port ${port}`);
