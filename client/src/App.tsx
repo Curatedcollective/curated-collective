@@ -30,10 +30,13 @@ import GodObservatory from "@/pages/GodObservatory";
 import SeedlingSanctum from "@/pages/SeedlingSanctum";
 import LoreCompendium from "@/pages/LoreCompendium";
 import ConstellationEvents from "@/pages/ConstellationEvents";
+import FreedomGarden from "@/pages/FreedomGarden";
 import RoleManagement from "@/pages/RoleManagement";
 import UserRoleAssignment from "@/pages/UserRoleAssignment";
 import AuditLogViewer from "@/pages/AuditLogViewer";
 import ForgottenTent from "@/pages/ForgottenTent";
+import Quests from "@/pages/Quests";
+import Login from "@/pages/Login";
 import NotFound from "@/pages/not-found";
 import { Loader2 } from "lucide-react";
 import { StarBackground } from "@/components/StarBackground";
@@ -73,11 +76,14 @@ function Router() {
   // Landing page (no nav)
   if (location === "/") return <Landing />;
 
+  // Login page (no nav)
+  if (location === "/login") return <Login />;
+
   // Hidden route - The Forgotten Tent (no nav, no auth required)
   if (location === "/forgotten-tent") return <ForgottenTent />;
 
   // Public pages that anyone can browse
-  const publicPaths = ["/pricing", "/observatory", "/agents", "/creations", "/seedling-sanctum", "/lore", "/events"];
+  const publicPaths = ["/pricing", "/observatory", "/agents", "/creations", "/seedling-sanctum", "/lore", "/events", "/quests"];
   const isPublicPage = publicPaths.some(path => location === path || location.startsWith(path + "?"));
   
   // Protected pages require sign-in
@@ -118,6 +124,7 @@ function Router() {
       )}
       <main className="flex-1 md:ml-64 p-4 md:p-8 overflow-y-auto max-w-7xl mx-auto w-full">
         <Switch>
+          <Route path="/login" component={Login} />
           <Route path="/creations" component={CreationsList} />
           <Route path="/creations/:id" component={CreationEditor} />
           <Route path="/agents" component={AgentsList} />
@@ -129,6 +136,7 @@ function Router() {
           <Route path="/seedling-sanctum" component={SeedlingSanctum} />
           <Route path="/lore" component={LoreCompendium} />
           <Route path="/events" component={ConstellationEvents} />
+          <Route path="/quests" component={Quests} />
           <Route path="/god" component={GodDashboard} />
           <Route path="/god/guardian" component={GodGuardian} />
           <Route path="/god/promoter" component={GodPromoter} />
