@@ -12,8 +12,16 @@
 import type { Express, Request, Response, NextFunction } from "express";
 import passport from "passport";
 import { Strategy as LocalStrategy } from "passport-local";
+import session from "express-session";
+import connectPg from "connect-pg-simple";
 import { authStorage } from "../replit_integrations/auth/storage";
 import { type User } from "@shared/models/auth";
+
+// Helper function to check if user is owner
+function isOwnerUser(user: User): boolean {
+  const ownerEmail = process.env.OWNER_EMAIL || 'curated.collectiveai@proton.me';
+  return user.role === 'owner' || user.email === ownerEmail;
+}
 
 // Simple password validation (in production, use bcrypt)
 // For now, we'll use a simple demo password system
@@ -38,6 +46,32 @@ const DEMO_USERS = [
 
 export function setupFallbackAuth(app: Express): void {
   console.log("Setting up fallback authentication for non-Replit environment");
+
+  // Setup session middleware
+  const sessionTtl = 7 * 24 * 60 * 60 * 1000; // 1 week
+  const pgStore = connectPg(session);
+  const sessionStore = new pgStore({
+    conString: process.env.DATABASE_URL,
+    createTableIfMissing: false,
+    ttl: sessionTtl,
+    tableName: "sessions",
+  });
+
+  app.use(session({
+    secret: process.env.SESSION_SECRET || 'fallback-dev-secret-change-in-production',
+    store: sessionStore,
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: sessionTtl,
+    },
+  }));
+
+  // Initialize passport middleware (required for passport to work)
+  app.use(passport.initialize());
+  app.use(passport.session());
 
   // Configure passport with local strategy
   passport.use(new LocalStrategy(
@@ -72,7 +106,7 @@ export function setupFallbackAuth(app: Express): void {
         });
 
         // Add isOwner flag for easy checking
-        (user as any).isOwner = user.role === 'owner' || user.email === 'curated.collectiveai@proton.me';
+        (user as any).isOwner = isOwnerUser(user);
         
         return done(null, user);
       } catch (error) {
@@ -91,7 +125,7 @@ export function setupFallbackAuth(app: Express): void {
       const user = await authStorage.getUser(id);
       if (user) {
         // Add isOwner flag
-        (user as any).isOwner = user.role === 'owner' || user.email === 'curated.collectiveai@proton.me';
+        (user as any).isOwner = isOwnerUser(user);
       }
       done(null, user || null);
     } catch (error) {
@@ -137,7 +171,7 @@ export function registerFallbackAuthRoutes(app: Express): void {
     try {
       const user = req.user as User;
       // Add isOwner flag
-      (user as any).isOwner = user.role === 'owner' || user.email === 'curated.collectiveai@proton.me';
+      (user as any).isOwner = isOwnerUser(user);
       res.json(user);
     } catch (error) {
       console.error("Error fetching user:", error);
