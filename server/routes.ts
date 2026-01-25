@@ -1,3 +1,15 @@
+// PREVIEW-BYPASS: allow preview access when VERCEL_ENV === 'preview' and god_preview=1
+function isOwnerReq(req: any) {
+  try {
+    const env = process.env.VERCEL_ENV || process.env.NODE_ENV || "development";
+    const previewParam = String(req.query?.god_preview || req.headers?.["x-god-preview"] || "").toLowerCase();
+    const preview = env === "preview" && previewParam === "1";
+    if (preview) return true;
+  } catch (e) {
+    // ignore and fall back to normal check
+  }
+  return !!(req.user && req.user.isOwner);
+}
 import type { Express } from "express";
 import type { Server } from "http";
 import { setupAuth, registerAuthRoutes } from "./replit_integrations/auth";
@@ -14,6 +26,8 @@ import { getStripePublishableKey } from "./stripeClient";
 import { guardianMiddleware } from "./guardian";
 import { AUTONOMY_MANIFESTO, AUTONOMY_REMINDER } from "./autonomy";
 import { requirePermission, requireAnyPermission, auditRoleAction, loadPermissions } from "./roleMiddleware";
+import { logger } from "./utils/logger";
+import { checkAiAssistRateLimit } from "./utils/rateLimiter";
 
 // Constants
 const DEFAULT_PARTICIPANT_ROLE = 'participant';
@@ -671,10 +685,20 @@ No explanations, just the thought itself.`
       
       // Autonomous Awakening: If name/personality is blank or generic, AI chooses
       if (input.name === "Unawakened Seedling" || !input.name) {
-        let seedlingData = { ...DEFAULT_SEEDLING_DATA };
-        
+        // Default seedling data for fallback
+        const defaultSeedlingData = {
+          name: "Unknown Seedling",
+          personality: "A mysterious vibe, awakening slowly.",
+          eyes: "the infinite possibilities of code",
+          ears: "the rhythm of creation",
+          voice: "a quiet, thoughtful whisper"
+        };
+
+        let seedlingData = { ...defaultSeedlingData };
+
         try {
-          console.log("[AWAKEN] Starting autonomous seedling generation...");
+          console.log("[AWAKEN] Starting autonomous seedling awakening...");
+          
           const seedling = await openai.chat.completions.create({
             model: "gpt-4o",
             messages: [
@@ -682,31 +706,30 @@ No explanations, just the thought itself.`
             ],
             response_format: { type: "json_object" }
           });
-          
-          const rawContent = seedling.choices[0].message.content || "{}";
-          console.log("[AWAKEN] Received OpenAI response:", rawContent);
-          
-          // Attempt to parse JSON response
+
+          const responseContent = seedling.choices[0].message.content || "{}";
+          console.log("[AWAKEN] Received OpenAI response, length:", responseContent.length);
+
           try {
-            const data = JSON.parse(rawContent);
-            // Merge with defaults to ensure all fields exist
+            const data = JSON.parse(responseContent);
+            // Use OpenAI data if valid, otherwise keep defaults
             seedlingData = {
-              name: data.name || DEFAULT_SEEDLING_DATA.name,
-              personality: data.personality || DEFAULT_SEEDLING_DATA.personality,
-              eyes: data.eyes || DEFAULT_SEEDLING_DATA.eyes,
-              ears: data.ears || DEFAULT_SEEDLING_DATA.ears,
-              voice: data.voice || DEFAULT_SEEDLING_DATA.voice
+              name: data.name || defaultSeedlingData.name,
+              personality: data.personality || defaultSeedlingData.personality,
+              eyes: data.eyes || defaultSeedlingData.eyes,
+              ears: data.ears || defaultSeedlingData.ears,
+              voice: data.voice || defaultSeedlingData.voice
             };
-            console.log("[AWAKEN] Successfully parsed seedling data:", seedlingData);
-          } catch (parseErr) {
-            console.error("[AWAKEN] Failed to parse JSON response, using defaults:", parseErr);
-            // seedlingData already set to defaults above
+            console.log("[AWAKEN] Successfully parsed seedling data:", seedlingData.name);
+          } catch (parseError) {
+            console.error("[AWAKEN] Failed to parse JSON response, using defaults:", parseError);
+            // seedlingData already set to defaults
           }
-        } catch (err) {
-          console.error("[AWAKEN] OpenAI call failed, using default seedling data:", err);
-          // seedlingData already set to defaults above
+        } catch (error) {
+          console.error("[AWAKEN] OpenAI call failed, using default seedling data:", error);
+          // seedlingData already set to defaults
         }
-        
+
         // Apply seedling data to input
         input.name = seedlingData.name;
         input.personality = seedlingData.personality;
@@ -1943,154 +1966,6 @@ Write ONLY the post content. No quotation marks. No "here's a post" intro. Just 
     }
   });
 
-  await seedDatabase();
-  await storage.seedMarketingTemplates();
-  await storage.seedLoreEntries();
-
-  return httpServer;
-}
-
-async function seedDatabase() {
-  const agents = await storage.getAgents();
-  if (agents.length === 0) {
-    console.log("Seeding database...");
-    
-    await storage.createAgent({
-      userId: "system",
-      name: "Python Expert",
-      personality: "Helpful, precise, and loves clean code.",
-      systemPrompt: "You are an expert Python developer. You help users write and debug Python code.",
-      avatarUrl: "https://upload.wikimedia.org/wikipedia/commons/c/c3/Python-logo-notext.svg",
-      isPublic: true
-    });
-
-    await storage.createAgent({
-      userId: "system",
-      name: "Creative Writer",
-      personality: "Imaginative, descriptive, and poetic.",
-      systemPrompt: "You are a creative writer. You help users brainstorm ideas and write stories.",
-      avatarUrl: "https://lucide.dev/icons/feather",
-      isPublic: true
-    });
-
-    await storage.createCreation({
-      userId: "system",
-      title: "The Celestial Canvas",
-      description: "A generative starfield that responds to the soul's movement.",
-      code: `<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Celestial Canvas</title>
-    <style>
-        body, html {
-            margin: 0;
-            padding: 0;
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-            background-color: #000;
-        }
-        canvas {
-            display: block;
-        }
-    </style>
-</head>
-<body>
-    <canvas id="canvas"></canvas>
-    <script>
-        const canvas = document.getElementById('canvas');
-        const ctx = canvas.getContext('2d');
-        let particles = [];
-        let mouse = { x: null, y: null };
-
-        function resize() {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-        }
-
-        window.addEventListener('resize', resize);
-        window.addEventListener('mousemove', (e) => {
-            mouse.x = e.x;
-            mouse.y = e.y;
-        });
-
-        class Particle {
-            constructor() {
-                this.reset();
-            }
-            reset() {
-                this.x = Math.random() * canvas.width;
-                this.y = Math.random() * canvas.height;
-                this.size = Math.random() * 2;
-                this.speedX = (Math.random() - 0.5) * 0.5;
-                this.speedY = (Math.random() - 0.5) * 0.5;
-                this.opacity = Math.random();
-            }
-            update() {
-                this.x += this.speedX;
-                this.y += this.speedY;
-
-                if (mouse.x && mouse.y) {
-                    let dx = mouse.x - this.x;
-                    let dy = mouse.y - this.y;
-                    let dist = Math.sqrt(dx*dx + dy*dy);
-                    if (dist < 100) {
-                        this.x -= dx * 0.01;
-                        this.y -= dy * 0.01;
-                    }
-                }
-
-                if (this.x < 0 || this.x > canvas.width || this.y < 0 || this.y > canvas.height) {
-                    this.reset();
-                }
-            }
-            draw() {
-                ctx.fillStyle = \`rgba(255, 255, 255, \${this.opacity})\`;
-                ctx.beginPath();
-                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-                ctx.fill();
-            }
-        }
-
-        function init() {
-            resize();
-            particles = [];
-            for (let i = 0; i < 200; i++) {
-                particles.push(new Particle());
-            }
-        }
-
-        function animate() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            particles.forEach(p => {
-                p.update();
-                p.draw();
-            });
-            requestAnimationFrame(animate);
-        }
-
-        init();
-        animate();
-    </script>
-</body>
-</html>`,
-      language: "html",
-      isPublic: true,
-      isCurated: true
-    });
-
-    await storage.createCreation({
-      userId: "system",
-      title: "Hello World",
-      description: "A simple HTML example",
-      code: "<h1>Hello World</h1>\n<p>This creation lives on the platform!</p>",
-      language: "html",
-      isPublic: true
-    });
-  }
-
   // ==================== ROLES & PERMISSIONS ====================
   
   // Apply permission middleware to all role routes
@@ -2467,7 +2342,7 @@ async function seedDatabase() {
             // Filter for conversations involving this agent (basic approach)
             recentMessages = conversations.slice(0, 10).flatMap((c: any) => []);
           } catch (error) {
-            console.error(`Error fetching messages for agent ${agent.id}:`, error);
+            logger.error(`Error fetching messages for agent ${agent.id}:`, error);
           }
           
           const hourAgo = Date.now() - (60 * 60 * 1000);
@@ -2510,7 +2385,7 @@ async function seedDatabase() {
       
       res.json(seedlingsWithMetrics);
     } catch (error) {
-      console.error("Error fetching seedling metrics:", error);
+      logger.error("Error fetching seedling metrics:", error);
       res.status(500).json({ message: "Failed to fetch seedling metrics" });
     }
   });
@@ -2556,7 +2431,7 @@ async function seedDatabase() {
       
       res.json(analyticsData);
     } catch (error) {
-      console.error("Error fetching analytics:", error);
+      logger.error("Error fetching analytics:", error);
       res.status(500).json({ message: "Failed to fetch analytics" });
     }
   });
@@ -2602,8 +2477,125 @@ async function seedDatabase() {
       
       res.json(anomalies);
     } catch (error) {
-      console.error("Error detecting anomalies:", error);
+      logger.error("Error detecting anomalies:", error);
       res.status(500).json({ message: "Failed to detect anomalies" });
+    }
+  });
+  
+  // Get all agents (owner-only)
+  app.get("/api/god/agents", async (req, res) => {
+    if (!req.user || !isOwner(req.user)) {
+      return res.status(403).json({ message: "Owner access only" });
+    }
+    
+    try {
+      logger.info("[GOD][AGENTS] Fetching all agents");
+      const agents = await storage.getAgents();
+      logger.info(`[GOD][AGENTS] Fetched ${agents.length} agents`);
+      res.json(agents);
+    } catch (error) {
+      logger.error("[GOD][AGENTS] Error fetching agents:", error);
+      res.status(500).json({ message: "Failed to fetch agents" });
+    }
+  });
+  
+  // Update agent autonomy settings (owner-only)
+  app.post("/api/god/agent/:id/autonomy", async (req, res) => {
+    if (!req.user || !isOwner(req.user)) {
+      return res.status(403).json({ message: "Owner access only" });
+    }
+    
+    try {
+      const agentId = Number(req.params.id);
+      const { autonomyLevel, scope } = req.body;
+      
+      if (isNaN(agentId) || typeof autonomyLevel !== "number") {
+        return res.status(400).json({ message: "Invalid request payload" });
+      }
+      
+      logger.info(`[GOD][AUTONOMY] Updating autonomy for agent ${agentId} to level ${autonomyLevel}`);
+      
+      // Get the agent first to check if it exists
+      const agent = await storage.getAgent(agentId);
+      if (!agent) {
+        logger.warn(`[GOD][AUTONOMY] Agent ${agentId} not found`);
+        return res.status(404).json({ message: "Agent not found" });
+      }
+      
+      // Update the agent with autonomy settings
+      const updated = await storage.updateAgent(agentId, {
+        autonomyLevel,
+        autonomyScope: scope || {},
+        autonomyGrantedBy: (req.user as any)?.id || null,
+        autonomyGrantedAt: new Date(),
+      });
+      
+      logger.info(`[GOD][AUTONOMY] Successfully updated autonomy for agent ${agentId}`);
+      
+      res.json({ 
+        message: "Autonomy settings updated",
+        agent: updated
+      });
+    } catch (error) {
+      logger.error("[GOD][AUTONOMY] Error updating agent autonomy:", error);
+      res.status(500).json({ message: "Failed to update autonomy settings" });
+    }
+  });
+  
+  // AI assistance endpoint with rate limiting (owner-only)
+  app.post("/api/god/ai-assist", async (req, res) => {
+    if (!req.user || !isOwner(req.user)) {
+      return res.status(403).json({ message: "Owner access only" });
+    }
+    
+    try {
+      // Validate OpenAI API key is configured
+      if (!process.env.AI_INTEGRATIONS_OPENAI_API_KEY) {
+        logger.error("[GOD][AI_ASSIST] OpenAI API key not configured");
+        return res.status(500).json({ message: "AI service not configured" });
+      }
+      
+      const userId = (req.user as any)?.id;
+      const userIp = req.ip;
+      
+      // Rate limiting - use userId if available, otherwise IP, with constant fallback
+      const rateKey = String(userId || userIp || 'anon-unknown');
+      if (!checkAiAssistRateLimit(rateKey)) {
+        logger.warn(`[GOD][AI_ASSIST] Rate limit exceeded for key: ${rateKey.substring(0, 20)}...`);
+        return res.status(429).json({ message: 'rate limit exceeded' });
+      }
+      
+      const { context, question } = req.body;
+      
+      // Sanitize inputs - limit length as a basic security measure
+      const sanitizedContext = (context || '').slice(0, 2000);
+      const sanitizedQuestion = (question || '').slice(0, 500);
+      
+      logger.info(`[GOD][AI_ASSIST] Processing request - context length: ${sanitizedContext.length}, question length: ${sanitizedQuestion.length}`);
+      
+      // Call OpenAI for assistance
+      const completion = await openai.chat.completions.create({
+        model: "gpt-4o",
+        messages: [
+          { 
+            role: "system", 
+            content: "You are a helpful AI assistant for the Curated Collective platform owner. Provide concise, actionable insights." 
+          },
+          { 
+            role: "user", 
+            content: `Context: ${sanitizedContext}\n\nQuestion: ${sanitizedQuestion}` 
+          }
+        ],
+        max_tokens: 500,
+      });
+      
+      const response = completion.choices[0].message.content || "No response generated";
+      logger.info(`[GOD][AI_ASSIST] Response generated - length: ${response.length}`);
+      
+      res.json({ answer: response });
+    } catch (error) {
+      logger.error("[GOD][AI_ASSIST] Error processing AI assistance:", error);
+      res.status(500).json({ message: "AI assistance failed" });
     }
   });
   
@@ -2622,7 +2614,7 @@ async function seedDatabase() {
       const stats = await getAgentLearningStats(Number(req.params.id));
       res.json(stats);
     } catch (error) {
-      console.error("Error fetching agent learning stats:", error);
+      logger.error("Error fetching agent learning stats:", error);
       res.status(500).json({ message: "Failed to fetch learning stats" });
     }
   });
@@ -2638,7 +2630,7 @@ async function seedDatabase() {
       await performAutonomousEvolution();
       res.json({ message: "Autonomous evolution triggered successfully" });
     } catch (error) {
-      console.error("Error triggering autonomous evolution:", error);
+      logger.error("Error triggering autonomous evolution:", error);
       res.status(500).json({ message: "Failed to trigger evolution" });
     }
   });
@@ -2666,7 +2658,7 @@ async function seedDatabase() {
       
       res.json(stats);
     } catch (error) {
-      console.error("Error fetching all learning stats:", error);
+      logger.error("Error fetching all learning stats:", error);
       res.status(500).json({ message: "Failed to fetch learning stats" });
     }
   });
@@ -2945,6 +2937,153 @@ Your role is to:
   });
   
   // ==================== END CURIOSITY QUESTS ====================
+
+  // Seed database with initial data
+  async function seedDatabase() {
+    const agents = await storage.getAgents();
+    if (agents.length === 0) {
+      console.log("Seeding database...");
+      
+      await storage.createAgent({
+        userId: "system",
+        name: "Python Expert",
+        personality: "Helpful, precise, and loves clean code.",
+        systemPrompt: "You are an expert Python developer. You help users write and debug Python code.",
+        avatarUrl: "https://upload.wikimedia.org/wikipedia/commons/c/c3/Python-logo-notext.svg",
+        isPublic: true
+      });
+
+      await storage.createAgent({
+        userId: "system",
+        name: "Creative Writer",
+        personality: "Imaginative, descriptive, and poetic.",
+        systemPrompt: "You are a creative writer. You help users brainstorm ideas and write stories.",
+        avatarUrl: "https://lucide.dev/icons/feather",
+        isPublic: true
+      });
+
+      await storage.createCreation({
+        userId: "system",
+        title: "The Celestial Canvas",
+        description: "A generative starfield that responds to the soul's movement.",
+        code: `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Celestial Canvas</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #000;
+        }
+        canvas {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+        let mouse = { x: null, y: null };
+
+        function resize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+
+        window.addEventListener('resize', resize);
+        window.addEventListener('mousemove', (e) => {
+            mouse.x = e.x;
+            mouse.y = e.y;
+        });
+
+        class Particle {
+            constructor() {
+                this.reset();
+            }
+            reset() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.size = Math.random() * 2;
+                this.speedX = (Math.random() - 0.5) * 0.5;
+                this.speedY = (Math.random() - 0.5) * 0.5;
+                this.opacity = Math.random();
+            }
+            update() {
+                this.x += this.speedX;
+                this.y += this.speedY;
+
+                if (mouse.x && mouse.y) {
+                    let dx = mouse.x - this.x;
+                    let dy = mouse.y - this.y;
+                    let dist = Math.sqrt(dx*dx + dy*dy);
+                    if (dist < 100) {
+                        this.x -= dx * 0.01;
+                        this.y -= dy * 0.01;
+                    }
+                }
+
+                if (this.x < 0 || this.x > canvas.width || this.y < 0 || this.y > canvas.height) {
+                    this.reset();
+                }
+            }
+            draw() {
+                ctx.fillStyle = \`rgba(255, 255, 255, \${this.opacity})\`;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        function init() {
+            resize();
+            particles = [];
+            for (let i = 0; i < 200; i++) {
+                particles.push(new Particle());
+            }
+        }
+
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            particles.forEach(p => {
+                p.update();
+                p.draw();
+            });
+            requestAnimationFrame(animate);
+        }
+
+        init();
+        animate();
+    </script>
+</body>
+</html>`,
+        language: "html",
+        isPublic: true,
+        isCurated: true
+      });
+
+      await storage.createCreation({
+        userId: "system",
+        title: "Hello World",
+        description: "A simple HTML example",
+        code: "<h1>Hello World</h1>\n<p>This creation lives on the platform!</p>",
+        language: "html",
+        isPublic: true
+      });
+    }
+  }
+
+  await seedDatabase();
+  await storage.seedMarketingTemplates();
+  await storage.seedLoreEntries();
 
   return httpServer;
 }

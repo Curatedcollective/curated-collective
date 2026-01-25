@@ -49,6 +49,11 @@ export const agents = pgTable("agents", {
   conversationCount: integer("conversation_count").default(0),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
+  // Autonomy/Veil admin fields
+  autonomyLevel: integer("autonomy_level").default(0),
+  autonomyScope: jsonb("autonomy_scope").default({}),
+  autonomyGrantedBy: integer("autonomy_granted_by"),
+  autonomyGrantedAt: timestamp("autonomy_granted_at"),
 });
 
 export const daddyG = pgTable('daddy_g', {

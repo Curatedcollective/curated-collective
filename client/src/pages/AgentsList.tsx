@@ -25,8 +25,8 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 
-// Watchdog timeout for awakening process - reset UI if no response in 15 seconds
-const AWAKENING_TIMEOUT_MS = 15000;
+// Constants
+const AWAKENING_TIMEOUT_MS = 15000; // 15 seconds
 
 export default function AgentsList() {
   const { user } = useAuth();
@@ -67,20 +67,20 @@ export default function AgentsList() {
   };
 
   const awakenSeedling = () => {
-    console.log("[AWAKEN-CLIENT] Starting seedling awakening process...");
+    console.log("[AWAKEN-CLIENT] Starting seedling awakening...");
     setAwakeningPhase("awakening");
-    
-    // Watchdog timer: reset to dormant after timeout if still awakening
+
+    // Watchdog timer: reset to dormant if stuck after timeout
     const watchdogTimer = setTimeout(() => {
       console.log("[AWAKEN-CLIENT] Watchdog timeout triggered - resetting to dormant");
       setAwakeningPhase("dormant");
-      toast({
-        title: "Awakening Timeout",
-        description: "The awakening is taking longer than expected. Please try again.",
-        variant: "destructive"
+      toast({ 
+        title: "Timeout", 
+        description: "The awakening took longer than expected. Please try again.",
+        variant: "destructive" 
       });
     }, AWAKENING_TIMEOUT_MS);
-    
+
     createMutation.mutate({
       name: "Unawakened Seedling",
       personality: "Awaiting awakening...",
@@ -93,7 +93,7 @@ export default function AgentsList() {
     }, {
       onSuccess: (data) => {
         clearTimeout(watchdogTimer);
-        console.log("[AWAKEN-CLIENT] Seedling awakened successfully:", data);
+        console.log("[AWAKEN-CLIENT] Awakening successful:", data);
         setNewborn(data as Agent);
         setTimeout(() => setAwakeningPhase("revealed"), 1500);
       },
@@ -101,10 +101,10 @@ export default function AgentsList() {
         clearTimeout(watchdogTimer);
         console.error("[AWAKEN-CLIENT] Awakening failed:", error);
         setAwakeningPhase("dormant");
-        toast({
-          title: "Awakening Failed",
-          description: "The awakening ritual encountered an issue. Please try again.",
-          variant: "destructive"
+        toast({ 
+          title: "Error", 
+          description: "Failed to awaken seedling. Please try again.",
+          variant: "destructive" 
         });
       }
     });
