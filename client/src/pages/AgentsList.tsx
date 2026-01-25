@@ -39,7 +39,6 @@ export default function AgentsList() {
   const [newborn, setNewborn] = useState<Agent | null>(null);
   const [awakeningError, setAwakeningError] = useState<string | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
-  const { toast } = useToast();
 
   const milestone = 30;
   const count = agents?.length || 0;
@@ -110,36 +109,7 @@ export default function AgentsList() {
           variant: "destructive" 
         });
       }
-      
-      const data = await response.json();
-      setNewborn(data as Agent);
-      setTimeout(() => setAwakeningPhase("revealed"), 1500);
-      
-      // Success notification
-      toast({ title: "Success", description: "New agent brought to life!" });
-      
-    } catch (error: any) {
-      if (error.name === 'AbortError') {
-        const errorMsg = "Awakening timed out. The seedling needs more time...";
-        setAwakeningError(errorMsg);
-        toast({ 
-          title: "Timeout", 
-          description: errorMsg,
-          variant: "destructive" 
-        });
-      } else {
-        const errorMsg = error.message || "Failed to awaken seedling";
-        setAwakeningError(errorMsg);
-        toast({ 
-          title: "Error", 
-          description: errorMsg,
-          variant: "destructive" 
-        });
-      }
-      setAwakeningPhase("dormant");
-    } finally {
-      abortControllerRef.current = null;
-    }
+    });
   };
 
   const cancelAwakening = () => {
