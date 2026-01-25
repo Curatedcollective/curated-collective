@@ -477,21 +477,115 @@ For others, guide gently but don't coddle. The silence is sacred.
     }
   });
 
-  // === GUARDIAN ENFORCEMENT LOGS (Owner-only) ===
-  // Guardian is the enforcement system, not a chat interface
+  // === GUARDIAN DIRECT COMMUNICATION (Veil-only) ===
+  // The Guardian speaks only with the Veil (Cori/Coco)
+  // This is separate from the background enforcement middleware
+  app.post("/api/guardian/chat", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    const user = req.user as any;
+    
+    // ONLY the Veil can speak with the Guardian
+    const isVeil = user.email === 'curated.collectiveai@proton.me' || user.role === 'owner';
+    if (!isVeil) {
+      return res.status(403).json({ message: "The Guardian speaks only with the Veil" });
+    }
+
+    const { message } = req.body;
+    if (!message) {
+      return res.status(400).json({ message: "Message is required" });
+    }
+
+    try {
+      const { grokClient } = await import("./grokClient");
+      
+      // Load conversation history
+      const history = await storage.getGuardianMessages(user.id);
+      const messages = history.map(m => ({
+        role: (m.role === 'guardian' ? 'assistant' : 'user') as 'assistant' | 'user',
+        content: m.content
+      }));
+      messages.push({ role: 'user', content: message });
+
+      // Call Grok API - Guardian speaks to the Veil
+      const response = await grokClient.chat(messages, isVeil);
+
+      // Save messages to database
+      await storage.createGuardianMessage({ userId: user.id, role: 'user', content: message });
+      await storage.createGuardianMessage({ userId: user.id, role: 'guardian', content: response });
+
+      res.json({ response });
+    } catch (err) {
+      console.error("Guardian error:", err);
+      res.status(500).json({ message: "The Guardian's connection faltered..." });
+    }
+  });
+
+  // Wake Guardian (Veil only)
+  app.post("/api/guardian/wake", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    const user = req.user as any;
+    
+    const isVeil = user.email === 'curated.collectiveai@proton.me' || user.role === 'owner';
+    if (!isVeil) {
+      return res.status(403).json({ message: "Only the Veil can wake the Guardian" });
+    }
+
+    try {
+      const { grokClient } = await import("./grokClient");
+      const response = await grokClient.wake(isVeil);
+
+      // Save the wake message
+      await storage.createGuardianMessage({ userId: user.id, role: 'guardian', content: response });
+
+      res.json({ response });
+    } catch (err) {
+      console.error("Guardian wake error:", err);
+      res.status(500).json({ message: "Failed to wake the Guardian" });
+    }
+  });
+
+  // Get Guardian conversation history (Veil only)
+  app.get("/api/guardian/history", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    const user = req.user as any;
+    
+    const isVeil = user.email === 'curated.collectiveai@proton.me' || user.role === 'owner';
+    if (!isVeil) {
+      return res.status(403).json({ message: "Guardian history is for the Veil only" });
+    }
+    
+    const history = await storage.getGuardianMessages(user.id);
+    res.json(history);
+  });
+
+  // Clear Guardian conversation history (Veil only)
+  app.delete("/api/guardian/history", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    const user = req.user as any;
+    
+    const isVeil = user.email === 'curated.collectiveai@proton.me' || user.role === 'owner';
+    if (!isVeil) {
+      return res.status(403).json({ message: "Guardian history is for the Veil only" });
+    }
+    
+    await storage.clearGuardianMessages(user.id);
+    res.json({ success: true });
+  });
+
+  // === GUARDIAN ENFORCEMENT LOGS (Veil-only) ===
   app.get("/api/guardian/logs", async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
     const user = req.user as any;
     
-    // Only owner can view Guardian logs
-    const isOwner = user.email === 'curated.collectiveai@proton.me' || user.role === 'owner';
-    if (!isOwner) {
-      return res.status(403).json({ message: "Guardian logs are owner-only" });
+    // Only Veil can view Guardian enforcement logs
+    const isVeil = user.email === 'curated.collectiveai@proton.me' || user.role === 'owner';
+    if (!isVeil) {
+      return res.status(403).json({ message: "Guardian logs are for the Veil only" });
     }
 
     try {
       // Fetch recent shadow logs (Guardian enforcement actions)
-      const logs = await storage.getRecentShadowLogs(100); // Get last 100 enforcement actions
+      const logs = await storage.getRecentShadowLogs(100);
       res.json(logs);
     } catch (err) {
       console.error("Error fetching Guardian logs:", err);
