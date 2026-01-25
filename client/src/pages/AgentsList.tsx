@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -22,6 +22,7 @@ import { insertAgentSchema, Agent } from "@shared/schema";
 import { z } from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Label } from "@/components/ui/label";
+import { useLocation } from "wouter";
 
 export default function AgentsList() {
   const { user } = useAuth();
@@ -30,6 +31,14 @@ export default function AgentsList() {
   const [open, setOpen] = useState(false);
   const [awakeningPhase, setAwakeningPhase] = useState<"dormant" | "awakening" | "revealed">("dormant");
   const [newborn, setNewborn] = useState<Agent | null>(null);
+  const [location] = useLocation();
+
+  // Auto-open dialog if hash is #awaken
+  useEffect(() => {
+    if (location.includes('#awaken')) {
+      setOpen(true);
+    }
+  }, [location]);
 
   const milestone = 30;
   const count = agents?.length || 0;

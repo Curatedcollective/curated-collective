@@ -64,7 +64,7 @@ function NavContent({ user, logout, location, theme, setTheme }: any) {
         {user && (
           <div className="mt-4 pt-4 border-t border-border/50">
             <p className="text-[9px] text-muted-foreground uppercase tracking-widest mb-2 px-4">quick access</p>
-            <Link href="/agents">
+            <Link href="/agents#awaken">
               <div className="flex items-center gap-3 px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground hover:text-foreground hover:bg-secondary cursor-pointer transition-colors">
                 <Sparkles className="w-3 h-3" />
                 awaken seedling
