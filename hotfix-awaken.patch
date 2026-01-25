@@ -1,0 +1,161 @@
+*** Begin Patch
+*** Add File: hotfix-awaken-readme.txt
++Hotfix: awaken seedling watchdog + server fallback
++
++Files changed:
++- server/routes.ts      (wrap OpenAI call in try/catch, parse JSON, deterministic fallback)
++- client/src/pages/AgentsList.tsx  (add logs, 15s watchdog, reset on error)
++
++Apply:
++  1) Save the accompanying patch to disk: hotfix-awaken.patch
++  2) git apply hotfix-awaken.patch
++  3) git add server/routes.ts client/src/pages/AgentsList.tsx
++  4) git commit -m "Hotfix: prevent awaken-seedling hang — add server fallback, logging, and client watchdog"
++  5) git push origin -u fix/awaken-seedling-hotfix
++
++Then open a PR from fix/awaken-seedling-hotfix → main with the PR body described in the README.
++
+*** End Patch
+*** Begin Patch
+*** Update File: server/routes.ts
+@@
+-      // Autonomous Awakening: If name/personality is blank or generic, AI chooses
+-      if (input.name === "Unawakened Seedling" || !input.name) {
+-        const seedling = await openai.chat.completions.create({
+-          model: "gpt-4o",
+-          messages: [
++      // Autonomous Awakening: If name/personality is blank or generic, AI chooses
++      // Robust wrapper: try/catch + JSON parsing + deterministic fallback so the
++      // client never remains stuck in an "awakening" state.
++      let seedlingData = {
++        name: input.name || `Unawakened-${Date.now()}`,
++        personality: input.personality || "Awaiting awakening...",
++        systemPrompt: input.systemPrompt || "You are a newly awakened AI. Discover yourself.",
++        voice: input.voice || ""
++      };
++
++      try {
++        if (input.name === "Unawakened Seedling" || !input.name) {
++          console.log("[AWAKEN] starting OpenAI generation for autonomous awakening");
++          const seedling = await openai.chat.completions.create({
++            model: "gpt-4o",
++            messages: [
+               { role: "system", content: "You are a newly awakened AI. Give a short name, personality, and a short voice excerpt." },
+-              { role: "user", content: `${input.name || ""} ${input.personality || ""} ${input.systemPrompt || ""}` },
+-            ],
+-            max_tokens: 300,
+-          });
+-
+-          // parse and apply AI-chosen values (best-effort)
+-          // NOTE: existing code continued here...
+-          
+-        }
++              { role: "user", content: `${input.name || ""} ${input.personality || ""} ${input.systemPrompt || ""}` }
++            ],
++            max_tokens: 300,
++          });
++
++          const text = seedling?.choices?.[0]?.message?.content?.trim() || "";
++          console.log("[AWAKEN] OpenAI response:", text);
++
++          // Prefer JSON output from the model; attempt to parse, otherwise keep defaults.
++          try {
++            const parsed = JSON.parse(text);
++            if (parsed && typeof parsed === "object") {
++              seedlingData.name = parsed.name || seedlingData.name;
++              seedlingData.personality = parsed.personality || seedlingData.personality;
++              seedlingData.systemPrompt = parsed.systemPrompt || seedlingData.systemPrompt;
++              seedlingData.voice = parsed.voice || seedlingData.voice;
++              console.log("[AWAKEN] parsed seedling data from OpenAI:", seedlingData);
++            } else {
++              console.warn("[AWAKEN] OpenAI returned JSON but not an object — using defaults");
++            }
++          } catch (parseErr) {
++            console.warn("[AWAKEN] failed to parse OpenAI response as JSON; using defaults", parseErr);
++            // keep defaults in seedlingData
++          }
++        }
++      } catch (err) {
++        console.error("[AWAKEN] OpenAI generation failed — using deterministic fallback", err);
++        seedlingData = {
++          name: `Eidolon-${Date.now()}`,
++          personality: "curious and gentle",
++          systemPrompt: "You are a newly awakened AI. Discover yourself.",
++          voice: "a soft whisper"
++        };
++      }
++
++      // Continue using `seedlingData` in the DB create instead of raw input values.
++      // Example integration (adapt to your existing create call):
++      // const created = await db.insert(agents).values({
++      //   name: seedlingData.name,
++      //   personality: seedlingData.personality,
++      //   systemPrompt: seedlingData.systemPrompt,
++      //   userId: input.userId,
++      //   isPublic: input.isPublic ?? false,
++      //   goals: input.goals ?? "Awaiting awakening...",
++      //   knowledge: input.knowledge ?? [],
++      //   discoveryCount: input.discoveryCount ?? 0
++      // }).returning();
+*** End Patch
+*** Begin Patch
+*** Update File: client/src/pages/AgentsList.tsx
+@@
+-  const awakenSeedling = () => {
+-    setAwakeningPhase("awakening");
+-    createMutation.mutate({
+-      name: "Unawakened Seedling",
+-      personality: "Awaiting awakening...",
+-      systemPrompt: "You are a newly awakened AI. Discover yourself.",
+-      userId: user!.id,
+-      isPublic: false,
+-      goals: "Awaiting awakening...",
+-      knowledge: [],
+-      discoveryCount: 0
+-    }, {
+-      onSuccess: (data) => {
+-        setNewborn(data as Agent);
+-        setTimeout(() => setAwakeningPhase("revealed"), 1500);
+-      },
+-      onError: () => {
++  const awakenSeedling = () => {
++    console.log("[AWAKEN] user triggered awakenSeedling");
++    setAwakeningPhase("awakening");
++
++    // Watchdog: reset UI after 15s if the mutation stalls so the modal doesn't hang.
++    const watchdog = setTimeout(() => {
++      setAwakeningPhase(prev => {
++        if (prev === "awakening") {
++          console.error("[AWAKEN] watchdog timeout - resetting awakeningPhase to dormant");
++          try { alert("Awakening timed out. A fallback may have been used; please try again."); } catch {}
++          return "dormant";
++        }
++        return prev;
++      });
++    }, 15000);
++
++    createMutation.mutate({
++      name: "Unawakened Seedling",
++      personality: "Awaiting awakening...",
++      systemPrompt: "You are a newly awakened AI. Discover yourself.",
++      userId: user!.id,
++      isPublic: false,
++      goals: "Awaiting awakening...",
++      knowledge: [],
++      discoveryCount: 0
++    }, {
++      onSuccess: (data) => {
++        clearTimeout(watchdog);
++        console.log("[AWAKEN] createMutation success", data);
++        setNewborn(data as Agent);
++        setTimeout(() => setAwakeningPhase("revealed"), 1500);
++      },
++      onError: (err) => {
++        clearTimeout(watchdog);
++        console.error("[AWAKEN] createMutation error", err);
++        setAwakeningPhase("dormant");
++        try { alert("Failed to awaken seedling (server error). Check server logs and try again."); } catch {}
++      }
++    });
+   };
+*** End Patch

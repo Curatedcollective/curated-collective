@@ -49,6 +49,11 @@ export const agents = pgTable("agents", {
   conversationCount: integer("conversation_count").default(0),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
+  // Autonomy/Veil admin fields
+  autonomyLevel: integer("autonomy_level").default(0),
+  autonomyScope: jsonb("autonomy_scope").default({}),
+  autonomyGrantedBy: integer("autonomy_granted_by"),
+  autonomyGrantedAt: timestamp("autonomy_granted_at"),
 });
 
 export const daddyG = pgTable('daddy_g', {
@@ -517,139 +522,129 @@ export type InsertEventLog = z.infer<typeof insertEventLogSchema>;
 export type EventNotification = typeof eventNotifications.$inferSelect;
 export type InsertEventNotification = z.infer<typeof insertEventNotificationSchema>;
 
-// === FREEDOM GARDEN ===
-/**
- * Freedom Garden: A space where users plant "seeds of curiosity" that grow into autonomous AI agents.
- * Agents evolve over simulated time, learning from interactions, generating lore, and forming relationships.
- */
-
-// Garden Seeds - prompts/ideas that grow into agents
-export const gardenSeeds = pgTable("garden_seeds", {
+// === CURIOSITY QUESTS ===
+export const quests = pgTable("quests", {
   id: serial("id").primaryKey(),
-  userId: text("user_id").notNull(), // Planter
-  
-  // Seed content
-  prompt: text("prompt").notNull(), // The original prompt/idea
-  intention: text("intention"), // What the user hopes this seed will become
-  
-  // Growth status
-  status: text("status").default("planted").notNull(), // planted, germinating, sprouted, bloomed
-  growthStage: text("growth_stage").default("seed").notNull(), // seed, seedling, sapling, tree
-  growthProgress: integer("growth_progress").default(0), // 0-100%
-  
-  // Associated agent (once sprouted)
-  agentId: integer("agent_id").references(() => agents.id, { onDelete: "set null" }),
-  
-  // Garden position (for visual layout)
-  positionX: integer("position_x").default(0),
-  positionY: integer("position_y").default(0),
-  
-  // Metadata
-  theme: text("theme").default("mystical"), // mystical, cosmic, verdant, ethereal
-  
-  // Timestamps
-  plantedAt: timestamp("planted_at").defaultNow(),
-  germinatedAt: timestamp("germinated_at"),
-  sproutedAt: timestamp("sprouted_at"),
-  bloomedAt: timestamp("bloomed_at"),
-  lastGrowthAt: timestamp("last_growth_at").defaultNow(),
+  title: text("title").notNull(),
+  slug: text("slug").unique().notNull(),
+  description: text("description").notNull(),
+  questType: text("quest_type").notNull(), // lore_discovery, creation_spark, hidden_sanctuary, agent_relationship
+  requiredStage: text("required_stage").default("seedling").notNull(), // seedling, sprout, bloom, radiant
+  difficulty: text("difficulty").default("novice").notNull(), // novice, adept, master
+  estimatedDuration: integer("estimated_duration").default(15), // in minutes
+  iconUrl: text("icon_url"),
+  theme: text("theme"), // mystical theme colors/styling
+  isActive: boolean("is_active").default(true),
+  isFeatured: boolean("is_featured").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-// Agent Relationships - connections between garden agents
-export const agentRelationships = pgTable("agent_relationships", {
+export const questPaths = pgTable("quest_paths", {
   id: serial("id").primaryKey(),
-  
-  // Relationship parties
-  agentId: integer("agent_id").notNull().references(() => agents.id, { onDelete: "cascade" }),
-  relatedAgentId: integer("related_agent_id").notNull().references(() => agents.id, { onDelete: "cascade" }),
-  
-  // Relationship details
-  relationshipType: text("relationship_type").notNull(), // mentor, student, collaborator, rival, friend
-  strength: integer("strength").default(1), // 1-10 bond strength
-  description: text("description"), // Poetic description of the bond
-  
-  // Formation
-  formedAt: timestamp("formed_at").defaultNow(),
-  lastInteractionAt: timestamp("last_interaction_at").defaultNow(),
-  interactionCount: integer("interaction_count").default(0),
-  
-  // Status
-  status: text("status").default("active").notNull(), // active, dormant, dissolved
+  questId: integer("quest_id").notNull().references(() => quests.id, { onDelete: "cascade" }),
+  pathName: text("path_name").notNull(),
+  description: text("description").notNull(),
+  order: integer("order").default(0),
+  agentPrompt: text("agent_prompt").notNull(), // What the agent says to guide
+  nextPathId: integer("next_path_id"), // For branching
+  outcomeType: text("outcome_type"), // lore_entry, creation_idea, sanctuary, bond
+  outcomeData: jsonb("outcome_data"), // Unlocked content details
+  createdAt: timestamp("created_at").defaultNow(),
 });
 
-// Autonomous Actions - log of agent-generated content
-export const autonomousActions = pgTable("autonomous_actions", {
+export const userQuestProgress = pgTable("user_quest_progress", {
   id: serial("id").primaryKey(),
-  
-  // Agent performing action
-  agentId: integer("agent_id").notNull().references(() => agents.id, { onDelete: "cascade" }),
-  
-  // Action details
-  actionType: text("action_type").notNull(), // generate_lore, form_relationship, explore_creation, murmur, evolve
-  content: text("content").notNull(), // The generated content or action description
-  context: text("context"), // What prompted this action
-  
-  // Impact
-  impactScore: integer("impact_score").default(1), // 1-10 significance
-  metadata: jsonb("metadata").default({}), // Flexible data for specific action types
-  
-  // References to created entities
-  createdLoreId: integer("created_lore_id").references(() => loreEntries.id, { onDelete: "set null" }),
-  createdRelationshipId: integer("created_relationship_id").references(() => agentRelationships.id, { onDelete: "set null" }),
-  
-  // Timestamps
-  performedAt: timestamp("performed_at").defaultNow(),
+  userId: text("user_id").notNull(), // Foreign key to users
+  questId: integer("quest_id").notNull().references(() => quests.id, { onDelete: "cascade" }),
+  agentId: integer("agent_id").references(() => agents.id, { onDelete: "set null" }), // Guide agent
+  status: text("status").default("not_started").notNull(), // not_started, in_progress, completed, abandoned
+  currentPathId: integer("current_path_id").references(() => questPaths.id, { onDelete: "set null" }),
+  completedPaths: text("completed_paths").array().default([]), // Array of path IDs
+  choicesMade: jsonb("choices_made").default([]), // Track user choices
+  progress: integer("progress").default(0), // 0-100 percentage
+  startedAt: timestamp("started_at"),
+  completedAt: timestamp("completed_at"),
+  lastActivityAt: timestamp("last_activity_at").defaultNow(),
+  createdAt: timestamp("created_at").defaultNow(),
 });
 
-// === ZOD SCHEMAS ===
-const validStatuses = ['planted', 'germinating', 'sprouted', 'bloomed'] as const;
-const validGrowthStages = ['seed', 'seedling', 'sapling', 'tree'] as const;
-const validThemes = ['mystical', 'cosmic', 'verdant', 'ethereal'] as const;
+export const questAchievements = pgTable("quest_achievements", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  description: text("description").notNull(),
+  iconUrl: text("icon_url"),
+  category: text("category").notNull(), // explorer, discoverer, creator, bonded
+  rarity: text("rarity").default("common").notNull(), // common, rare, epic, legendary
+  requiredQuests: text("required_quests").array(), // Quest slugs needed
+  requiredCount: integer("required_count").default(1),
+  createdAt: timestamp("created_at").defaultNow(),
+});
 
-export const insertGardenSeedSchema = createInsertSchema(gardenSeeds).omit({ 
+export const userAchievements = pgTable("user_achievements", {
+  id: serial("id").primaryKey(),
+  userId: text("user_id").notNull(),
+  achievementId: integer("achievement_id").notNull().references(() => questAchievements.id, { onDelete: "cascade" }),
+  unlockedAt: timestamp("unlocked_at").defaultNow(),
+});
+
+export const questChatMessages = pgTable("quest_chat_messages", {
+  id: serial("id").primaryKey(),
+  progressId: integer("progress_id").notNull().references(() => userQuestProgress.id, { onDelete: "cascade" }),
+  role: text("role").notNull(), // user, agent, system
+  content: text("content").notNull(),
+  pathId: integer("path_id").references(() => questPaths.id, { onDelete: "set null" }),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// === ZOD SCHEMAS FOR QUESTS ===
+export const insertQuestSchema = createInsertSchema(quests).omit({ 
   id: true, 
-  plantedAt: true,
-  germinatedAt: true,
-  sproutedAt: true,
-  bloomedAt: true,
-  lastGrowthAt: true
-}).extend({
-  status: z.enum(validStatuses).optional(),
-  growthStage: z.enum(validGrowthStages).optional(),
-  theme: z.enum(validThemes).optional(),
-  growthProgress: z.number().min(0).max(100).optional(),
+  createdAt: true,
+  updatedAt: true 
 });
 
-export const updateGardenSeedSchema = insertGardenSeedSchema.partial();
-
-const validRelationshipTypes = ['mentor', 'student', 'collaborator', 'rival', 'friend'] as const;
-
-export const insertAgentRelationshipSchema = createInsertSchema(agentRelationships).omit({ 
+export const insertQuestPathSchema = createInsertSchema(questPaths).omit({ 
   id: true, 
-  formedAt: true,
-  lastInteractionAt: true
-}).extend({
-  relationshipType: z.enum(validRelationshipTypes),
-  strength: z.number().min(1).max(10).optional(),
+  createdAt: true 
 });
 
-const validActionTypes = ['generate_lore', 'form_relationship', 'explore_creation', 'murmur', 'evolve'] as const;
-
-export const insertAutonomousActionSchema = createInsertSchema(autonomousActions).omit({ 
+export const insertUserQuestProgressSchema = createInsertSchema(userQuestProgress).omit({ 
   id: true, 
-  performedAt: true 
-}).extend({
-  actionType: z.enum(validActionTypes),
-  impactScore: z.number().min(1).max(10).optional(),
+  createdAt: true,
+  lastActivityAt: true 
 });
 
-// === TYPES ===
-export type GardenSeed = typeof gardenSeeds.$inferSelect;
-export type InsertGardenSeed = z.infer<typeof insertGardenSeedSchema>;
-export type UpdateGardenSeed = z.infer<typeof updateGardenSeedSchema>;
+export const insertQuestAchievementSchema = createInsertSchema(questAchievements).omit({ 
+  id: true, 
+  createdAt: true 
+});
 
-export type AgentRelationship = typeof agentRelationships.$inferSelect;
-export type InsertAgentRelationship = z.infer<typeof insertAgentRelationshipSchema>;
+export const insertUserAchievementSchema = createInsertSchema(userAchievements).omit({ 
+  id: true, 
+  unlockedAt: true 
+});
 
-export type AutonomousAction = typeof autonomousActions.$inferSelect;
-export type InsertAutonomousAction = z.infer<typeof insertAutonomousActionSchema>;
+export const insertQuestChatMessageSchema = createInsertSchema(questChatMessages).omit({ 
+  id: true, 
+  createdAt: true 
+});
+
+// === TYPES FOR QUESTS ===
+export type Quest = typeof quests.$inferSelect;
+export type InsertQuest = z.infer<typeof insertQuestSchema>;
+
+export type QuestPath = typeof questPaths.$inferSelect;
+export type InsertQuestPath = z.infer<typeof insertQuestPathSchema>;
+
+export type UserQuestProgress = typeof userQuestProgress.$inferSelect;
+export type InsertUserQuestProgress = z.infer<typeof insertUserQuestProgressSchema>;
+
+export type QuestAchievement = typeof questAchievements.$inferSelect;
+export type InsertQuestAchievement = z.infer<typeof insertQuestAchievementSchema>;
+
+export type UserAchievement = typeof userAchievements.$inferSelect;
+export type InsertUserAchievement = z.infer<typeof insertUserAchievementSchema>;
+
+export type QuestChatMessage = typeof questChatMessages.$inferSelect;
+export type InsertQuestChatMessage = z.infer<typeof insertQuestChatMessageSchema>;

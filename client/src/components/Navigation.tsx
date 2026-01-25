@@ -12,7 +12,7 @@ import {
   ShoppingCart,
   Users,
   ChevronDown,
-  Flower2,
+  Compass,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import NavLink from "./ui/nav-link";
@@ -87,10 +87,11 @@ export function Navigation() {
         <nav className="space-y-1">
           <NavLink href="/creations" icon={<Code className="w-4 h-4" />} label="creations" />
           <NavLink href="/agents" icon={<Bot className="w-4 h-4" />} label="seedlings" />
-          <NavLink href="/garden" icon={<Flower2 className="w-4 h-4" />} label="freedom garden" />
+          <NavLink href="/quests" icon={<Compass className="w-4 h-4" />} label="curiosity quests" />
           <NavLink href="/observatory" icon={<Eye className="w-4 h-4" />} label="observatory" />
           <NavLink href="/lore" icon={<BookOpen className="w-4 h-4" />} label="lore compendium" />
           <NavLink href="/events" icon={<Star className="w-4 h-4" />} label="constellation events" />
+          <NavLink href="/labyrinth" icon={<Puzzle className="w-4 h-4" />} label="code labyrinth" />
           <NavLink href="/chat" icon={<MessageSquare className="w-4 h-4" />} label="lab chat" />
           <NavLink href="/seedling-sanctum" icon={<Leaf className="w-4 h-4" />} label="sanctum" />
           <NavLink href="/sanctum" icon={<Lock className="w-4 h-4" />} label="inner sanctum" />

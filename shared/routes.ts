@@ -352,124 +352,125 @@ export const api = {
       },
     },
   },
-  garden: {
-    // Seeds
-    listSeeds: {
+  labyrinth: {
+    // Puzzle routes
+    puzzles: {
       method: 'GET' as const,
-      path: '/api/garden/seeds',
+      path: '/api/labyrinth/puzzles',
       input: z.object({
-        userId: z.string().optional(),
-        status: z.string().optional(),
+        difficulty: z.number().optional(),
+        type: z.string().optional(),
       }).optional(),
       responses: {
         200: z.array(z.any()),
       },
     },
-    getSeed: {
+    getPuzzle: {
       method: 'GET' as const,
-      path: '/api/garden/seeds/:id',
+      path: '/api/labyrinth/puzzles/:id',
       responses: {
         200: z.any(),
         404: errorSchemas.notFound,
       },
     },
-    plantSeed: {
-      method: 'POST' as const,
-      path: '/api/garden/seeds',
+    // Progress routes
+    progress: {
+      method: 'GET' as const,
+      path: '/api/labyrinth/progress',
+      responses: {
+        200: z.any(),
+      },
+    },
+    updateProgress: {
+      method: 'PUT' as const,
+      path: '/api/labyrinth/progress',
       input: z.object({
-        prompt: z.string().min(1),
-        intention: z.string().optional(),
-        theme: z.string().optional(),
-        positionX: z.number().optional(),
-        positionY: z.number().optional(),
+        currentLevel: z.number().optional(),
+        totalExperience: z.number().optional(),
+        currentPath: z.string().optional(),
       }),
       responses: {
-        201: z.any(),
-        400: errorSchemas.validation,
-      },
-    },
-    updateSeed: {
-      method: 'PUT' as const,
-      path: '/api/garden/seeds/:id',
-      input: z.object({
-        prompt: z.string().optional(),
-        intention: z.string().optional(),
-        growthStage: z.string().optional(),
-        growthProgress: z.number().optional(),
-        status: z.string().optional(),
-      }).optional(),
-      responses: {
         200: z.any(),
-        404: errorSchemas.notFound,
       },
     },
-    deleteSeed: {
-      method: 'DELETE' as const,
-      path: '/api/garden/seeds/:id',
-      responses: {
-        204: z.void(),
-        404: errorSchemas.notFound,
-      },
-    },
-    // Growth simulation
-    simulateGrowth: {
+    // Attempt routes
+    submitAttempt: {
       method: 'POST' as const,
-      path: '/api/garden/seeds/:id/grow',
+      path: '/api/labyrinth/attempts',
+      input: z.object({
+        puzzleId: z.number(),
+        code: z.string(),
+      }),
       responses: {
-        200: z.object({ 
-          seed: z.any(),
-          agent: z.any().optional(),
-          message: z.string() 
+        200: z.object({
+          status: z.string(),
+          testsPassed: z.number(),
+          totalTests: z.number(),
+          message: z.string(),
+          experienceGained: z.number().optional(),
         }),
       },
     },
-    // Relationships
-    listRelationships: {
+    getAttempts: {
       method: 'GET' as const,
-      path: '/api/garden/relationships',
+      path: '/api/labyrinth/attempts',
       input: z.object({
-        agentId: z.number().optional(),
+        puzzleId: z.number().optional(),
       }).optional(),
       responses: {
         200: z.array(z.any()),
       },
     },
-    createRelationship: {
+    // Achievement routes
+    achievements: {
+      method: 'GET' as const,
+      path: '/api/labyrinth/achievements',
+      responses: {
+        200: z.array(z.any()),
+      },
+    },
+    userAchievements: {
+      method: 'GET' as const,
+      path: '/api/labyrinth/user-achievements',
+      responses: {
+        200: z.array(z.any()),
+      },
+    },
+    // Eclipse events
+    eclipses: {
+      method: 'GET' as const,
+      path: '/api/labyrinth/eclipses/active',
+      responses: {
+        200: z.array(z.any()),
+      },
+    },
+    // Guardian encounters
+    guardians: {
       method: 'POST' as const,
-      path: '/api/garden/relationships',
+      path: '/api/labyrinth/guardians/encounter',
       input: z.object({
-        agentId: z.number(),
-        relatedAgentId: z.number(),
-        relationshipType: z.string(),
-        description: z.string().optional(),
+        puzzleId: z.number(),
+        agentId: z.number().optional(),
       }),
       responses: {
-        201: z.any(),
+        200: z.object({
+          message: z.string(),
+          agentName: z.string().optional(),
+        }),
       },
     },
-    // Autonomous actions
-    listActions: {
-      method: 'GET' as const,
-      path: '/api/garden/actions',
-      input: z.object({
-        agentId: z.number().optional(),
-        actionType: z.string().optional(),
-        limit: z.number().optional(),
-      }).optional(),
-      responses: {
-        200: z.array(z.any()),
-      },
-    },
-    triggerAutonomy: {
+    // AI hints
+    getHint: {
       method: 'POST' as const,
-      path: '/api/garden/autonomy/trigger',
+      path: '/api/labyrinth/hints',
       input: z.object({
-        agentId: z.number().optional(), // If omitted, triggers for all eligible agents
-      }).optional(),
+        puzzleId: z.number(),
+        currentCode: z.string(),
+        hintLevel: z.number(),
+      }),
       responses: {
-        200: z.object({ 
-          actions: z.array(z.any()),
-          message: z.string() 
+        200: z.object({
+          hint: z.string(),
         }),
       },
     },
