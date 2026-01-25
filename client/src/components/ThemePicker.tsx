@@ -30,7 +30,7 @@ export function ThemePicker({
   align = "end" 
 }: ThemePickerProps) {
   const { theme, setTheme } = useTheme();
-  const [cosmosUnlockedState, setCosmosUnlockedState] = useState(() => {
+  const [isCosmosUnlocked, setIsCosmosUnlocked] = useState(() => {
     return localStorage.getItem('cosmosUnlocked') === 'true';
   });
 
@@ -40,7 +40,7 @@ export function ThemePicker({
   // Listen for cosmos unlock
   useEffect(() => {
     const handleCosmosUnlock = () => {
-      setCosmosUnlockedState(localStorage.getItem('cosmosUnlocked') === 'true');
+      setIsCosmosUnlocked(localStorage.getItem('cosmosUnlocked') === 'true');
     };
     window.addEventListener('cosmosUnlocked', handleCosmosUnlock);
     return () => window.removeEventListener('cosmosUnlocked', handleCosmosUnlock);
@@ -57,7 +57,7 @@ export function ThemePicker({
           {option.label}
         </DropdownMenuItem>
       ))}
-      {cosmosUnlocked && (
+      {isCosmosUnlocked && (
         <DropdownMenuItem className="text-muted-foreground hover:text-foreground cursor-pointer lowercase" onClick={() => setTheme('cosmos')}>
           🌌 cosmos (living)
         </DropdownMenuItem>
@@ -103,8 +103,8 @@ export function ThemePicker({
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent 
-        align={align} 
         className="bg-card border-border rounded-none"
+        align={align}
       >
         {renderMenuItems()}
       </DropdownMenuContent>
