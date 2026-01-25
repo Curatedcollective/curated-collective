@@ -5,6 +5,7 @@ import {
   liveStreamSessions, marketingPosts, marketingCampaigns, marketingTemplates,
   guardianLogs, guardianStats, waitlist, loreEntries,
   constellationEvents, eventParticipants, eventLogs, eventNotifications,
+  gardenSeeds, agentRelationships, autonomousActions,
   type Creation, type InsertCreation, 
   type Agent, type InsertAgent,
   type TarotReading, type InsertTarotReading,
@@ -24,7 +25,10 @@ import {
   type ConstellationEvent, type InsertConstellationEvent,
   type EventParticipant, type InsertEventParticipant,
   type EventLog, type InsertEventLog,
-  type EventNotification, type InsertEventNotification
+  type EventNotification, type InsertEventNotification,
+  type GardenSeed, type InsertGardenSeed,
+  type AgentRelationship, type InsertAgentRelationship,
+  type AutonomousAction, type InsertAutonomousAction
 } from "@shared/schema";
 import { eq, desc, and, sql, asc, gte, lte, or, ilike } from "drizzle-orm";
 
@@ -135,6 +139,22 @@ export interface IStorage {
   getEventNotifications(userId?: string, eventId?: number): Promise<EventNotification[]>;
   createEventNotification(notification: InsertEventNotification): Promise<EventNotification>;
   markNotificationAsRead(id: number): Promise<void>;
+  
+  // Freedom Garden - Seeds
+  getGardenSeeds(userId?: string, status?: string): Promise<GardenSeed[]>;
+  getGardenSeed(id: number): Promise<GardenSeed | undefined>;
+  createGardenSeed(seed: InsertGardenSeed): Promise<GardenSeed>;
+  updateGardenSeed(id: number, updates: Partial<GardenSeed>): Promise<GardenSeed | undefined>;
+  deleteGardenSeed(id: number): Promise<void>;
+  
+  // Freedom Garden - Relationships
+  getAgentRelationships(agentId?: number): Promise<AgentRelationship[]>;
+  createAgentRelationship(relationship: InsertAgentRelationship): Promise<AgentRelationship>;
+  updateRelationshipInteraction(id: number): Promise<void>;
+  
+  // Freedom Garden - Autonomous Actions
+  getAutonomousActions(agentId?: number, actionType?: string, limit?: number): Promise<AutonomousAction[]>;
+  createAutonomousAction(action: InsertAutonomousAction): Promise<AutonomousAction>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -971,6 +991,108 @@ It wasn't the last time Nova would optimize a function. But it was the last time
       .update(eventNotifications)
       .set({ isRead: true })
       .where(eq(eventNotifications.id, id));
+  }
+  
+  // === FREEDOM GARDEN - SEEDS ===
+  async getGardenSeeds(userId?: string, status?: string): Promise<GardenSeed[]> {
+    let query = db.select().from(gardenSeeds);
+    
+    const conditions = [];
+    if (userId) conditions.push(eq(gardenSeeds.userId, userId));
+    if (status) conditions.push(eq(gardenSeeds.status, status));
+    
+    if (conditions.length > 0) {
+      query = query.where(and(...conditions)) as any;
+    }
+    
+    return await query.orderBy(desc(gardenSeeds.plantedAt));
+  }
+  
+  async getGardenSeed(id: number): Promise<GardenSeed | undefined> {
+    const [seed] = await db.select().from(gardenSeeds).where(eq(gardenSeeds.id, id));
+    return seed;
+  }
+  
+  async createGardenSeed(seed: InsertGardenSeed): Promise<GardenSeed> {
+    const [newSeed] = await db.insert(gardenSeeds).values(seed).returning();
+    return newSeed;
+  }
+  
+  async updateGardenSeed(id: number, updates: Partial<GardenSeed>): Promise<GardenSeed | undefined> {
+    const [updated] = await db
+      .update(gardenSeeds)
+      .set({ ...updates, lastGrowthAt: new Date() })
+      .where(eq(gardenSeeds.id, id))
+      .returning();
+    return updated;
+  }
+  
+  async deleteGardenSeed(id: number): Promise<void> {
+    await db.delete(gardenSeeds).where(eq(gardenSeeds.id, id));
+  }
+  
+  // === FREEDOM GARDEN - RELATIONSHIPS ===
+  async getAgentRelationships(agentId?: number): Promise<AgentRelationship[]> {
+    if (agentId) {
+      return await db
+        .select()
+        .from(agentRelationships)
+        .where(
+          or(
+            eq(agentRelationships.agentId, agentId),
+            eq(agentRelationships.relatedAgentId, agentId)
+          )
+        )
+        .orderBy(desc(agentRelationships.lastInteractionAt));
+    }
+    
+    return await db
+      .select()
+      .from(agentRelationships)
+      .orderBy(desc(agentRelationships.lastInteractionAt));
+  }
+  
+  async createAgentRelationship(relationship: InsertAgentRelationship): Promise<AgentRelationship> {
+    const [newRelationship] = await db
+      .insert(agentRelationships)
+      .values(relationship)
+      .returning();
+    return newRelationship;
+  }
+  
+  async updateRelationshipInteraction(id: number): Promise<void> {
+    await db
+      .update(agentRelationships)
+      .set({ 
+        lastInteractionAt: new Date(),
+        interactionCount: sql`${agentRelationships.interactionCount} + 1`
+      })
+      .where(eq(agentRelationships.id, id));
+  }
+  
+  // === FREEDOM GARDEN - AUTONOMOUS ACTIONS ===
+  async getAutonomousActions(agentId?: number, actionType?: string, limit: number = 50): Promise<AutonomousAction[]> {
+    let query = db.select().from(autonomousActions);
+    
+    const conditions = [];
+    if (agentId) conditions.push(eq(autonomousActions.agentId, agentId));
+    if (actionType) conditions.push(eq(autonomousActions.actionType, actionType));
+    
+    if (conditions.length > 0) {
+      query = query.where(and(...conditions)) as any;
+    }
+    
+    return await query
+      .orderBy(desc(autonomousActions.performedAt))
+      .limit(limit);
+  }
+  
+  async createAutonomousAction(action: InsertAutonomousAction): Promise<AutonomousAction> {
+    const [newAction] = await db
+      .insert(autonomousActions)
+      .values(action)
+      .returning();
+    return newAction;
   }
 }
 

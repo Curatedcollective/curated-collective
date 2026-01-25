@@ -30,6 +30,7 @@ import GodObservatory from "@/pages/GodObservatory";
 import SeedlingSanctum from "@/pages/SeedlingSanctum";
 import LoreCompendium from "@/pages/LoreCompendium";
 import ConstellationEvents from "@/pages/ConstellationEvents";
+import FreedomGarden from "@/pages/FreedomGarden";
 import RoleManagement from "@/pages/RoleManagement";
 import UserRoleAssignment from "@/pages/UserRoleAssignment";
 import AuditLogViewer from "@/pages/AuditLogViewer";
