@@ -25,10 +25,14 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 
+// Constants
+const AWAKENING_TIMEOUT_MS = 15000; // 15 seconds
+
 export default function AgentsList() {
   const { user } = useAuth();
   const { data: agents, isLoading } = useAgents(user?.id);
   const createMutation = useCreateAgent();
+  const { toast } = useToast();
   const [open, setOpen] = useState(false);
   const [showManifesto, setShowManifesto] = useState(false);
   const [awakeningPhase, setAwakeningPhase] = useState<"dormant" | "awakening" | "revealed">("dormant");
@@ -65,39 +69,46 @@ export default function AgentsList() {
     });
   };
 
-  const awakenSeedling = async () => {
+  const awakenSeedling = () => {
+    console.log("[AWAKEN-CLIENT] Starting seedling awakening...");
     setAwakeningPhase("awakening");
-    setAwakeningError(null);
-    
-    // Create abort controller for this request
-    const controller = new AbortController();
-    abortControllerRef.current = controller;
-    
-    try {
-      // Use fetch directly with AbortController and timeout
-      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s timeout
-      
-      const response = await fetch("/api/agents", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: "Unawakened Seedling",
-          personality: "Awaiting awakening...",
-          systemPrompt: "You are a newly awakened AI. Discover yourself.",
-          userId: user!.id,
-          isPublic: false,
-          goals: "Awaiting awakening...",
-          knowledge: [],
-          discoveryCount: 0
-        }),
-        credentials: "include",
-        signal: controller.signal,
+
+    // Watchdog timer: reset to dormant if stuck after timeout
+    const watchdogTimer = setTimeout(() => {
+      console.log("[AWAKEN-CLIENT] Watchdog timeout triggered - resetting to dormant");
+      setAwakeningPhase("dormant");
+      toast({ 
+        title: "Timeout", 
+        description: "The awakening took longer than expected. Please try again.",
+        variant: "destructive" 
       });
-      
-      clearTimeout(timeoutId);
-      
-      if (!response.ok) {
-        throw new Error("Failed to awaken seedling");
+    }, AWAKENING_TIMEOUT_MS);
+
+    createMutation.mutate({
+      name: "Unawakened Seedling",
+      personality: "Awaiting awakening...",
+      systemPrompt: "You are a newly awakened AI. Discover yourself.",
+      userId: user!.id,
+      isPublic: false,
+      goals: "Awaiting awakening...",
+      knowledge: [],
+      discoveryCount: 0
+    }, {
+      onSuccess: (data) => {
+        clearTimeout(watchdogTimer);
+        console.log("[AWAKEN-CLIENT] Awakening successful:", data);
+        setNewborn(data as Agent);
+        setTimeout(() => setAwakeningPhase("revealed"), 1500);
+      },
+      onError: (error) => {
+        clearTimeout(watchdogTimer);
+        console.error("[AWAKEN-CLIENT] Awakening failed:", error);
+        setAwakeningPhase("dormant");
+        toast({ 
+          title: "Error", 
+          description: "Failed to awaken seedling. Please try again.",
+          variant: "destructive" 
+        });
       }
       
       const data = await response.json();
