@@ -2,7 +2,17 @@ import React, { useEffect, useState } from "react";
 import AIHelper from "../components/AIHelper";
 
 export default function GodObservatory({ user }: { user?: any }) {
-  if (!user?.isOwner) return <div className="p-8">Forbidden</div>;
+  // preview bypass: allow rendering with ?god_preview=1 in preview deployments
+  const query = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
+  const hasPreviewParam = !!(query && query.get("god_preview") === "1");
+  const env =
+    typeof process !== "undefined"
+      ? (process.env.NEXT_PUBLIC_VERCEL_ENV || process.env.VERCEL_ENV || process.env.NODE_ENV)
+      : "development";
+
+  if (!(user?.isOwner || (env === "preview" && hasPreviewParam))) {
+    return <div className="p-8">Forbidden</div>;
+  }
 
   const [agents, setAgents] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
