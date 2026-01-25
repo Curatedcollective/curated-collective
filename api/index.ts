@@ -1,4 +1,3 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
 import express from "express";
 import { createServer } from "http";
 
@@ -19,18 +18,11 @@ async function initialize() {
   initialized = true;
 }
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+export default async function handler(req: any, res: any) {
   await initialize();
   
-  // Convert VercelRequest to Express-compatible request
-  const expressReq = Object.assign(req, {
-    url: req.url || '/',
-    method: req.method || 'GET',
-    headers: req.headers || {},
-  });
-  
   return new Promise((resolve, reject) => {
-    app(expressReq as any, res as any, (err: any) => {
+    app(req as any, res as any, (err: any) => {
       if (err) reject(err);
       else resolve(undefined);
     });
