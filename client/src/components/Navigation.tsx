@@ -12,7 +12,7 @@ import {
   ShoppingCart,
   Users,
   ChevronDown,
-  Puzzle,
+  Compass,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import NavLink from "./ui/nav-link";
@@ -87,6 +87,7 @@ export function Navigation() {
         <nav className="space-y-1">
           <NavLink href="/creations" icon={<Code className="w-4 h-4" />} label="creations" />
           <NavLink href="/agents" icon={<Bot className="w-4 h-4" />} label="seedlings" />
+          <NavLink href="/quests" icon={<Compass className="w-4 h-4" />} label="curiosity quests" />
           <NavLink href="/observatory" icon={<Eye className="w-4 h-4" />} label="observatory" />
           <NavLink href="/lore" icon={<BookOpen className="w-4 h-4" />} label="lore compendium" />
           <NavLink href="/events" icon={<Star className="w-4 h-4" />} label="constellation events" />

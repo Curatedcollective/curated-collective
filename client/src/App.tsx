@@ -34,7 +34,7 @@ import RoleManagement from "@/pages/RoleManagement";
 import UserRoleAssignment from "@/pages/UserRoleAssignment";
 import AuditLogViewer from "@/pages/AuditLogViewer";
 import ForgottenTent from "@/pages/ForgottenTent";
-import Labyrinth from "@/pages/Labyrinth";
+import Quests from "@/pages/Quests";
 import NotFound from "@/pages/not-found";
 import { Loader2 } from "lucide-react";
 import { StarBackground } from "@/components/StarBackground";
@@ -78,7 +78,7 @@ function Router() {
   if (location === "/forgotten-tent") return <ForgottenTent />;
 
   // Public pages that anyone can browse
-  const publicPaths = ["/pricing", "/observatory", "/agents", "/creations", "/seedling-sanctum", "/lore", "/events", "/labyrinth"];
+  const publicPaths = ["/pricing", "/observatory", "/agents", "/creations", "/seedling-sanctum", "/lore", "/events", "/quests"];
   const isPublicPage = publicPaths.some(path => location === path || location.startsWith(path + "?"));
   
   // Protected pages require sign-in
@@ -130,7 +130,7 @@ function Router() {
           <Route path="/seedling-sanctum" component={SeedlingSanctum} />
           <Route path="/lore" component={LoreCompendium} />
           <Route path="/events" component={ConstellationEvents} />
-          <Route path="/labyrinth" component={Labyrinth} />
+          <Route path="/quests" component={Quests} />
           <Route path="/god" component={GodDashboard} />
           <Route path="/god/guardian" component={GodGuardian} />
           <Route path="/god/promoter" component={GodPromoter} />
