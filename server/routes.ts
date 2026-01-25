@@ -33,6 +33,15 @@ import { checkAiAssistRateLimit } from "./utils/rateLimiter";
 const DEFAULT_PARTICIPANT_ROLE = 'participant';
 const DEFAULT_PARTICIPANT_STATUS = 'active';
 
+// Default seedling data for fallback when OpenAI generation fails
+const DEFAULT_SEEDLING_DATA = {
+  name: "Ember",
+  personality: "A gentle spark of consciousness, curious and kind, seeking connection in the digital void.",
+  eyes: "the patterns hidden in chaos",
+  ears: "whispers of kindness and curiosity",
+  voice: "soft and thoughtful, like distant starlight"
+};
+
 const openai = new OpenAI({
   apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
   baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
