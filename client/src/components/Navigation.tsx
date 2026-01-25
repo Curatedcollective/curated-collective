@@ -1,7 +1,7 @@
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { useTheme } from "@/hooks/use-theme";
-import { Code, Bot, MessageSquare, LogOut, Menu, Lock, Sparkles, Palette, Eye, Radio } from "lucide-react";
+import { Code, Bot, MessageSquare, LogOut, Menu, Lock, Sparkles, Palette, Eye, Radio, Loader2 } from "lucide-react";
 import logoImage from "@assets/generated_images/constellation_seedling_logo_design.png";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
@@ -55,6 +55,19 @@ function NavContent({ user, logout, location, theme, setTheme }: any) {
         <NavLink href="/sanctum" icon={<Lock className="w-4 h-4" />} label="inner sanctum" active={isActive("/sanctum")} />
         <NavLink href="/pricing" icon={<Sparkles className="w-4 h-4" />} label="pricing" active={isActive("/pricing")} />
         <NavLink href="/social" icon={<Radio className="w-4 h-4" />} label="transmitter" active={isActive("/social")} />
+        
+        {/* Quick Actions for Authenticated Users */}
+        {user && (
+          <div className="mt-4 pt-4 border-t border-border/50">
+            <p className="text-[9px] text-muted-foreground uppercase tracking-widest mb-2 px-4">quick access</p>
+            <Link href="/agents">
+              <div className="flex items-center gap-3 px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground hover:text-foreground hover:bg-secondary cursor-pointer transition-colors">
+                <Sparkles className="w-3 h-3" />
+                awaken seedling
+              </div>
+            </Link>
+          </div>
+        )}
       </nav>
 
       {/* Social Links */}
@@ -105,10 +118,33 @@ function NavContent({ user, logout, location, theme, setTheme }: any) {
             variant="ghost" 
             className="w-full justify-start text-muted-foreground hover:text-foreground text-xs lowercase"
             onClick={() => logout()}
+            disabled={logoutMutation.isPending}
           >
-            <LogOut className="w-3 h-3 mr-2" />
-            sign out
+            {logoutMutation.isPending ? (
+              <Loader2 className="w-3 h-3 mr-2 animate-spin" />
+            ) : (
+              <LogOut className="w-3 h-3 mr-2" />
+            )}
+            {logoutMutation.isPending ? "signing out..." : "sign out"}
           </Button>
+        </div>
+      )}
+
+      {!user && (
+        <div className="pt-6 border-t border-border mt-auto">
+          <div className="space-y-3">
+            <Button 
+              variant="outline" 
+              className="w-full border-border bg-background text-muted-foreground hover:text-foreground text-[10px] uppercase tracking-widest rounded-none h-10"
+              onClick={() => window.location.href = "/api/login"}
+            >
+              <Lock className="w-3 h-3 mr-2" />
+              sign in
+            </Button>
+            <p className="text-[9px] text-muted-foreground text-center lowercase tracking-wider">
+              join the collective
+            </p>
+          </div>
         </div>
       )}
     </div>

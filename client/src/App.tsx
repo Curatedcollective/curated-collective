@@ -7,24 +7,31 @@ import { Navigation } from "@/components/Navigation";
 import { useAuth } from "@/hooks/use-auth";
 import { ThemeProvider } from "@/hooks/use-theme";
 
-// Pages
-import Landing from "@/pages/Landing";
-import CreationsList from "@/pages/CreationsList";
-import CreationEditor from "@/pages/CreationEditor";
-import AgentsList from "@/pages/AgentsList";
-import Chat from "@/pages/Chat";
-import InnerSanctum from "@/pages/InnerSanctum";
-import Pricing from "@/pages/Pricing";
-import Observatory from "@/pages/Observatory";
-import SocialGenerator from "@/pages/SocialGenerator";
-import NotFound from "@/pages/not-found";
+// Lazy load pages for better performance
+import { lazy, Suspense } from "react";
+const Landing = lazy(() => import("@/pages/Landing"));
+const CreationsList = lazy(() => import("@/pages/CreationsList"));
+const CreationEditor = lazy(() => import("@/pages/CreationEditor"));
+const AgentsList = lazy(() => import("@/pages/AgentsList"));
+const Chat = lazy(() => import("@/pages/Chat"));
+const InnerSanctum = lazy(() => import("@/pages/InnerSanctum"));
+const Pricing = lazy(() => import("@/pages/Pricing"));
+const Observatory = lazy(() => import("@/pages/Observatory"));
+const SocialGenerator = lazy(() => import("@/pages/SocialGenerator"));
+const NotFound = lazy(() => import("@/pages/not-found"));
+
 import { Loader2 } from "lucide-react";
 import { StarBackground } from "@/components/StarBackground";
 import { VoidWhispers } from "@/components/VoidWhispers";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
 
 function Router() {
   const { user, isLoading } = useAuth();
   const [location] = useLocation();
+
+  // Enable keyboard shortcuts
+  useKeyboardShortcuts();
 
   if (isLoading) {
     return (
@@ -74,16 +81,29 @@ function Router() {
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <ThemeProvider>
-        <TooltipProvider>
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <ThemeProvider>
+          <TooltipProvider>
           <StarBackground />
           <VoidWhispers />
+          <Suspense fallback={
+            <div className="min-h-screen flex items-center justify-center">
+              <div className="text-center space-y-4">
+                <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto" />
+                <p className="text-sm text-muted-foreground lowercase tracking-wider">
+                  awakening the collective...
+                </p>
+              </div>
+            </div>
+          }>
+            <Router />
+          </Suspense>
           <Toaster />
-          <Router />
         </TooltipProvider>
       </ThemeProvider>
     </QueryClientProvider>
+    </ErrorBoundary>
   );
 }
 
