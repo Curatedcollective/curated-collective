@@ -20,6 +20,12 @@ declare module "http" {
 }
 
 async function initStripe() {
+  // Skip Stripe initialization on Vercel
+  if (process.env.VERCEL) {
+    console.log('Vercel environment detected, skipping Replit Stripe initialization');
+    return;
+  }
+
   const databaseUrl = process.env.DATABASE_URL;
   if (!databaseUrl) {
     console.log('DATABASE_URL not found, skipping Stripe initialization');
