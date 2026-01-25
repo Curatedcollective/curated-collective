@@ -1,3 +1,15 @@
+// PREVIEW-BYPASS: allow preview access when VERCEL_ENV === 'preview' and god_preview=1
+function isOwnerReq(req: any) {
+  try {
+    const env = process.env.VERCEL_ENV || process.env.NODE_ENV || "development";
+    const previewParam = String(req.query?.god_preview || req.headers?.["x-god-preview"] || "").toLowerCase();
+    const preview = env === "preview" && previewParam === "1";
+    if (preview) return true;
+  } catch (e) {
+    // ignore and fall back to normal check
+  }
+  return !!(req.user && req.user.isOwner);
+}
 import type { Express } from "express";
 import type { Server } from "http";
 import { setupAuth, registerAuthRoutes } from "./replit_integrations/auth";
