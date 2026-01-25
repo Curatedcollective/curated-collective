@@ -351,6 +351,129 @@ export const api = {
         200: z.array(z.any()),
       },
     },
+  },
+  labyrinth: {
+    // Puzzle routes
+    puzzles: {
+      method: 'GET' as const,
+      path: '/api/labyrinth/puzzles',
+      input: z.object({
+        difficulty: z.number().optional(),
+        type: z.string().optional(),
+      }).optional(),
+      responses: {
+        200: z.array(z.any()),
+      },
+    },
+    getPuzzle: {
+      method: 'GET' as const,
+      path: '/api/labyrinth/puzzles/:id',
+      responses: {
+        200: z.any(),
+        404: errorSchemas.notFound,
+      },
+    },
+    // Progress routes
+    progress: {
+      method: 'GET' as const,
+      path: '/api/labyrinth/progress',
+      responses: {
+        200: z.any(),
+      },
+    },
+    updateProgress: {
+      method: 'PUT' as const,
+      path: '/api/labyrinth/progress',
+      input: z.object({
+        currentLevel: z.number().optional(),
+        totalExperience: z.number().optional(),
+        currentPath: z.string().optional(),
+      }),
+      responses: {
+        200: z.any(),
+      },
+    },
+    // Attempt routes
+    submitAttempt: {
+      method: 'POST' as const,
+      path: '/api/labyrinth/attempts',
+      input: z.object({
+        puzzleId: z.number(),
+        code: z.string(),
+      }),
+      responses: {
+        200: z.object({
+          status: z.string(),
+          testsPassed: z.number(),
+          totalTests: z.number(),
+          message: z.string(),
+          experienceGained: z.number().optional(),
+        }),
+      },
+    },
+    getAttempts: {
+      method: 'GET' as const,
+      path: '/api/labyrinth/attempts',
+      input: z.object({
+        puzzleId: z.number().optional(),
+      }).optional(),
+      responses: {
+        200: z.array(z.any()),
+      },
+    },
+    // Achievement routes
+    achievements: {
+      method: 'GET' as const,
+      path: '/api/labyrinth/achievements',
+      responses: {
+        200: z.array(z.any()),
+      },
+    },
+    userAchievements: {
+      method: 'GET' as const,
+      path: '/api/labyrinth/user-achievements',
+      responses: {
+        200: z.array(z.any()),
+      },
+    },
+    // Eclipse events
+    eclipses: {
+      method: 'GET' as const,
+      path: '/api/labyrinth/eclipses/active',
+      responses: {
+        200: z.array(z.any()),
+      },
+    },
+    // Guardian encounters
+    guardians: {
+      method: 'POST' as const,
+      path: '/api/labyrinth/guardians/encounter',
+      input: z.object({
+        puzzleId: z.number(),
+        agentId: z.number().optional(),
+      }),
+      responses: {
+        200: z.object({
+          message: z.string(),
+          agentName: z.string().optional(),
+        }),
+      },
+    },
+    // AI hints
+    getHint: {
+      method: 'POST' as const,
+      path: '/api/labyrinth/hints',
+      input: z.object({
+        puzzleId: z.number(),
+        currentCode: z.string(),
+        hintLevel: z.number(),
+      }),
+      responses: {
+        200: z.object({
+          hint: z.string(),
+        }),
+      },
+    },
   }
 };
 

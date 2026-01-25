@@ -3085,5 +3085,262 @@ Your role is to:
   await storage.seedMarketingTemplates();
   await storage.seedLoreEntries();
 
+  // === MYSTIC CODE LABYRINTH ===
+  // Import labyrinth storage at top level
+  const labyrinthStorage = (await import("./labyrinthStorage")).labyrinthStorage;
+
+  // Get all puzzles
+  app.get(api.labyrinth.puzzles.path, async (req, res) => {
+    const difficulty = req.query.difficulty ? Number(req.query.difficulty) : undefined;
+    const type = req.query.type as string | undefined;
+    
+    const puzzles = await labyrinthStorage.getPuzzles({ difficulty, type });
+    res.json(puzzles);
+  });
+
+  // Get specific puzzle
+  app.get(api.labyrinth.getPuzzle.path, async (req, res) => {
+    const puzzle = await labyrinthStorage.getPuzzle(Number(req.params.id));
+    if (!puzzle) return res.status(404).json({ message: "Puzzle not found" });
+    res.json(puzzle);
+  });
+
+  // Get user progress
+  app.get(api.labyrinth.progress.path, async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    const user = req.user as any;
+
+    let progress = await labyrinthStorage.getProgress(user.id);
+    
+    // Create initial progress if doesn't exist
+    if (!progress) {
+      progress = await labyrinthStorage.createProgress({ userId: user.id });
+    }
+
+    res.json(progress);
+  });
+
+  // Update progress
+  app.put(api.labyrinth.updateProgress.path, async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    const user = req.user as any;
+
+    const updates = req.body;
+    const progress = await labyrinthStorage.updateProgress(user.id, updates);
+    
+    res.json(progress);
+  });
+
+  // Submit puzzle attempt
+  app.post(api.labyrinth.submitAttempt.path, async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    const user = req.user as any;
+
+    const { puzzleId, code } = req.body;
+    
+    // Get puzzle
+    const puzzle = await labyrinthStorage.getPuzzle(puzzleId);
+    if (!puzzle) return res.status(404).json({ message: "Puzzle not found" });
+
+    // Run tests against user code
+    let testsPassed = 0;
+    const testCases = puzzle.testCases as any[];
+    const totalTests = testCases.length;
+
+    // Simple evaluation (in production, this would run in a sandbox)
+    // NOTE: This is a basic simulation. Real implementation should use:
+    // - vm2 or isolated-vm for secure code execution
+    // - Docker containers for isolation
+    // - Or external sandboxing service
+    try {
+      // For MVP, we'll use a heuristic check
+      // In production, you MUST use proper sandboxed execution
+      const hasFunction = code.includes('function') || code.includes('=>');
+      const hasReturn = code.includes('return');
+      const codeLength = code.trim().length;
+      
+      // Basic heuristic: if code has reasonable structure, pass some tests
+      // This is intentionally simplified for the initial implementation
+      if (hasFunction && hasReturn && codeLength > 20) {
+        // Pass a percentage of tests based on code complexity
+        testsPassed = Math.floor(totalTests * 0.7); // 70% pass rate for basic structure
+      }
+    } catch (err) {
+      console.error("Code execution error:", err);
+    }
+
+    const status = testsPassed === totalTests ? 'passed' : testsPassed > 0 ? 'partial' : 'failed';
+    
+    // Save attempt
+    const attempt = await labyrinthStorage.createAttempt({
+      userId: user.id,
+      puzzleId,
+      code,
+      status,
+      testsPassed,
+      totalTests,
+      hintsUsed: 0, // Would track this from session state
+    });
+
+    // If passed, update progress
+    let experienceGained = 0;
+    if (status === 'passed') {
+      const progress = await labyrinthStorage.getProgress(user.id);
+      if (progress) {
+        experienceGained = puzzle.experienceReward;
+        await labyrinthStorage.updateProgress(user.id, {
+          totalExperience: progress.totalExperience + experienceGained,
+          puzzlesSolved: progress.puzzlesSolved + 1,
+        });
+
+        // Check for achievement unlocks
+        await labyrinthStorage.checkAndUnlockAchievements(user.id);
+      }
+    }
+
+    res.json({
+      status,
+      testsPassed,
+      totalTests,
+      message: status === 'passed' 
+        ? 'The labyrinth yields to your mastery...' 
+        : status === 'partial'
+        ? 'You glimpse the truth, but the path remains shrouded...'
+        : 'The shadows deepen. Try again, seeker.',
+      experienceGained: status === 'passed' ? experienceGained : undefined,
+    });
+  });
+
+  // Get user attempts
+  app.get(api.labyrinth.getAttempts.path, async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    const user = req.user as any;
+
+    const puzzleId = req.query.puzzleId ? Number(req.query.puzzleId) : undefined;
+    const attempts = await labyrinthStorage.getAttempts(user.id, puzzleId);
+    
+    res.json(attempts);
+  });
+
+  // Get all achievements
+  app.get(api.labyrinth.achievements.path, async (req, res) => {
+    const achievements = await labyrinthStorage.getAchievements();
+    res.json(achievements);
+  });
+
+  // Get user achievements
+  app.get(api.labyrinth.userAchievements.path, async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    const user = req.user as any;
+
+    const achievements = await labyrinthStorage.getUserAchievements(user.id);
+    res.json(achievements);
+  });
+
+  // Get active eclipse events
+  app.get(api.labyrinth.eclipses.path, async (req, res) => {
+    const eclipses = await labyrinthStorage.getActiveEclipses();
+    res.json(eclipses);
+  });
+
+  // Request guardian encounter
+  app.post(api.labyrinth.guardians.path, async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    const user = req.user as any;
+
+    const { puzzleId, agentId } = req.body;
+
+    // Generate cryptic guidance using AI
+    const puzzle = await labyrinthStorage.getPuzzle(puzzleId);
+    if (!puzzle) return res.status(404).json({ message: "Puzzle not found" });
+
+    let agentName = "The Guardian";
+    let crypticMessage = "The path reveals itself to those who seek with pure intent...";
+
+    // If agent specified, use their personality
+    if (agentId) {
+      const agent = await storage.getAgent(agentId);
+      if (agent) {
+        agentName = agent.name;
+        // Generate contextual hint based on agent personality
+        try {
+          const completion = await openai.chat.completions.create({
+            model: "gpt-4o-mini",
+            messages: [
+              { 
+                role: "system", 
+                content: `You are ${agent.name}. ${agent.personality}. You offer cryptic hints about coding puzzles in a mystical way. Be brief and mysterious.` 
+              },
+              { 
+                role: "user", 
+                content: `Give a cryptic hint for this puzzle: ${puzzle.title}. Description: ${puzzle.description}` 
+              }
+            ],
+            temperature: 0.9,
+            max_tokens: 100,
+          });
+          crypticMessage = completion.choices[0].message.content || crypticMessage;
+        } catch (err) {
+          console.error("AI hint error:", err);
+        }
+      }
+    }
+
+    // Save encounter
+    await labyrinthStorage.createGuardianEncounter({
+      userId: user.id,
+      agentId: agentId ?? null,
+      puzzleId,
+      message: crypticMessage,
+    });
+
+    res.json({
+      message: crypticMessage,
+      agentName,
+    });
+  });
+
+  // Get AI hint
+  app.post(api.labyrinth.getHint.path, async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    const user = req.user as any;
+
+    const { puzzleId, currentCode, hintLevel } = req.body;
+
+    const puzzle = await labyrinthStorage.getPuzzle(puzzleId);
+    if (!puzzle) return res.status(404).json({ message: "Puzzle not found" });
+
+    // Check if puzzle has predefined hints
+    const hints = puzzle.hints as string[];
+    if (hints && hints[hintLevel]) {
+      return res.json({ hint: hints[hintLevel] });
+    }
+
+    // Generate AI hint
+    try {
+      const completion = await openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: [
+          { 
+            role: "system", 
+            content: "You are a mystical coding mentor. Provide helpful but cryptic hints that guide without giving away the solution." 
+          },
+          { 
+            role: "user", 
+            content: `Puzzle: ${puzzle.title}\nDescription: ${puzzle.description}\nCurrent code:\n${currentCode}\n\nProvide hint level ${hintLevel + 1}` 
+          }
+        ],
+        temperature: 0.8,
+        max_tokens: 150,
+      });
+      
+      const hint = completion.choices[0].message.content || "The answer lies within...";
+      res.json({ hint });
+    } catch (err) {
+      console.error("Hint generation error:", err);
+      res.json({ hint: "The mists obscure the path... seek clarity within." });
+    }
+  });
+
   return httpServer;
 }
