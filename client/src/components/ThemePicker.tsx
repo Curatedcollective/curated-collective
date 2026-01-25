@@ -1,6 +1,7 @@
 import { useTheme } from "@/hooks/use-theme";
 import { Button } from "./ui/button";
 import { Palette } from "lucide-react";
+import { useState, useEffect } from "react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -29,6 +30,18 @@ export function ThemePicker({
   align = "end" 
 }: ThemePickerProps) {
   const { theme, setTheme } = useTheme();
+  const [cosmosUnlocked, setCosmosUnlocked] = useState(() => {
+    return localStorage.getItem('cosmosUnlocked') === 'true';
+  });
+
+  // Listen for cosmos unlock
+  useEffect(() => {
+    const handleCosmosUnlock = () => {
+      setCosmosUnlocked(localStorage.getItem('cosmosUnlocked') === 'true');
+    };
+    window.addEventListener('cosmosUnlocked', handleCosmosUnlock);
+    return () => window.removeEventListener('cosmosUnlocked', handleCosmosUnlock);
+  }, []);
 
   const renderMenuItems = () => (
     <>
