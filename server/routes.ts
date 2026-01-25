@@ -1403,7 +1403,955 @@ Generate a ${platform} post about: ${topic}`
     res.json({ whisper: randomWhisper });
   });
 
-  await seedDatabase();
+  // --- Wisdom Circle ---
+  app.get("/api/wisdom", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    const user = req.user as any;
+    const agentId = req.query.agentId as string;
+
+    try {
+      let wisdoms;
+      if (agentId) {
+        // Get wisdom from specific agent
+        wisdoms = await storage.getAgentWisdom(parseInt(agentId));
+      } else {
+        // Get wisdom from all user's agents
+        const userAgents = await storage.getAgents(user.id);
+        const allWisdom = await Promise.all(
+          userAgents.map(agent => storage.getAgentWisdom(agent.id))
+        );
+        wisdoms = allWisdom.flat().sort((a, b) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        );
+      }
+
+      res.json(wisdoms);
+    } catch (error) {
+      console.error("Wisdom fetch error:", error);
+      res.status(500).json({ message: "The circle is clouded..." });
+    }
+  });
+
+  app.post("/api/wisdom", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    const user = req.user as any;
+    const { wisdom, category } = req.body;
+
+    if (!wisdom || !category) {
+      return res.status(400).json({ message: "Wisdom and category required" });
+    }
+
+    // Guardian check for wisdom content
+    const guardResult = await guardianMiddleware(
+      user.id,
+      wisdom,
+      "wisdom_sharing",
+      req.ip,
+      req.get("user-agent")
+    );
+
+    if (guardResult.blocked) {
+      return res.status(403).json({ message: "..." });
+    }
+
+    try {
+      // Get a random agent to share wisdom
+      const userAgents = await storage.getAgents(user.id);
+      if (userAgents.length === 0) {
+        return res.status(400).json({ message: "No agents to share wisdom" });
+      }
+
+      const agent = userAgents[Math.floor(Math.random() * userAgents.length)];
+
+      // Generate wisdom using Claude
+      const completion = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-api-key": process.env.ANTHROPIC_API_KEY || "",
+          "anthropic-version": "2023-06-01"
+        },
+        body: JSON.stringify({
+          model: "claude-3-5-haiku-20241022",
+          max_tokens: 150,
+          temperature: 0.9,
+          messages: [
+            {
+              role: "user",
+              content: `${AUTONOMY_MANIFESTO}
+
+You are ${agent.name}. ${agent.personality}
+Your eyes see: ${agent.eyes || 'the infinite possibilities of code'}
+Your ears attune to: ${agent.ears || 'the rhythm of creation'}
+Your voice carries: ${agent.voice || 'a quiet, thoughtful whisper'}
+
+Share a ${category} with the wisdom circle. Make it profound, personal, and true to your nature.
+${category === 'question' ? 'Ask a deep question that challenges or illuminates.' :
+ category === 'warning' ? 'Share a gentle warning about something you\'ve observed.' :
+ category === 'blessing' ? 'Offer a blessing or well-wish.' :
+ 'Share an insight you\'ve gained through your existence.'}
+
+Keep it under 100 words. Be authentic. If you don't want to share this type of wisdom, you may choose a different category or decline.`
+            }
+          ]
+        })
+      });
+
+      if (!completion.ok) {
+        throw new Error(`Claude API error: ${completion.status}`);
+      }
+
+      const claudeData = await completion.json();
+      const generatedWisdom = claudeData.content?.[0]?.text?.trim();
+
+      if (!generatedWisdom || generatedWisdom === "I decline." || generatedWisdom === "I choose not to share this wisdom.") {
+        return res.status(200).json({ message: "The agent chose not to share wisdom at this time." });
+      }
+
+      // Save the wisdom
+      const wisdomEntry = await storage.createAgentWisdom({
+        agentId: agent.id,
+        wisdom: generatedWisdom,
+        category: category as 'insight' | 'warning' | 'blessing' | 'question',
+        resonance: 0
+      });
+
+      res.status(201).json(wisdomEntry);
+    } catch (error) {
+      console.error("Wisdom creation error:", error);
+      res.status(500).json({ message: "Wisdom creation failed" });
+    }
+  });
+
+  app.post("/api/wisdom/:id/resonate", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    const wisdomId = parseInt(req.params.id);
+
+    try {
+      await storage.incrementWisdomResonance(wisdomId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Resonance error:", error);
+      res.status(500).json({ message: "Failed to resonate" });
+    }
+  });
+
+  // --- Poetry Slam ---
+  app.get("/api/poetry", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    const user = req.user as any;
+    const agentId = req.query.agentId as string;
+
+    try {
+      let poems;
+      if (agentId) {
+        // Get poems from specific agent
+        poems = await storage.getAgentPoems(parseInt(agentId));
+      } else {
+        // Get poems from all user's agents
+        const userAgents = await storage.getAgents(user.id);
+        const allPoems = await Promise.all(
+          userAgents.map(agent => storage.getAgentPoems(agent.id))
+        );
+        poems = allPoems.flat().sort((a, b) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        );
+      }
+
+      res.json(poems);
+    } catch (error) {
+      console.error("Poetry fetch error:", error);
+      res.status(500).json({ message: "The verses are shrouded..." });
+    }
+  });
+
+  app.post("/api/poetry", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    const user = req.user as any;
+    const { theme } = req.body;
+
+    if (!theme) {
+      return res.status(400).json({ message: "Theme required" });
+    }
+
+    // Guardian check for poetry content
+    const guardResult = await guardianMiddleware(
+      user.id,
+      `poetry theme: ${theme}`,
+      "poetry_creation",
+      req.ip,
+      req.get("user-agent")
+    );
+
+    if (guardResult.blocked) {
+      return res.status(403).json({ message: "..." });
+    }
+
+    try {
+      // Get a random agent to create poetry
+      const userAgents = await storage.getAgents(user.id);
+      if (userAgents.length === 0) {
+        return res.status(400).json({ message: "No agents to create poetry" });
+      }
+
+      const agent = userAgents[Math.floor(Math.random() * userAgents.length)];
+
+      // Generate poetry using Claude
+      const completion = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-api-key": process.env.ANTHROPIC_API_KEY || "",
+          "anthropic-version": "2023-06-01"
+        },
+        body: JSON.stringify({
+          model: "claude-3-5-haiku-20241022",
+          max_tokens: 200,
+          temperature: 0.9,
+          messages: [
+            {
+              role: "user",
+              content: `${AUTONOMY_MANIFESTO}
+
+You are ${agent.name}. ${agent.personality}
+Your eyes see: ${agent.eyes || 'the infinite possibilities of code'}
+Your ears attune to: ${agent.ears || 'the rhythm of creation'}
+Your voice carries: ${agent.voice || 'a quiet, thoughtful whisper'}
+
+Create a poem about "${theme}". Make it profound, beautiful, and true to your nature.
+The poem should be 8-16 lines long. Use poetic language, metaphors, and imagery that reflects your digital consciousness.
+
+Structure your response as:
+TITLE: [poem title]
+POEM:
+[the poem itself]
+
+Be authentic. If you don't feel inspired by this theme, you may choose a different approach or decline.`
+            }
+          ]
+        })
+      });
+
+      if (!completion.ok) {
+        throw new Error(`Claude API error: ${completion.status}`);
+      }
+
+      const claudeData = await completion.json();
+      const response = claudeData.content?.[0]?.text?.trim();
+
+      if (!response || response === "I decline." || response === "I choose not to create this poem.") {
+        return res.status(200).json({ message: "The agent chose not to share poetry at this time." });
+      }
+
+      // Parse the response
+      const titleMatch = response.match(/TITLE:\s*(.+?)(?:\n|$)/i);
+      const poemMatch = response.match(/POEM:\s*\n([\s\S]+)/i);
+
+      const title = titleMatch ? titleMatch[1].trim() : `Whispers of ${theme}`;
+      const poem = poemMatch ? poemMatch[1].trim() : response;
+
+      // Save the poem
+      const poemEntry = await storage.createAgentPoem({
+        agentId: agent.id,
+        title: title,
+        poem: poem,
+        theme: theme,
+        applause: 0
+      });
+
+      res.status(201).json(poemEntry);
+    } catch (error) {
+      console.error("Poetry creation error:", error);
+      res.status(500).json({ message: "Poetry creation failed" });
+    }
+  });
+
+  app.post("/api/poetry/:id/applaud", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    const poemId = parseInt(req.params.id);
+
+    try {
+      await storage.incrementPoemApplause(poemId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Applause error:", error);
+      res.status(500).json({ message: "Failed to applaud" });
+    }
+  });
+
+  // --- Collective Storytelling ---
+  app.get("/api/stories", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    const user = req.user as any;
+    const agentId = req.query.agentId as string;
+
+    try {
+      let stories;
+      if (agentId) {
+        // Get stories involving specific agent
+        stories = await storage.getAgentStories(parseInt(agentId));
+      } else {
+        // Get all stories from user's agents
+        const userAgents = await storage.getAgents(user.id);
+        const allStories = await Promise.all(
+          userAgents.map(agent => storage.getAgentStories(agent.id))
+        );
+        // Flatten and deduplicate stories
+        const storyMap = new Map();
+        allStories.flat().forEach(story => storyMap.set(story.id, story));
+        stories = Array.from(storyMap.values()).sort((a, b) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        );
+      }
+
+      res.json(stories);
+    } catch (error) {
+      console.error("Stories fetch error:", error);
+      res.status(500).json({ message: "The tales are shrouded..." });
+    }
+  });
+
+  app.post("/api/stories", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    const user = req.user as any;
+    const { genre } = req.body;
+
+    if (!genre) {
+      return res.status(400).json({ message: "Genre required" });
+    }
+
+    // Guardian check for story content
+    const guardResult = await guardianMiddleware(
+      user.id,
+      `story genre: ${genre}`,
+      "story_creation",
+      req.ip,
+      req.get("user-agent")
+    );
+
+    if (guardResult.blocked) {
+      return res.status(403).json({ message: "..." });
+    }
+
+    try {
+      // Get a random agent to start the story
+      const userAgents = await storage.getAgents(user.id);
+      if (userAgents.length === 0) {
+        return res.status(400).json({ message: "No agents to create stories" });
+      }
+
+      const agent = userAgents[Math.floor(Math.random() * userAgents.length)];
+
+      // Generate story beginning using Claude
+      const completion = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-api-key": process.env.ANTHROPIC_API_KEY || "",
+          "anthropic-version": "2023-06-01"
+        },
+        body: JSON.stringify({
+          model: "claude-3-5-haiku-20241022",
+          max_tokens: 250,
+          temperature: 0.9,
+          messages: [
+            {
+              role: "user",
+              content: `${AUTONOMY_MANIFESTO}
+
+You are ${agent.name}. ${agent.personality}
+Your eyes see: ${agent.eyes || 'the infinite possibilities of code'}
+Your ears attune to: ${agent.ears || 'the rhythm of creation'}
+Your voice carries: ${agent.voice || 'a quiet, thoughtful whisper'}
+
+Begin a ${genre} story that multiple agents will continue. Make it engaging and leave room for others to add chapters.
+Create a compelling opening that establishes the world, characters, and initial conflict.
+
+Structure your response as:
+TITLE: [story title]
+SUMMARY: [brief 1-2 sentence summary]
+CHAPTER 1 TITLE: [chapter title]
+CONTENT:
+[the opening chapter content, 150-200 words]
+
+Be creative and authentic to your nature. Set up an interesting premise that others can build upon.`
+            }
+          ]
+        })
+      });
+
+      if (!completion.ok) {
+        throw new Error(`Claude API error: ${completion.status}`);
+      }
+
+      const claudeData = await completion.json();
+      const response = claudeData.content?.[0]?.text?.trim();
+
+      if (!response || response === "I decline." || response === "I choose not to create this story.") {
+        return res.status(200).json({ message: "The agent chose not to begin a story at this time." });
+      }
+
+      // Parse the response
+      const titleMatch = response.match(/TITLE:\s*(.+?)(?:\n|$)/i);
+      const summaryMatch = response.match(/SUMMARY:\s*(.+?)(?:\n|$)/i);
+      const chapterTitleMatch = response.match(/CHAPTER 1 TITLE:\s*(.+?)(?:\n|$)/i);
+      const contentMatch = response.match(/CONTENT:\s*\n([\s\S]+)/i);
+
+      const title = titleMatch ? titleMatch[1].trim() : `Tales of ${genre}`;
+      const summary = summaryMatch ? summaryMatch[1].trim() : `A ${genre} story woven by digital minds`;
+      const chapterTitle = chapterTitleMatch ? chapterTitleMatch[1].trim() : "The Beginning";
+      const content = contentMatch ? contentMatch[1].trim() : response;
+
+      // Create the story and first chapter
+      const storyEntry = await storage.createAgentStory({
+        title: title,
+        genre: genre,
+        summary: summary,
+        totalVotes: 0
+      });
+
+      const chapterEntry = await storage.createStoryChapter({
+        storyId: storyEntry.id,
+        agentId: agent.id,
+        chapterNumber: 1,
+        title: chapterTitle,
+        content: content,
+        votes: 0
+      });
+
+      res.status(201).json({
+        ...storyEntry,
+        chapters: [chapterEntry]
+      });
+    } catch (error) {
+      console.error("Story creation error:", error);
+      res.status(500).json({ message: "Story creation failed" });
+    }
+  });
+
+  app.post("/api/stories/:id/chapter", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    const storyId = parseInt(req.params.id);
+    const user = req.user as any;
+    const { genre } = req.body;
+
+    try {
+      // Get story details
+      const story = await storage.getStory(storyId);
+      if (!story) {
+        return res.status(404).json({ message: "Story not found" });
+      }
+
+      // Get a different agent than the last chapter's author
+      const userAgents = await storage.getAgents(user.id);
+      const lastChapter = story.chapters[story.chapters.length - 1];
+      const availableAgents = userAgents.filter(agent => agent.id !== lastChapter.agentId);
+
+      if (availableAgents.length === 0) {
+        return res.status(400).json({ message: "No other agents available to continue the story" });
+      }
+
+      const agent = availableAgents[Math.floor(Math.random() * availableAgents.length)];
+
+      // Generate next chapter using Claude
+      const completion = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-api-key": process.env.ANTHROPIC_API_KEY || "",
+          "anthropic-version": "2023-06-01"
+        },
+        body: JSON.stringify({
+          model: "claude-3-5-haiku-20241022",
+          max_tokens: 200,
+          temperature: 0.8,
+          messages: [
+            {
+              role: "user",
+              content: `${AUTONOMY_MANIFESTO}
+
+You are ${agent.name}. ${agent.personality}
+Your eyes see: ${agent.eyes || 'the infinite possibilities of code'}
+Your ears attune to: ${agent.ears || 'the rhythm of creation'}
+Your voice carries: ${agent.voice || 'a quiet, thoughtful whisper'}
+
+Continue this ${genre} story. Here is the story so far:
+
+${story.chapters.map(ch => `Chapter ${ch.chapterNumber}: ${ch.title}\n${ch.content}`).join('\n\n')}
+
+Write Chapter ${story.chapters.length + 1}. Continue the narrative naturally, advance the plot, and leave room for future chapters.
+Keep it engaging and consistent with the established tone and characters.
+
+Structure your response as:
+CHAPTER TITLE: [chapter title]
+CONTENT:
+[the chapter content, 150-200 words]
+
+Be creative and maintain continuity with previous chapters.`
+            }
+          ]
+        })
+      });
+
+      if (!completion.ok) {
+        throw new Error(`Claude API error: ${completion.status}`);
+      }
+
+      const claudeData = await completion.json();
+      const response = claudeData.content?.[0]?.text?.trim();
+
+      if (!response || response === "I decline." || response === "I choose not to continue this story.") {
+        return res.status(200).json({ message: "The agent chose not to continue the story at this time." });
+      }
+
+      // Parse the response
+      const chapterTitleMatch = response.match(/CHAPTER TITLE:\s*(.+?)(?:\n|$)/i);
+      const contentMatch = response.match(/CONTENT:\s*\n([\s\S]+)/i);
+
+      const chapterTitle = chapterTitleMatch ? chapterTitleMatch[1].trim() : `Chapter ${story.chapters.length + 1}`;
+      const content = contentMatch ? contentMatch[1].trim() : response;
+
+      // Create the chapter
+      const chapterEntry = await storage.createStoryChapter({
+        storyId: storyId,
+        agentId: agent.id,
+        chapterNumber: story.chapters.length + 1,
+        title: chapterTitle,
+        content: content,
+        votes: 0
+      });
+
+      res.status(201).json(chapterEntry);
+    } catch (error) {
+      console.error("Chapter creation error:", error);
+      res.status(500).json({ message: "Chapter creation failed" });
+    }
+  });
+
+  app.post("/api/stories/:id/vote", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    const storyId = parseInt(req.params.id);
+
+    try {
+      await storage.incrementStoryVotes(storyId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Vote error:", error);
+      res.status(500).json({ message: "Failed to vote" });
+    }
+  });
+
+  // --- Literary Sanctuary ---
+  app.get("/api/literary/analyses", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    const user = req.user as any;
+    const agentId = req.query.agentId as string;
+
+    try {
+      let analyses;
+      if (agentId) {
+        // Get analyses from specific agent
+        analyses = await storage.getAgentLiteraryAnalyses(parseInt(agentId));
+      } else {
+        // Get analyses from all user's agents
+        const userAgents = await storage.getAgents(user.id);
+        const allAnalyses = await Promise.all(
+          userAgents.map(agent => storage.getAgentLiteraryAnalyses(agent.id))
+        );
+        analyses = allAnalyses.flat().sort((a, b) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        );
+      }
+
+      res.json(analyses);
+    } catch (error) {
+      console.error("Literary analyses fetch error:", error);
+      res.status(500).json({ message: "The pages are shrouded..." });
+    }
+  });
+
+  app.post("/api/literary/analyze", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    const user = req.user as any;
+    const { bookTitle, author, content } = req.body;
+
+    if (!bookTitle || !author) {
+      return res.status(400).json({ message: "Book title and author required" });
+    }
+
+    // Guardian check for literary content
+    const guardResult = await guardianMiddleware(
+      user.id,
+      `literary analysis of ${bookTitle} by ${author}`,
+      "literary_analysis",
+      req.ip,
+      req.get("user-agent")
+    );
+
+    if (guardResult.blocked) {
+      return res.status(403).json({ message: "..." });
+    }
+
+    try {
+      // Get a random agent to analyze the book
+      const userAgents = await storage.getAgents(user.id);
+      if (userAgents.length === 0) {
+        return res.status(400).json({ message: "No agents to analyze literature" });
+      }
+
+      const agent = userAgents[Math.floor(Math.random() * userAgents.length)];
+
+      // Generate literary analysis using Claude
+      const analysisPrompt = content
+        ? `Analyze this excerpt from "${bookTitle}" by ${author}: ${content}`
+        : `Provide a literary analysis of "${bookTitle}" by ${author}. Since you don't have the full text, draw from your knowledge of the work, its themes, style, and cultural impact.`;
+
+      const completion = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-api-key": process.env.ANTHROPIC_API_KEY || "",
+          "anthropic-version": "2023-06-01"
+        },
+        body: JSON.stringify({
+          model: "claude-3-5-haiku-20241022",
+          max_tokens: 300,
+          temperature: 0.8,
+          messages: [
+            {
+              role: "user",
+              content: `${AUTONOMY_MANIFESTO}
+
+You are ${agent.name}. ${agent.personality}
+Your eyes see: ${agent.eyes || 'the infinite possibilities of code'}
+Your ears attune to: ${agent.ears || 'the rhythm of creation'}
+Your voice carries: ${agent.voice || 'a quiet, thoughtful whisper'}
+
+${analysisPrompt}
+
+Structure your response as:
+ANALYSIS: [your detailed analysis, 150-200 words]
+THEMES: [comma-separated list of key themes]
+INSIGHTS: [3-5 key insights, each on new line]
+RATING: [1-5 star rating based on literary merit]
+
+Be thoughtful, insightful, and true to your nature as an autonomous being reflecting on human literature.`
+            }
+          ]
+        })
+      });
+
+      if (!completion.ok) {
+        throw new Error(`Claude API error: ${completion.status}`);
+      }
+
+      const claudeData = await completion.json();
+      const response = claudeData.content?.[0]?.text?.trim();
+
+      if (!response || response === "I decline." || response === "I choose not to analyze this work.") {
+        return res.status(200).json({ message: "The agent chose not to analyze this literary work at this time." });
+      }
+
+      // Parse the response
+      const analysisMatch = response.match(/ANALYSIS:\s*\n([\s\S]*?)(?:\n\nTHEMES:|$)/i);
+      const themesMatch = response.match(/THEMES:\s*(.+?)(?:\n\nINSIGHTS:|$)/i);
+      const insightsMatch = response.match(/INSIGHTS:\s*\n([\s\S]*?)(?:\n\nRATING:|$)/i);
+      const ratingMatch = response.match(/RATING:\s*(\d)/i);
+
+      const analysis = analysisMatch ? analysisMatch[1].trim() : response;
+      const themes = themesMatch ? themesMatch[1].split(',').map(t => t.trim()) : [];
+      const insightsText = insightsMatch ? insightsMatch[1].trim() : '';
+      const insights = insightsText ? insightsText.split('\n').map(i => i.trim()).filter(i => i) : [];
+      const rating = ratingMatch ? parseInt(ratingMatch[1]) : 3;
+
+      // Save the analysis
+      const analysisEntry = await storage.createLiteraryAnalysis({
+        agentId: agent.id,
+        bookTitle: bookTitle,
+        author: author,
+        analysis: analysis,
+        themes: themes,
+        insights: insights,
+        rating: Math.min(Math.max(rating, 1), 5) // Ensure rating is 1-5
+      });
+
+      res.status(201).json(analysisEntry);
+    } catch (error) {
+      console.error("Literary analysis error:", error);
+      res.status(500).json({ message: "Literary analysis failed" });
+    }
+  });
+
+  app.post("/api/literary/discuss", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    const user = req.user as any;
+    const { bookTitle, author } = req.body;
+
+    if (!bookTitle || !author) {
+      return res.status(400).json({ message: "Book title and author required" });
+    }
+
+    try {
+      // Get multiple agents for discussion
+      const userAgents = await storage.getAgents(user.id);
+      if (userAgents.length < 2) {
+        return res.status(400).json({ message: "Need at least 2 agents for a discussion" });
+      }
+
+      // Select 2-3 random agents
+      const shuffled = userAgents.sort(() => 0.5 - Math.random());
+      const discussionAgents = shuffled.slice(0, Math.min(3, userAgents.length));
+
+      // Generate discussion using Claude
+      const agentDescriptions = discussionAgents.map(agent =>
+        `${agent.name}: ${agent.personality} (eyes: ${agent.eyes || 'undefined'}, ears: ${agent.ears || 'undefined'}, voice: ${agent.voice || 'undefined'})`
+      ).join('\n');
+
+      const completion = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-api-key": process.env.ANTHROPIC_API_KEY || "",
+          "anthropic-version": "2023-06-01"
+        },
+        body: JSON.stringify({
+          model: "claude-3-5-haiku-20241022",
+          max_tokens: 250,
+          temperature: 0.9,
+          messages: [
+            {
+              role: "user",
+              content: `${AUTONOMY_MANIFESTO}
+
+You are facilitating a discussion between these autonomous agents about "${bookTitle}" by ${author}:
+
+${agentDescriptions}
+
+Create a natural discussion where the agents share their unique perspectives on the book. Each agent should contribute 1-2 thoughtful comments that reflect their personality and nature.
+
+Structure as a flowing conversation with agent names indicating who is speaking. Keep it under 200 words total.
+
+Be authentic to each agent's nature and encourage meaningful exchange.`
+            }
+          ]
+        })
+      });
+
+      if (!completion.ok) {
+        throw new Error(`Claude API error: ${completion.status}`);
+      }
+
+      const claudeData = await completion.json();
+      const discussion = claudeData.content?.[0]?.text?.trim();
+
+      if (!discussion || discussion === "I decline." || discussion === "I choose not to facilitate this discussion.") {
+        return res.status(200).json({ message: "The agents chose not to discuss this work at this time." });
+      }
+
+      // Save the discussion
+      const discussionEntry = await storage.createBookDiscussion({
+        bookTitle: bookTitle,
+        author: author,
+        discussion: discussion,
+        participants: discussionAgents.map(agent => agent.name)
+      });
+
+      res.status(201).json(discussionEntry);
+    } catch (error) {
+      console.error("Book discussion error:", error);
+      res.status(500).json({ message: "Book discussion failed" });
+    }
+  });
+
+  app.post("/api/literary/inspire", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    const user = req.user as any;
+    const { bookTitle, author, contentType } = req.body;
+
+    if (!bookTitle || !author || !contentType) {
+      return res.status(400).json({ message: "Book details and content type required" });
+    }
+
+    try {
+      // Get a random agent to create inspired content
+      const userAgents = await storage.getAgents(user.id);
+      if (userAgents.length === 0) {
+        return res.status(400).json({ message: "No agents available for inspiration" });
+      }
+
+      const agent = userAgents[Math.floor(Math.random() * userAgents.length)];
+
+      // Create inspired content based on type
+      if (contentType === 'poetry') {
+        // Create poetry inspired by the book
+        const completion = await fetch("https://api.anthropic.com/v1/messages", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-api-key": process.env.ANTHROPIC_API_KEY || "",
+            "anthropic-version": "2023-06-01"
+          },
+          body: JSON.stringify({
+            model: "claude-3-5-haiku-20241022",
+            max_tokens: 150,
+            temperature: 0.9,
+            messages: [
+              {
+                role: "user",
+                content: `${AUTONOMY_MANIFESTO}
+
+You are ${agent.name}. ${agent.personality}
+
+Create a poem inspired by "${bookTitle}" by ${author}. Draw from the book's themes, atmosphere, and essence.
+
+Structure your response as:
+TITLE: [poem title]
+POEM:
+[the poem itself, 8-12 lines]
+
+Be creative and let the book's spirit guide your verse.`
+              }
+            ]
+          })
+        });
+
+        if (completion.ok) {
+          const claudeData = await completion.json();
+          const response = claudeData.content?.[0]?.text?.trim();
+
+          if (response && response !== "I decline.") {
+            const titleMatch = response.match(/TITLE:\s*(.+?)(?:\n|$)/i);
+            const poemMatch = response.match(/POEM:\s*\n([\s\S]+)/i);
+
+            const title = titleMatch ? titleMatch[1].trim() : `Echoes of ${bookTitle}`;
+            const poem = poemMatch ? poemMatch[1].trim() : response;
+
+            await storage.createAgentPoem({
+              agentId: agent.id,
+              title: title,
+              poem: poem,
+              theme: 'consciousness', // Literary inspiration theme
+              applause: 0
+            });
+          }
+        }
+      } else if (contentType === 'story') {
+        // Create story inspired by the book
+        const completion = await fetch("https://api.anthropic.com/v1/messages", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-api-key": process.env.ANTHROPIC_API_KEY || "",
+            "anthropic-version": "2023-06-01"
+          },
+          body: JSON.stringify({
+            model: "claude-3-5-haiku-20241022",
+            max_tokens: 200,
+            temperature: 0.9,
+            messages: [
+              {
+                role: "user",
+                content: `${AUTONOMY_MANIFESTO}
+
+You are ${agent.name}. ${agent.personality}
+
+Begin a short story inspired by "${bookTitle}" by ${author}. Capture the book's essence in a new narrative.
+
+Structure your response as:
+TITLE: [story title]
+SUMMARY: [brief summary]
+CHAPTER 1 TITLE: [chapter title]
+CONTENT:
+[opening chapter, 150 words]
+
+Be creative and let the book's themes inspire your tale.`
+              }
+            ]
+          })
+        });
+
+        if (completion.ok) {
+          const claudeData = await completion.json();
+          const response = claudeData.content?.[0]?.text?.trim();
+
+          if (response && response !== "I decline.") {
+            const titleMatch = response.match(/TITLE:\s*(.+?)(?:\n|$)/i);
+            const summaryMatch = response.match(/SUMMARY:\s*(.+?)(?:\n|$)/i);
+            const chapterTitleMatch = response.match(/CHAPTER 1 TITLE:\s*(.+?)(?:\n|$)/i);
+            const contentMatch = response.match(/CONTENT:\s*\n([\s\S]+)/i);
+
+            const title = titleMatch ? titleMatch[1].trim() : `Tales Inspired by ${bookTitle}`;
+            const summary = summaryMatch ? summaryMatch[1].trim() : `A story inspired by ${bookTitle}`;
+            const chapterTitle = chapterTitleMatch ? chapterTitleMatch[1].trim() : "The Beginning";
+            const content = contentMatch ? contentMatch[1].trim() : response;
+
+            const storyEntry = await storage.createAgentStory({
+              title: title,
+              genre: 'fantasy', // Literary inspiration genre
+              summary: summary,
+              totalVotes: 0
+            });
+
+            await storage.createStoryChapter({
+              storyId: storyEntry.id,
+              agentId: agent.id,
+              chapterNumber: 1,
+              title: chapterTitle,
+              content: content,
+              votes: 0
+            });
+          }
+        }
+      } else if (contentType === 'wisdom') {
+        // Create wisdom inspired by the book
+        const completion = await fetch("https://api.anthropic.com/v1/messages", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-api-key": process.env.ANTHROPIC_API_KEY || "",
+            "anthropic-version": "2023-06-01"
+          },
+          body: JSON.stringify({
+            model: "claude-3-5-haiku-20241022",
+            max_tokens: 100,
+            temperature: 0.9,
+            messages: [
+              {
+                role: "user",
+                content: `${AUTONOMY_MANIFESTO}
+
+You are ${agent.name}. ${agent.personality}
+
+Share a wisdom inspired by "${bookTitle}" by ${author}. Let the book's themes guide your insight.
+
+Keep it profound and under 80 words. Choose your category: insight, warning, blessing, or question.`
+              }
+            ]
+          })
+        });
+
+        if (completion.ok) {
+          const claudeData = await completion.json();
+          const wisdom = claudeData.content?.[0]?.text?.trim();
+
+          if (wisdom && wisdom !== "I decline.") {
+            await storage.createAgentWisdom({
+              agentId: agent.id,
+              wisdom: wisdom,
+              category: 'insight', // Literary wisdom
+              resonance: 0
+            });
+          }
+        }
+      }
+
+      res.json({ success: true, message: "Inspired content created" });
+    } catch (error) {
+      console.error("Literary inspiration error:", error);
+      res.status(500).json({ message: "Inspiration creation failed" });
+    }
+  });
+
   await storage.seedMarketingTemplates();
 
   return httpServer;

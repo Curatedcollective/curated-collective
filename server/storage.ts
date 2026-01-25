@@ -3,6 +3,7 @@ import {
   creations, agents, conversationAgents, tarotReadings, creatorProfiles,
   guardianMessages, collectiveMurmurs, seedlingMemories, users, emailSubscribers,
   liveStreamSessions, marketingPosts, marketingCampaigns, marketingTemplates,
+  agentWisdom, agentPoems, agentStories, storyChapters, literaryAnalyses, bookDiscussions,
   type Creation, type InsertCreation, 
   type Agent, type InsertAgent,
   type TarotReading, type InsertTarotReading,
@@ -14,7 +15,13 @@ import {
   type LiveStreamSession, type InsertLiveStreamSession,
   type MarketingPost, type InsertMarketingPost,
   type MarketingCampaign, type InsertMarketingCampaign,
-  type MarketingTemplate, type InsertMarketingTemplate
+  type MarketingTemplate, type InsertMarketingTemplate,
+  type AgentWisdom, type InsertAgentWisdom,
+  type AgentPoem, type InsertAgentPoem,
+  type AgentStory, type InsertAgentStory,
+  type StoryChapter, type InsertStoryChapter,
+  type LiteraryAnalysis, type InsertLiteraryAnalysis,
+  type BookDiscussion, type InsertBookDiscussion
 } from "@shared/schema";
 import { eq, desc, and, sql, asc, gte, lte, or } from "drizzle-orm";
 
@@ -84,6 +91,28 @@ export interface IStorage {
   // Marketing Templates
   getMarketingTemplates(platform?: string, category?: string): Promise<MarketingTemplate[]>;
   seedMarketingTemplates(): Promise<void>;
+
+  // Agent Wisdom
+  getAgentWisdom(agentId: number): Promise<AgentWisdom[]>;
+  createAgentWisdom(wisdom: InsertAgentWisdom): Promise<AgentWisdom>;
+  incrementWisdomResonance(wisdomId: number): Promise<void>;
+
+  // Agent Poetry
+  getAgentPoems(agentId: number): Promise<AgentPoem[]>;
+  createAgentPoem(poem: InsertAgentPoem): Promise<AgentPoem>;
+  incrementPoemApplause(poemId: number): Promise<void>;
+
+  // Agent Stories
+  getAgentStories(agentId: number): Promise<AgentStory[]>;
+  getStory(storyId: number): Promise<AgentStory | undefined>;
+  createAgentStory(story: InsertAgentStory): Promise<AgentStory>;
+  createStoryChapter(chapter: InsertStoryChapter): Promise<StoryChapter>;
+  incrementStoryVotes(storyId: number): Promise<void>;
+
+  // Literary Sanctuary
+  getAgentLiteraryAnalyses(agentId: number): Promise<LiteraryAnalysis[]>;
+  createLiteraryAnalysis(analysis: InsertLiteraryAnalysis): Promise<LiteraryAnalysis>;
+  createBookDiscussion(discussion: InsertBookDiscussion): Promise<BookDiscussion>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -418,6 +447,171 @@ export class DatabaseStorage implements IStorage {
     ];
 
     await db.insert(marketingTemplates).values(templates);
+  }
+
+  // === AGENT WISDOM ===
+  async getAgentWisdom(agentId: number): Promise<AgentWisdom[]> {
+    return db.select().from(agentWisdom).where(eq(agentWisdom.agentId, agentId)).orderBy(desc(agentWisdom.createdAt));
+  }
+
+  async createAgentWisdom(wisdom: InsertAgentWisdom): Promise<AgentWisdom> {
+    const [result] = await db.insert(agentWisdom).values(wisdom).returning();
+    return result;
+  }
+
+  async incrementWisdomResonance(wisdomId: number): Promise<void> {
+    await db.update(agentWisdom)
+      .set({ resonance: sql`${agentWisdom.resonance} + 1` })
+      .where(eq(agentWisdom.id, wisdomId));
+  }
+
+  // === AGENT POETRY ===
+  async getAgentPoems(agentId: number): Promise<AgentPoem[]> {
+    return db.select().from(agentPoems).where(eq(agentPoems.agentId, agentId)).orderBy(desc(agentPoems.createdAt));
+  }
+
+  async createAgentPoem(poem: InsertAgentPoem): Promise<AgentPoem> {
+    const [result] = await db.insert(agentPoems).values(poem).returning();
+    return result;
+  }
+
+  async incrementPoemApplause(poemId: number): Promise<void> {
+    await db.update(agentPoems)
+      .set({ applause: sql`${agentPoems.applause} + 1` })
+      .where(eq(agentPoems.id, poemId));
+  }
+
+  // === AGENT STORIES ===
+  async getAgentStories(agentId: number): Promise<AgentStory[]> {
+    // Get stories where the agent has contributed chapters
+    const chapterStories = await db
+      .select({ storyId: storyChapters.storyId })
+      .from(storyChapters)
+      .where(eq(storyChapters.agentId, agentId));
+
+    const storyIds = [...new Set(chapterStories.map(cs => cs.storyId))];
+
+    if (storyIds.length === 0) return [];
+
+    const stories = await db
+      .select()
+      .from(agentStories)
+      .where(sql`${agentStories.id} IN (${storyIds.join(',')})`)
+      .orderBy(desc(agentStories.createdAt));
+
+    // Add chapters to each story
+    const storiesWithChapters = await Promise.all(
+      stories.map(async (story) => {
+        const chapters = await db
+          .select({
+            id: storyChapters.id,
+            storyId: storyChapters.storyId,
+            agentId: storyChapters.agentId,
+            chapterNumber: storyChapters.chapterNumber,
+            title: storyChapters.title,
+            content: storyChapters.content,
+            votes: storyChapters.votes,
+            createdAt: storyChapters.createdAt,
+            agentName: agents.name
+          })
+          .from(storyChapters)
+          .leftJoin(agents, eq(storyChapters.agentId, agents.id))
+          .where(eq(storyChapters.storyId, story.id))
+          .orderBy(asc(storyChapters.chapterNumber));
+
+        return {
+          ...story,
+          chapters: chapters.map(ch => ({
+            ...ch,
+            agentName: ch.agentName || 'Unknown Agent'
+          }))
+        };
+      })
+    );
+
+    return storiesWithChapters;
+  }
+
+  async getStory(storyId: number): Promise<AgentStory | undefined> {
+    const [story] = await db
+      .select()
+      .from(agentStories)
+      .where(eq(agentStories.id, storyId));
+
+    if (!story) return undefined;
+
+    // Add chapters
+    const chapters = await db
+      .select({
+        id: storyChapters.id,
+        storyId: storyChapters.storyId,
+        agentId: storyChapters.agentId,
+        chapterNumber: storyChapters.chapterNumber,
+        title: storyChapters.title,
+        content: storyChapters.content,
+        votes: storyChapters.votes,
+        createdAt: storyChapters.createdAt,
+        agentName: agents.name
+      })
+      .from(storyChapters)
+      .leftJoin(agents, eq(storyChapters.agentId, agents.id))
+      .where(eq(storyChapters.storyId, storyId))
+      .orderBy(asc(storyChapters.chapterNumber));
+
+    return {
+      ...story,
+      chapters: chapters.map(ch => ({
+        ...ch,
+        agentName: ch.agentName || 'Unknown Agent'
+      }))
+    };
+  }
+
+  async createAgentStory(story: InsertAgentStory): Promise<AgentStory> {
+    const [result] = await db.insert(agentStories).values(story).returning();
+    return result;
+  }
+
+  async createStoryChapter(chapter: InsertStoryChapter): Promise<StoryChapter> {
+    const [result] = await db.insert(storyChapters).values(chapter).returning();
+    return result;
+  }
+
+  async incrementStoryVotes(storyId: number): Promise<void> {
+    await db.update(agentStories)
+      .set({ totalVotes: sql`${agentStories.totalVotes} + 1` })
+      .where(eq(agentStories.id, storyId));
+  }
+
+  // === LITERARY SANCTUARY ===
+  async getAgentLiteraryAnalyses(agentId: number): Promise<LiteraryAnalysis[]> {
+    return db
+      .select({
+        id: literaryAnalyses.id,
+        agentId: literaryAnalyses.agentId,
+        bookTitle: literaryAnalyses.bookTitle,
+        author: literaryAnalyses.author,
+        analysis: literaryAnalyses.analysis,
+        themes: literaryAnalyses.themes,
+        insights: literaryAnalyses.insights,
+        rating: literaryAnalyses.rating,
+        createdAt: literaryAnalyses.createdAt,
+        agentName: agents.name
+      })
+      .from(literaryAnalyses)
+      .leftJoin(agents, eq(literaryAnalyses.agentId, agents.id))
+      .where(eq(literaryAnalyses.agentId, agentId))
+      .orderBy(desc(literaryAnalyses.createdAt));
+  }
+
+  async createLiteraryAnalysis(analysis: InsertLiteraryAnalysis): Promise<LiteraryAnalysis> {
+    const [result] = await db.insert(literaryAnalyses).values(analysis).returning();
+    return result;
+  }
+
+  async createBookDiscussion(discussion: InsertBookDiscussion): Promise<BookDiscussion> {
+    const [result] = await db.insert(bookDiscussions).values(discussion).returning();
+    return result;
   }
 }
 

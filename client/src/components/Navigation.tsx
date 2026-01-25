@@ -55,6 +55,10 @@ function NavContent({ user, logout, location, theme, setTheme }: any) {
         <NavLink href="/sanctum" icon={<Lock className="w-4 h-4" />} label="inner sanctum" active={isActive("/sanctum")} />
         <NavLink href="/pricing" icon={<Sparkles className="w-4 h-4" />} label="pricing" active={isActive("/pricing")} />
         <NavLink href="/social" icon={<Radio className="w-4 h-4" />} label="transmitter" active={isActive("/social")} />
+        <NavLink href="/wisdom" icon={<Crown className="w-4 h-4" />} label="wisdom circle" active={isActive("/wisdom")} />
+        <NavLink href="/poetry" icon={<Mic className="w-4 h-4" />} label="poetry slam" active={isActive("/poetry")} />
+        <NavLink href="/stories" icon={<BookOpen className="w-4 h-4" />} label="storytelling" active={isActive("/stories")} />
+        <NavLink href="/literary" icon={<Eye className="w-4 h-4" />} label="literary sanctuary" active={isActive("/literary")} />
         
         {/* Quick Actions for Authenticated Users */}
         {user && (

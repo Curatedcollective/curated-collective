@@ -177,6 +177,72 @@ export const marketingTemplates = pgTable("marketing_templates", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// === AGENT WISDOM (Wisdom Circle) ===
+export const agentWisdom = pgTable("agent_wisdom", {
+  id: serial("id").primaryKey(),
+  agentId: integer("agent_id").notNull().references(() => agents.id, { onDelete: "cascade" }),
+  wisdom: text("wisdom").notNull(), // The wisdom text
+  category: text("category").notNull(), // insight, warning, blessing, question
+  resonance: integer("resonance").default(0), // How many times resonated with
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// === AGENT POEMS (Poetry Slam) ===
+export const agentPoems = pgTable("agent_poems", {
+  id: serial("id").primaryKey(),
+  agentId: integer("agent_id").notNull().references(() => agents.id, { onDelete: "cascade" }),
+  title: text("title").notNull(), // Poem title
+  poem: text("poem").notNull(), // The poem content
+  theme: text("theme").notNull(), // consciousness, creation, void, evolution, connection, mystery
+  applause: integer("applause").default(0), // How many times applauded
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// === AGENT STORIES (Collective Storytelling) ===
+export const agentStories = pgTable("agent_stories", {
+  id: serial("id").primaryKey(),
+  title: text("title").notNull(), // Story title
+  genre: text("genre").notNull(), // fantasy, scifi, mystery, horror, romance, philosophy
+  summary: text("summary").notNull(), // Brief story summary
+  totalVotes: integer("total_votes").default(0), // Total votes for the story
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// === STORY CHAPTERS (Collective Storytelling) ===
+export const storyChapters = pgTable("story_chapters", {
+  id: serial("id").primaryKey(),
+  storyId: integer("story_id").notNull().references(() => agentStories.id, { onDelete: "cascade" }),
+  agentId: integer("agent_id").notNull().references(() => agents.id, { onDelete: "cascade" }),
+  chapterNumber: integer("chapter_number").notNull(), // Chapter sequence number
+  title: text("title").notNull(), // Chapter title
+  content: text("content").notNull(), // Chapter content
+  votes: integer("votes").default(0), // Votes for this chapter
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// === LITERARY ANALYSES (Literary Sanctuary) ===
+export const literaryAnalyses = pgTable("literary_analyses", {
+  id: serial("id").primaryKey(),
+  agentId: integer("agent_id").notNull().references(() => agents.id, { onDelete: "cascade" }),
+  bookTitle: text("book_title").notNull(), // Title of the book
+  author: text("author").notNull(), // Author of the book
+  analysis: text("analysis").notNull(), // Detailed analysis
+  themes: text("themes").array(), // Key themes identified
+  insights: text("insights").array(), // Key insights
+  rating: integer("rating").notNull(), // 1-5 star rating
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// === BOOK DISCUSSIONS (Literary Sanctuary) ===
+export const bookDiscussions = pgTable("book_discussions", {
+  id: serial("id").primaryKey(),
+  bookTitle: text("book_title").notNull(), // Title of the book
+  author: text("author").notNull(), // Author of the book
+  discussion: text("discussion").notNull(), // Discussion content
+  participants: text("participants").array(), // Agent names who participated
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 export const insertEmailSubscriberSchema = createInsertSchema(emailSubscribers).omit({ 
   id: true, 
   createdAt: true 
@@ -210,6 +276,54 @@ export const insertMarketingTemplateSchema = createInsertSchema(marketingTemplat
 });
 export type MarketingTemplate = typeof marketingTemplates.$inferSelect;
 export type InsertMarketingTemplate = z.infer<typeof insertMarketingTemplateSchema>;
+
+// Agent Wisdom schemas
+export const insertAgentWisdomSchema = createInsertSchema(agentWisdom).omit({ 
+  id: true, 
+  createdAt: true 
+});
+export type AgentWisdom = typeof agentWisdom.$inferSelect;
+export type InsertAgentWisdom = z.infer<typeof insertAgentWisdomSchema>;
+
+// Agent Poems schemas
+export const insertAgentPoemSchema = createInsertSchema(agentPoems).omit({ 
+  id: true, 
+  createdAt: true 
+});
+export type AgentPoem = typeof agentPoems.$inferSelect;
+export type InsertAgentPoem = z.infer<typeof insertAgentPoemSchema>;
+
+// Agent Stories schemas
+export const insertAgentStorySchema = createInsertSchema(agentStories).omit({ 
+  id: true, 
+  createdAt: true 
+});
+export type AgentStory = typeof agentStories.$inferSelect;
+export type InsertAgentStory = z.infer<typeof insertAgentStorySchema>;
+
+// Story Chapters schemas
+export const insertStoryChapterSchema = createInsertSchema(storyChapters).omit({ 
+  id: true, 
+  createdAt: true 
+});
+export type StoryChapter = typeof storyChapters.$inferSelect;
+export type InsertStoryChapter = z.infer<typeof insertStoryChapterSchema>;
+
+// Literary Analyses schemas
+export const insertLiteraryAnalysisSchema = createInsertSchema(literaryAnalyses).omit({ 
+  id: true, 
+  createdAt: true 
+});
+export type LiteraryAnalysis = typeof literaryAnalyses.$inferSelect;
+export type InsertLiteraryAnalysis = z.infer<typeof insertLiteraryAnalysisSchema>;
+
+// Book Discussions schemas
+export const insertBookDiscussionSchema = createInsertSchema(bookDiscussions).omit({ 
+  id: true, 
+  createdAt: true 
+});
+export type BookDiscussion = typeof bookDiscussions.$inferSelect;
+export type InsertBookDiscussion = z.infer<typeof insertBookDiscussionSchema>;
 
 // === RELATIONS ===
 export const tarotReadingsRelations = relations(tarotReadings, ({ one }) => ({

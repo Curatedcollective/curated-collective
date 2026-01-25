@@ -18,6 +18,10 @@ const InnerSanctum = lazy(() => import("@/pages/InnerSanctum"));
 const Pricing = lazy(() => import("@/pages/Pricing"));
 const Observatory = lazy(() => import("@/pages/Observatory"));
 const SocialGenerator = lazy(() => import("@/pages/SocialGenerator"));
+const WisdomCirclePage = lazy(() => import("@/pages/WisdomCircle"));
+const PoetrySlamPage = lazy(() => import("@/pages/PoetrySlam"));
+const CollectiveStorytellingPage = lazy(() => import("@/pages/CollectiveStorytelling"));
+const LiterarySanctuaryPage = lazy(() => import("@/pages/LiterarySanctuary"));
 const NotFound = lazy(() => import("@/pages/not-found"));
 
 import { Loader2 } from "lucide-react";
@@ -72,6 +76,10 @@ function Router() {
           <Route path="/observatory" component={Observatory} />
           <Route path="/pricing" component={Pricing} />
           <Route path="/social" component={SocialGenerator} />
+          <Route path="/wisdom" component={WisdomCirclePage} />
+          <Route path="/poetry" component={PoetrySlamPage} />
+          <Route path="/stories" component={CollectiveStorytellingPage} />
+          <Route path="/literary" component={LiterarySanctuaryPage} />
           <Route component={NotFound} />
         </Switch>
       </main>
