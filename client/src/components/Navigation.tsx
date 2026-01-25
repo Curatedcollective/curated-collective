@@ -13,12 +13,17 @@ import {
   Users,
   ChevronDown,
   Compass,
+  Puzzle,
+  LogIn,
+  LogOut,
+  User,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import NavLink from "./ui/nav-link";
 import logoImage from "@assets/generated_images/constellation_seedling_logo_design.png";
 import { ThemePicker } from "@/components/ThemePicker";
 import { useAuth } from "@/hooks/use-auth";
+import { Button } from "@/components/ui/button";
 
 /**
  * Left navigation — now includes ThemePicker so users can switch
@@ -112,12 +117,41 @@ export function Navigation() {
         </nav>
       </div>
 
-      <div className="mt-auto px-6 py-4">
+      <div className="mt-auto px-6 py-4 space-y-4">
+        {/* Login/Logout Button */}
+        {user ? (
+          <div className="space-y-2">
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <User className="w-3 h-3" />
+              <span className="lowercase truncate">{user.username || user.email}</span>
+            </div>
+            <Button
+              onClick={() => window.location.href = '/api/logout'}
+              variant="outline"
+              size="sm"
+              className="w-full text-xs lowercase border-white/10 hover:bg-white/5"
+            >
+              <LogOut className="w-3 h-3 mr-2" />
+              sign out
+            </Button>
+          </div>
+        ) : (
+          <Button
+            onClick={() => window.location.href = '/login'}
+            variant="default"
+            size="sm"
+            className="w-full text-xs lowercase"
+          >
+            <LogIn className="w-3 h-3 mr-2" />
+            sign in
+          </Button>
+        )}
+        
         <div className="flex items-center gap-4 text-muted-foreground">
           <a href="https://x.com/curatedcollect" target="_blank" rel="noopener noreferrer" className="text-[10px] hover:text-white">twitter</a>
           <a href="https://discord.gg/curatedcollective" target="_blank" rel="noopener noreferrer" className="text-[10px] hover:text-white">discord</a>
         </div>
-        <p className="text-[9px] text-muted-foreground mt-3 lowercase">© {new Date().getFullYear()} curated collective</p>
+        <p className="text-[9px] text-muted-foreground lowercase">© {new Date().getFullYear()} curated collective</p>
       </div>
     </aside>
   );

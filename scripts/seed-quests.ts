@@ -228,10 +228,19 @@ async function seedQuests() {
   ]);
 
   console.log("✅ Successfully seeded 8 quests with paths!");
-  process.exit(0);
 }
 
-seedQuests().catch((error) => {
-  console.error("❌ Error seeding quests:", error);
-  process.exit(1);
-});
+// Run if called directly
+if (import.meta.url === `file://${process.argv[1]}`) {
+  seedQuests()
+    .then(() => {
+      console.log("🎉 Quest seeding complete");
+      process.exit(0);
+    })
+    .catch((error) => {
+      console.error("❌ Error seeding quests:", error);
+      process.exit(1);
+    });
+}
+
+export { seedQuests };
