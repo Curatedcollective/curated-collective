@@ -9,16 +9,22 @@
  * - SVG connection lines between nearby stars (bonding motif)
  * - Animated ritual text that pops in star-like, not scrolling
  * - Playfair Display typography for poetic elegance
+ * - The Whispering Clock: a subtle lore element in the corner
  * 
  * Future expansion ready:
  * - Musical/ritual feature integration points documented
  * - Audio trigger hooks prepared (no implementation yet)
  * - Ritual progression state management structure
+ * 
+ * // the veil opened the door at midnight. the guardian stood in the threshold.
+ * // they never left. they never will.
+ * // time bends for them. the moon remembers.
  */
 
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect, useMemo } from "react";
 import { BondNetwork } from "@/components/BondNetwork";
+import { Clock } from "lucide-react";
 
 // Star configuration for the starfield
 interface Star {
@@ -82,6 +88,8 @@ export default function Observatory() {
   // Track which ritual text lines are visible
   const [visibleLines, setVisibleLines] = useState<number[]>([]);
   const [cometVisible, setCometVisible] = useState(false);
+  const [clockMessage, setClockMessage] = useState(false);
+  const [clockHovered, setClockHovered] = useState(false);
 
   // Animate ritual text appearance (pop in sequentially)
   useEffect(() => {
@@ -134,6 +142,12 @@ export default function Observatory() {
    *    - Sync audio with visual transitions
    *    - User preference for audio enable/disable
    */
+
+  const handleClockClick = () => {
+    setClockMessage(true);
+    // Play a low hum chime sound effect (placeholder for future audio)
+    setTimeout(() => setClockMessage(false), 5000);
+  };
 
   return (
     <div className="relative h-screen w-full overflow-hidden bg-black">
@@ -295,6 +309,68 @@ export default function Observatory() {
                 </div>
               </div>
             </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* The Whispering Clock - subtle lore element in corner */}
+      <div 
+        className="absolute top-6 right-6 cursor-pointer group"
+        style={{ zIndex: 10 }}
+        onClick={handleClockClick}
+        onMouseEnter={() => setClockHovered(true)}
+        onMouseLeave={() => setClockHovered(false)}
+        onFocus={() => setClockHovered(true)}
+        onBlur={() => setClockHovered(false)}
+        tabIndex={0}
+        role="button"
+        aria-label="The Whispering Clock - click to reveal a secret"
+      >
+        <Clock 
+          className="w-8 h-8 text-white opacity-30 group-hover:opacity-60 group-focus:opacity-60 transition-opacity duration-300"
+          strokeWidth={1}
+        />
+        
+        {/* Tooltip on hover/focus */}
+        <AnimatePresence>
+          {clockHovered && !clockMessage && (
+            <motion.div
+              className="absolute top-full right-0 mt-2 w-64 p-3 bg-black/90 border border-white/20 rounded-md text-white/80 text-xs lowercase leading-relaxed"
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.2 }}
+              role="tooltip"
+            >
+              the veil opened the door at midnight. the guardian stood in the threshold. they never left. they never will.
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+
+      {/* Clock Click Message - screen dims and shows lore */}
+      <AnimatePresence>
+        {clockMessage && (
+          <motion.div
+            className="absolute inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center"
+            style={{ zIndex: 20 }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.5 }}
+          >
+            <motion.p
+              className="text-2xl md:text-3xl text-white/90 lowercase tracking-wide font-display text-center px-8"
+              style={{
+                textShadow: '0 0 20px rgba(255, 255, 255, 0.4)',
+              }}
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.8, opacity: 0 }}
+              transition={{ duration: 0.5 }}
+            >
+              time bends for them. the moon remembers.
+            </motion.p>
           </motion.div>
         )}
       </AnimatePresence>

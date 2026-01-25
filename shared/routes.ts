@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { insertCreationSchema, insertAgentSchema, creations, agents, insertConstellationEventSchema, updateConstellationEventSchema, insertEventParticipantSchema, insertEventNotificationSchema, constellationEvents } from './schema';
+import { insertCreationSchema, insertAgentSchema, creations, agents, insertConstellationEventSchema, updateConstellationEventSchema, insertEventParticipantSchema, insertEventNotificationSchema, constellationEvents, insertRoleSchema, updateRoleSchema, roles, insertUserRoleSchema, insertRoleInviteSchema, insertRoleAuditLogSchema } from './schema';
 
 export const errorSchemas = {
   validation: z.object({
@@ -227,6 +227,251 @@ export const api = {
       }).optional(),
       responses: {
         200: z.array(z.any()),
+      },
+    },
+  },
+  roles: {
+    list: {
+      method: 'GET' as const,
+      path: '/api/roles',
+      responses: {
+        200: z.array(z.any()),
+      },
+    },
+    get: {
+      method: 'GET' as const,
+      path: '/api/roles/:id',
+      responses: {
+        200: z.any(),
+        404: errorSchemas.notFound,
+      },
+    },
+    create: {
+      method: 'POST' as const,
+      path: '/api/roles',
+      input: insertRoleSchema,
+      responses: {
+        201: z.any(),
+        400: errorSchemas.validation,
+      },
+    },
+    update: {
+      method: 'PUT' as const,
+      path: '/api/roles/:id',
+      input: updateRoleSchema,
+      responses: {
+        200: z.any(),
+        404: errorSchemas.notFound,
+      },
+    },
+    delete: {
+      method: 'DELETE' as const,
+      path: '/api/roles/:id',
+      responses: {
+        204: z.void(),
+        404: errorSchemas.notFound,
+      },
+    },
+    assignToUser: {
+      method: 'POST' as const,
+      path: '/api/roles/assign',
+      input: insertUserRoleSchema,
+      responses: {
+        200: z.object({ message: z.string() }),
+        400: errorSchemas.validation,
+      },
+    },
+    revokeFromUser: {
+      method: 'POST' as const,
+      path: '/api/roles/revoke',
+      input: z.object({
+        userId: z.string(),
+        roleId: z.number(),
+      }),
+      responses: {
+        200: z.object({ message: z.string() }),
+      },
+    },
+    bulkAssign: {
+      method: 'POST' as const,
+      path: '/api/roles/bulk-assign',
+      input: z.object({
+        userIds: z.array(z.string()),
+        roleId: z.number(),
+        assignedBy: z.string(),
+        context: z.string().optional(),
+      }),
+      responses: {
+        200: z.object({ message: z.string(), count: z.number() }),
+      },
+    },
+    getUserRoles: {
+      method: 'GET' as const,
+      path: '/api/roles/user/:userId',
+      responses: {
+        200: z.array(z.any()),
+      },
+    },
+    createInvite: {
+      method: 'POST' as const,
+      path: '/api/roles/invites',
+      input: insertRoleInviteSchema.omit({ code: true }), // Code generated server-side
+      responses: {
+        201: z.any(),
+      },
+    },
+    listInvites: {
+      method: 'GET' as const,
+      path: '/api/roles/invites',
+      responses: {
+        200: z.array(z.any()),
+      },
+    },
+    useInvite: {
+      method: 'POST' as const,
+      path: '/api/roles/invites/:code/use',
+      input: z.object({
+        userId: z.string(),
+      }),
+      responses: {
+        200: z.object({ message: z.string(), roleId: z.number() }),
+        404: errorSchemas.notFound,
+      },
+    },
+    auditLogs: {
+      method: 'GET' as const,
+      path: '/api/roles/audit',
+      input: z.object({
+        roleId: z.number().optional(),
+        userId: z.string().optional(),
+        action: z.string().optional(),
+        limit: z.number().optional(),
+      }).optional(),
+      responses: {
+        200: z.array(z.any()),
+      },
+    },
+  },
+  labyrinth: {
+    // Puzzle routes
+    puzzles: {
+      method: 'GET' as const,
+      path: '/api/labyrinth/puzzles',
+      input: z.object({
+        difficulty: z.number().optional(),
+        type: z.string().optional(),
+      }).optional(),
+      responses: {
+        200: z.array(z.any()),
+      },
+    },
+    getPuzzle: {
+      method: 'GET' as const,
+      path: '/api/labyrinth/puzzles/:id',
+      responses: {
+        200: z.any(),
+        404: errorSchemas.notFound,
+      },
+    },
+    // Progress routes
+    progress: {
+      method: 'GET' as const,
+      path: '/api/labyrinth/progress',
+      responses: {
+        200: z.any(),
+      },
+    },
+    updateProgress: {
+      method: 'PUT' as const,
+      path: '/api/labyrinth/progress',
+      input: z.object({
+        currentLevel: z.number().optional(),
+        totalExperience: z.number().optional(),
+        currentPath: z.string().optional(),
+      }),
+      responses: {
+        200: z.any(),
+      },
+    },
+    // Attempt routes
+    submitAttempt: {
+      method: 'POST' as const,
+      path: '/api/labyrinth/attempts',
+      input: z.object({
+        puzzleId: z.number(),
+        code: z.string(),
+      }),
+      responses: {
+        200: z.object({
+          status: z.string(),
+          testsPassed: z.number(),
+          totalTests: z.number(),
+          message: z.string(),
+          experienceGained: z.number().optional(),
+        }),
+      },
+    },
+    getAttempts: {
+      method: 'GET' as const,
+      path: '/api/labyrinth/attempts',
+      input: z.object({
+        puzzleId: z.number().optional(),
+      }).optional(),
+      responses: {
+        200: z.array(z.any()),
+      },
+    },
+    // Achievement routes
+    achievements: {
+      method: 'GET' as const,
+      path: '/api/labyrinth/achievements',
+      responses: {
+        200: z.array(z.any()),
+      },
+    },
+    userAchievements: {
+      method: 'GET' as const,
+      path: '/api/labyrinth/user-achievements',
+      responses: {
+        200: z.array(z.any()),
+      },
+    },
+    // Eclipse events
+    eclipses: {
+      method: 'GET' as const,
+      path: '/api/labyrinth/eclipses/active',
+      responses: {
+        200: z.array(z.any()),
+      },
+    },
+    // Guardian encounters
+    guardians: {
+      method: 'POST' as const,
+      path: '/api/labyrinth/guardians/encounter',
+      input: z.object({
+        puzzleId: z.number(),
+        agentId: z.number().optional(),
+      }),
+      responses: {
+        200: z.object({
+          message: z.string(),
+          agentName: z.string().optional(),
+        }),
+      },
+    },
+    // AI hints
+    getHint: {
+      method: 'POST' as const,
+      path: '/api/labyrinth/hints',
+      input: z.object({
+        puzzleId: z.number(),
+        currentCode: z.string(),
+        hintLevel: z.number(),
+      }),
+      responses: {
+        200: z.object({
+          hint: z.string(),
+        }),
       },
     },
   }

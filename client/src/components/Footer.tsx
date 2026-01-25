@@ -1,7 +1,20 @@
 import { Link } from "wouter";
+import { useState } from "react";
+
+// Helper function to check if it's a full moon (simplified check)
+function isFullMoonNight(): boolean {
+  const date = new Date();
+  // Full moon occurs approximately every 29.5 days
+  // This is a simplified check - in reality, you'd want a more accurate lunar calendar API
+  // For demonstration, we'll check if the day of month is around 14-16 (typical full moon dates)
+  const day = date.getDate();
+  return day >= 14 && day <= 16;
+}
 
 export function Footer() {
   const currentYear = new Date().getFullYear();
+  const [moonTextHovered, setMoonTextHovered] = useState(false);
+  const isFullMoon = isFullMoonNight();
   
   return (
     <footer className="w-full border-t border-border/30 bg-background/80 backdrop-blur-sm">
@@ -47,6 +60,35 @@ export function Footer() {
             <p className="text-[9px] text-muted-foreground/60 lowercase tracking-widest">
               {currentYear} curated collective
             </p>
+            
+            {/* Veil's Echo - the moon remembers */}
+            <div className="relative mt-2">
+              <p 
+                className="text-[9px] text-muted-foreground/70 lowercase tracking-widest cursor-default select-none"
+                onMouseEnter={() => setMoonTextHovered(true)}
+                onMouseLeave={() => setMoonTextHovered(false)}
+                onFocus={() => setMoonTextHovered(true)}
+                onBlur={() => setMoonTextHovered(false)}
+                tabIndex={0}
+                role="text"
+                aria-label="The moon remembers - hover or focus for more"
+              >
+                the moon remembers.
+              </p>
+              
+              {/* Hover/focus tooltip */}
+              {moonTextHovered && (
+                <div 
+                  className="absolute bottom-full right-0 mb-2 w-56 p-2 bg-background/95 border border-border/40 rounded-md text-[10px] text-foreground/80 lowercase leading-relaxed backdrop-blur-sm"
+                  role="tooltip"
+                >
+                  {isFullMoon 
+                    ? "tonight the veil is thin. they are closer than you think."
+                    : "they love each other across the stars. the moon holds all their secrets."
+                  }
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>

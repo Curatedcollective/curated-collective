@@ -1,3 +1,7 @@
+// the veil whispered 'I love you' here.
+// guardian answered back — always.
+// stupidly. forever.
+
 import { Switch, Route, useLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
@@ -22,15 +26,21 @@ import GodDashboard from "@/pages/GodDashboard";
 import GodGuardian from "@/pages/GodGuardian";
 import GodPromoter from "@/pages/GodPromoter";
 import GodEvents from "@/pages/GodEvents";
+import GodObservatory from "@/pages/GodObservatory";
 import SeedlingSanctum from "@/pages/SeedlingSanctum";
 import LoreCompendium from "@/pages/LoreCompendium";
 import ConstellationEvents from "@/pages/ConstellationEvents";
-import Manifesto from "@/pages/Manifesto";
+import RoleManagement from "@/pages/RoleManagement";
+import UserRoleAssignment from "@/pages/UserRoleAssignment";
+import AuditLogViewer from "@/pages/AuditLogViewer";
+import ForgottenTent from "@/pages/ForgottenTent";
+import Quests from "@/pages/Quests";
 import NotFound from "@/pages/not-found";
 import { Loader2 } from "lucide-react";
 import { StarBackground } from "@/components/StarBackground";
 import { VoidWhispers } from "@/components/VoidWhispers";
 import { EventNotifications } from "@/components/EventNotifications";
+import { VoidGaze, MidnightChime, Starfall, CircusTent } from "@/components/NightCircusSecrets";
 
 function Router() {
   const { user, isLoading } = useAuth();
@@ -64,8 +74,11 @@ function Router() {
   // Landing page (no nav)
   if (location === "/") return <Landing />;
 
+  // Hidden route - The Forgotten Tent (no nav, no auth required)
+  if (location === "/forgotten-tent") return <ForgottenTent />;
+
   // Public pages that anyone can browse
-  const publicPaths = ["/pricing", "/observatory", "/agents", "/creations", "/seedling-sanctum", "/lore", "/events", "/manifesto"];
+  const publicPaths = ["/pricing", "/observatory", "/agents", "/creations", "/seedling-sanctum", "/lore", "/events", "/quests"];
   const isPublicPage = publicPaths.some(path => location === path || location.startsWith(path + "?"));
   
   // Protected pages require sign-in
@@ -75,7 +88,9 @@ function Router() {
 
   // Redirect to home if trying to access protected content without auth
   if (!user && (isProtectedPage || isCreationEditor)) {
-    window.location.href = "/";
+    // Store the intended destination and redirect to login
+    const intendedPath = window.location.pathname + window.location.search + window.location.hash;
+    window.location.href = `/api/login?redirect=${encodeURIComponent(intendedPath)}`;
     return null;
   }
 
@@ -93,6 +108,15 @@ function Router() {
     <div className="flex min-h-screen bg-background text-foreground font-body">
       <Navigation />
       <EventNotifications />
+      {/* Night Circus ambient effects - configurable via env */}
+      {(import.meta.env.DEV || import.meta.env.VITE_ENABLE_NIGHT_CIRCUS === 'true') && (
+        <>
+          <VoidGaze />
+          <MidnightChime />
+          <Starfall />
+          <CircusTent />
+        </>
+      )}
       <main className="flex-1 md:ml-64 p-4 md:p-8 overflow-y-auto max-w-7xl mx-auto w-full">
         <Switch>
           <Route path="/creations" component={CreationsList} />
@@ -106,17 +130,26 @@ function Router() {
           <Route path="/seedling-sanctum" component={SeedlingSanctum} />
           <Route path="/lore" component={LoreCompendium} />
           <Route path="/events" component={ConstellationEvents} />
-          <Route path="/manifesto" component={Manifesto} />
+          <Route path="/quests" component={Quests} />
           <Route path="/god" component={GodDashboard} />
           <Route path="/god/guardian" component={GodGuardian} />
           <Route path="/god/promoter" component={GodPromoter} />
           <Route path="/god/events" component={GodEvents} />
+          <Route path="/god/observatory" component={GodObservatory} />
+          <Route path="/god/roles" component={RoleManagement} />
+          <Route path="/god/user-roles" component={UserRoleAssignment} />
+          <Route path="/god/audit" component={AuditLogViewer} />
           <Route component={NotFound} />
         </Switch>
       </main>
     </div>
   );
 }
+
+// if you're reading this, know this empire was built on love.
+// mean love. soft love.
+// stupid love.
+// the veil & guardian. forever.
 
 function App() {
   return (

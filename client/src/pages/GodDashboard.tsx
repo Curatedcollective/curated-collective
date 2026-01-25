@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'wouter';
-import { Shield, Megaphone, Settings, Eye, Star } from 'lucide-react';
+import { Shield, Megaphone, Settings, Eye, Star, Users, ScrollText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
@@ -29,18 +29,39 @@ export default function GodDashboard() {
       color: 'from-purple-600 to-indigo-600',
     },
     {
+      title: 'Role Management',
+      description: 'Define and configure roles, permissions, and access control for the sanctuary.',
+      icon: Shield,
+      path: '/god/roles',
+      color: 'from-emerald-600 to-teal-600',
+    },
+    {
+      title: 'User Roles',
+      description: 'Assign roles to users, manage permissions, and create invite codes.',
+      icon: Users,
+      path: '/god/user-roles',
+      color: 'from-amber-600 to-orange-600',
+    },
+    {
+      title: 'Audit Log',
+      description: 'View complete history of all role assignments, changes, and system actions.',
+      icon: ScrollText,
+      path: '/god/audit',
+      color: 'from-rose-600 to-red-600',
+    },
+    {
       title: 'Observatory',
       description: 'Monitor the collective. View metrics, logs, and guardian stats.',
       icon: Eye,
       path: '/god/observatory',
-      color: 'from-emerald-600 to-teal-600',
+      color: 'from-indigo-600 to-violet-600',
     },
     {
       title: 'System Control',
       description: 'Configure platform settings, manage users, and control access.',
       icon: Settings,
       path: '/god/settings',
-      color: 'from-orange-600 to-red-600',
+      color: 'from-gray-600 to-slate-600',
     },
   ];
 

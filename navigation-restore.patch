@@ -1,0 +1,127 @@
+*** Begin Patch
+*** Add File: client/src/components/Navigation.tsx
++import React, { useEffect, useRef, useState } from "react";
++import { Link } from "wouter";
++import {
++  Code,
++  Bot,
++  Eye,
++  BookOpen,
++  Star,
++  MessageSquare,
++  Leaf,
++  Lock,
++  ShoppingCart,
++  Users,
++  ChevronDown,
++} from "lucide-react";
++import { cn } from "@/lib/utils";
++import NavLink from "./ui/nav-link";
++import logoImage from "@/assets/logo.png";
++import { ThemePicker } from "@/components/ThemePicker";
++import { useAuth } from "@/hooks/use-auth";
++
++/**
++ * Left navigation — now includes ThemePicker so users can switch
++ * themes directly from the left menu.
++ */
++export function Navigation() {
++  const { user } = useAuth();
++  const isOwner = (user as any)?.role === "owner" || user?.email === "curated.collectiveai@proton.me";
++
++  // Secret cosmos theme unlock: click logo 5 times
++  const logoClickCountRef = useRef(0);
++  const logoClickTimerRef = useRef<number | null>(null);
++  const [cosmosUnlocked, setCosmosUnlocked] = useState(() => {
++    try {
++      return localStorage.getItem('cosmosUnlocked') === 'true';
++    } catch {
++      return false;
++    }
++  });
++
++  useEffect(() => {
++    return () => {
++      if (logoClickTimerRef.current) {
++        clearTimeout(logoClickTimerRef.current);
++      }
++    };
++  }, []);
++
++  const handleLogoClick = () => {
++    logoClickCountRef.current += 1;
++
++    if (logoClickTimerRef.current) {
++      clearTimeout(logoClickTimerRef.current);
++    }
++    logoClickTimerRef.current = window.setTimeout(() => {
++      logoClickCountRef.current = 0;
++    }, 2000);
++
++    if (logoClickCountRef.current >= 5 && !cosmosUnlocked) {
++      setCosmosUnlocked(true);
++      try {
++        localStorage.setItem('cosmosUnlocked', 'true');
++      } catch {}
++    }
++  };
++
++  return (
++    <aside className="w-64 fixed left-0 top-0 bottom-0 bg-zinc-950 border-r border-white/5 text-foreground flex flex-col">
++      <div className="px-4 py-6">
++        <Link href="/">
++          <div
++            className="mb-6 flex items-center gap-3 cursor-pointer rounded p-2 -m-2"
++            onClick={handleLogoClick}
++            data-testid="link-home"
++          >
++            <img src={logoImage} alt="Curated Collective" className="w-10 h-10 object-contain" />
++            <div>
++              <h1 className="text-2xl font-bold font-display lowercase tracking-tighter">
++                curated collective
++              </h1>
++              <p className="text-[10px] text-muted-foreground mt-1 lowercase tracking-widest">ai & code platform</p>
++            </div>
++          </div>
++        </Link>
++
++        <nav className="space-y-1">
++          <NavLink href="/creations" icon={<Code className="w-4 h-4" />} label="creations" />
++          <NavLink href="/agents" icon={<Bot className="w-4 h-4" />} label="seedlings" />
++          <NavLink href="/observatory" icon={<Eye className="w-4 h-4" />} label="observatory" />
++          <NavLink href="/lore" icon={<BookOpen className="w-4 h-4" />} label="lore compendium" />
++          <NavLink href="/events" icon={<Star className="w-4 h-4" />} label="constellation events" />
++          <NavLink href="/chat" icon={<MessageSquare className="w-4 h-4" />} label="lab chat" />
++          <NavLink href="/seedling-sanctum" icon={<Leaf className="w-4 h-4" />} label="sanctum" />
++          <NavLink href="/sanctum" icon={<Lock className="w-4 h-4" />} label="inner sanctum" />
++
++          {/* Theme picker: placed as a control inside the nav so it's easy to access */}
++          <div className="mt-4 px-2">
++            <p className="text-[10px] text-zinc-500 uppercase tracking-widest mb-2">theme</p>
++            <div className="flex items-center">
++              <ThemePicker />
++            </div>
++          </div>
++
++          <div className="mt-6 border-t border-white/5 pt-4">
++            <NavLink href="/pricing" icon={<ShoppingCart className="w-4 h-4" />} label="pricing" />
++            <NavLink href="/social" icon={<Users className="w-4 h-4" />} label="transmitter" />
++            {isOwner && <NavLink href="/god" icon={<ChevronDown className="w-4 h-4" />} label="god mode" />}
++          </div>
++        </nav>
++      </div>
++
++      <div className="mt-auto px-6 py-4">
++        <div className="flex items-center gap-4 text-muted-foreground">
++          <a href="#" className="text-[10px] hover:text-white">twitter</a>
++          <a href="#" className="text-[10px] hover:text-white">discord</a>
++        </div>
++        <p className="text-[9px] text-muted-foreground mt-3 lowercase">© {new Date().getFullYear()} curated collective</p>
++      </div>
++    </aside>
++  );
++}
++
++export default Navigation;
++
+*** End Patch
