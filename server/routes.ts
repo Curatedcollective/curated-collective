@@ -1,10 +1,6 @@
 import type { Express } from "express";
 import type { Server } from "http";
-import { setupAuth, registerAuthRoutes } from "./replit_integrations/auth";
-import { registerChatRoutes } from "./replit_integrations/chat";
-import { registerImageRoutes } from "./replit_integrations/image";
 import { storage } from "./storage";
-import { chatStorage } from "./replit_integrations/chat/storage";
 import { api } from "@shared/routes";
 import { z } from "zod";
 import OpenAI from "openai";
@@ -22,16 +18,26 @@ export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
-  // 1. Setup Auth (Must be first)
-  await setupAuth(app);
-  registerAuthRoutes(app);
+  // Skip Replit-specific integrations on Railway
+  if (!process.env.VERCEL && !process.env.RAILWAY_ENVIRONMENT_NAME) {
+    try {
+      const { setupAuth, registerAuthRoutes } = await import("./replit_integrations/auth");
+      const { registerChatRoutes } = await import("./replit_integrations/chat");
+      const { registerImageRoutes } = await import("./replit_integrations/image");
+      
+      // 1. Setup Auth (Must be first)
+      await setupAuth(app);
+      registerAuthRoutes(app);
 
-  // 2. Register Integrations
-  registerChatRoutes(app);
-  registerImageRoutes(app);
+      // 2. Register Integrations
+      registerChatRoutes(app);
+      registerImageRoutes(app);
+    } catch (err) {
+      console.log('Replit integrations not available, skipping');
+    }
+  }
 
   // 3. Application Routes
-  
   // --- Creations ---
   app.get(api.creations.list.path, async (req, res) => {
     const userId = req.query.userId as string | undefined;
