@@ -8,9 +8,9 @@
     "npm": ">=10.0.0"
   },
   "scripts": {
-    "dev": "NODE_ENV=development tsx server/index.ts",
+    "dev": "cross-env NODE_ENV=development tsx server/index.ts",
     "build": "tsx script/build.ts",
-    "start": "NODE_ENV=production node dist/index.cjs",
+    "start": "cross-env NODE_ENV=production node dist/index.cjs",
     "check": "tsc",
     "db:push": "drizzle-kit push"
   },
