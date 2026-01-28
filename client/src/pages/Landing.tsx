@@ -110,18 +110,11 @@ export default function Landing() {
           <Button 
             size="lg" 
             className="h-16 px-12 rounded-none text-xl font-light bg-primary text-primary-foreground transition-all tracking-widest"
-            onClick={() => {
-              if (user) {
-                setLocation("/sanctum");
-              } else {
-                setAuthOpen(true);
-              }
-            }}
+            onClick={() => setLocation("/sanctum")}
             data-testid="button-enter-sanctum"
           >
             enter the sanctum
           </Button>
-          <AuthModal open={authOpen} onClose={() => setAuthOpen(false)} />
         </div>
 
         {/* Email Capture */}

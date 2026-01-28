@@ -48,7 +48,13 @@ function Router() {
   }
 
   // Landing page (no nav)
-  if (location === "/") return <Landing />;
+  if (location === "/" && !user) return <Landing />;
+  
+  // Logged in users go to sanctum from root
+  if (location === "/" && user) {
+    window.location.href = "/sanctum";
+    return null;
+  }
 
   // Public pages that anyone can browse
   const publicPaths = ["/pricing", "/observatory", "/agents", "/creations", "/sanctum"];
@@ -83,7 +89,8 @@ function Router() {
           <Route path="/creations/:id" component={CreationEditor} />
           <Route path="/agents" component={AgentsList} />
           <Route path="/chat" component={Chat} />
-          <Route path="/sanctum" component={InnerSanctum} />
+          <Route path="/sanctum" component={Dashboard} />
+          <Route path="/inner-sanctum" component={InnerSanctum} />
           <Route path="/observatory" component={Observatory} />
           <Route path="/pricing" component={Pricing} />
           <Route path="/social" component={SocialGenerator} />

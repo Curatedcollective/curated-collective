@@ -27,22 +27,28 @@ export function AuthModal({ open, onClose }: { open: boolean; onClose: () => voi
       }
       
       const res = await apiRequest("POST", endpoint, body);
-      if (!res.ok) throw new Error((await res.json()).error || "Unknown error");
+      if (!res.ok) {
+        const errorData = await res.json();
+        console.error("Auth error:", errorData);
+        throw new Error(errorData.error || "Authentication failed");
+      }
       return res.json();
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log("Auth success:", data);
       setError(null);
       if (mode === "register") {
         // After registration, redirect to pricing to select tier
         onClose();
         setLocation("/pricing");
       } else {
-        // After login, close modal and refresh auth
+        // After login, close modal and reload to refresh auth
         onClose();
-        window.location.href = "/";
+        window.location.reload();
       }
     },
     onError: (err: any) => {
+      console.error("Auth mutation error:", err);
       setError(err.message || "Unknown error");
     },
   });
