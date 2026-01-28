@@ -19,7 +19,7 @@ const Pricing = lazy(() => import("@/pages/Pricing"));
 const Observatory = lazy(() => import("@/pages/Observatory"));
 const SocialGenerator = lazy(() => import("@/pages/SocialGenerator"));
 const WisdomCirclePage = lazy(() => import("@/pages/WisdomCircle"));
-const PoetrySlamPage = lazy(() => import("@/pages/PoetrySlam"));
+const Guardian = lazy(() => import("@/pages/Guardian"));
 const CollectiveStorytellingPage = lazy(() => import("@/pages/CollectiveStorytelling"));
 const LiterarySanctuaryPage = lazy(() => import("@/pages/LiterarySanctuary"));
 const NotFound = lazy(() => import("@/pages/not-found"));
@@ -56,6 +56,14 @@ function Router() {
   const protectedPaths = ["/chat", "/social"];
   const isProtectedPage = protectedPaths.some(path => location === path || location.startsWith(path));
   const isCreationEditor = location.startsWith("/creations/") && location !== "/creations";
+  const isCreatorOnly = location === "/god" || location.startsWith("/god/");
+  const isCreator = user?.email === "cocoraec@gmail.com";
+
+  // Redirect to home if trying to access creator console without auth
+  if (isCreatorOnly && !isCreator) {
+    window.location.href = "/";
+    return null;
+  }
 
   // Redirect to home if trying to access protected content without auth
   if (!user && (isProtectedPage || isCreationEditor)) {
@@ -77,9 +85,9 @@ function Router() {
           <Route path="/pricing" component={Pricing} />
           <Route path="/social" component={SocialGenerator} />
           <Route path="/wisdom" component={WisdomCirclePage} />
-          <Route path="/poetry" component={PoetrySlamPage} />
           <Route path="/stories" component={CollectiveStorytellingPage} />
           <Route path="/literary" component={LiterarySanctuaryPage} />
+          <Route path="/god" component={Guardian} />
           <Route component={NotFound} />
         </Switch>
       </main>
