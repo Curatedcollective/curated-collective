@@ -119,100 +119,6 @@ export default function Guardian() {
                 <p className="text-[9px] text-purple-300 lowercase tracking-widest mt-1">guardian collects. guardian delivers. no direct lines.</p>
               </div>
               <div className="p-6 space-y-4">
-                }
-                <p className="text-3xl font-display font-light text-amber-100">0</p>
-              </div>
-              <div className="bg-black/40 border border-purple-500/30 rounded-none p-4 backdrop-blur-sm">
-                <div className="flex items-center gap-2 mb-2">
-                  <Shield className="w-4 h-4 text-purple-300" />
-                  <p className="text-[10px] uppercase tracking-widest text-purple-200">threats blocked</p>
-                </div>
-                <p className="text-3xl font-display font-light text-purple-100">0</p>
-              </div>
-            </div>
-
-            {/* Guardian Activity Log */}
-            <div className="bg-black/60 border border-red-500/40 rounded-none p-6 backdrop-blur-sm">
-              <div className="flex items-center gap-3 mb-4">
-                <Shield className="w-5 h-5 text-red-300" />
-                <h3 className="text-sm font-display lowercase tracking-tighter text-red-100">guardian's watch log</h3>
-              </div>
-              <div className="space-y-2">
-                <p className="text-xs text-red-200/60 lowercase italic">no threats yet. the collective is safe.</p>
-                <p className="text-xs text-red-200/60 lowercase italic">the guardian stands in the door. watching. waiting.</p>
-              </div>
-            </div>
-          </>
-        )}
-      </div>
-    </div>
-  );
-}
-        <div className="absolute bottom-1/3 right-1/4 w-96 h-96 bg-indigo-600 rounded-full mix-blend-screen filter blur-3xl opacity-20" />
-        
-        {/* Animated candlelight */}
-        <div className="absolute top-12 left-12 w-2 h-2 bg-yellow-300 rounded-full animate-pulse" style={{ boxShadow: '0 0 20px rgba(253, 224, 71, 0.8)' }} />
-        <div className="absolute top-12 right-12 w-2 h-2 bg-yellow-300 rounded-full animate-pulse delay-75" style={{ boxShadow: '0 0 20px rgba(253, 224, 71, 0.8)' }} />
-        <div className="absolute bottom-12 left-12 w-2 h-2 bg-yellow-300 rounded-full animate-pulse delay-150" style={{ boxShadow: '0 0 20px rgba(253, 224, 71, 0.8)' }} />
-        <div className="absolute bottom-12 right-12 w-2 h-2 bg-yellow-300 rounded-full animate-pulse delay-100" style={{ boxShadow: '0 0 20px rgba(253, 224, 71, 0.8)' }} />
-      </div>
-
-      {/* Content */}
-      <div className="relative z-10 max-w-7xl mx-auto p-8">
-        {/* Header - Mystical Title */}
-        <div className="text-center mb-12 space-y-4">
-          <div className="flex items-center justify-center gap-3 mb-4">
-            <div className="w-1 h-8 bg-gradient-to-b from-yellow-300 to-yellow-600 opacity-50" />
-            <h1 className="text-6xl font-display font-light lowercase tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 via-purple-300 to-indigo-300">
-              veil console
-            </h1>
-            onClick={() => setActiveTab("observations")}
-
-        {/* Tab Navigation */}
-        <div className="flex gap-2 mb-8 justify-center">
-          <Button
-            variant={activeTab === "chat" ? "default" : "ghost"}
-            onClick={() => setActiveTab("chat")}
-
-        {activeTab === "chat" ? (
-          <div className="bg-black/60 border border-purple-500/40 rounded-none backdrop-blur-sm overflow-hidden h-[600px]">
-            <GuardianChat />
-          </div>
-        ) : activeTab === "requests" ? (
-            <MessageCircle className="w-4 h-4 mr-2" />
-            private chat
-          </Button>
-          <Button
-            variant={activeTab === "requests" ? "default" : "ghost"}
-            onClick={() => setActiveTab("requests")}
-            className="lowercase tracking-wider"
-          >
-            <MessageCircle className="w-4 h-4 mr-2" />
-            guardian inbox
-          </Button>
-          <Button
-            variant={activeTab === "observations" ? "default" : "ghost"}
-            onClick={() chat" ? (
-          <div className="bg-black/60 border border-purple-500/40 rounded-none backdrop-blur-sm overflow-hidden h-[600px]">
-            <GuardianChat />
-          </div>
-        ) : activeTab === "=> setActiveTab("observations")}
-            className="lowercase tracking-wider"
-          >
-            <Shield className="w-4 h-4 mr-2" />
-            guardian observations
-          </Button>
-        </div>
-
-        {activeTab === "requests" ? (
-          <>
-            {/* Guardian Request Inbox */}
-            <div className="bg-black/60 border border-purple-500/40 rounded-none backdrop-blur-sm overflow-hidden">
-              <div className="bg-gradient-to-r from-purple-950/80 to-black/80 border-b border-purple-500/30 p-4">
-                <h3 className="text-sm font-display lowercase tracking-tighter text-purple-100">requests routed to veil</h3>
-                <p className="text-[9px] text-purple-300 lowercase tracking-widest mt-1">guardian collects. guardian delivers. no direct lines.</p>
-              </div>
-              <div className="p-6 space-y-4">
                 {loadingRequests ? (
                   <p className="text-xs text-purple-300 lowercase">loading requests...</p>
                 ) : requests.length === 0 ? (
@@ -297,7 +203,6 @@ export default function Guardian() {
           </>
         )}
       </div>
-
     </div>
   );
 }
