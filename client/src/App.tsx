@@ -61,7 +61,7 @@ function Router() {
   const isPublicPage = publicPaths.some(path => location === path || location.startsWith(path + "?"));
   
   // Protected pages require sign-in
-  const protectedPaths = ["/chat", "/social"];
+  const protectedPaths = ["/social"];
   const isProtectedPage = protectedPaths.some(path => location === path || location.startsWith(path));
   const isCreationEditor = location.startsWith("/creations/") && location !== "/creations";
   const isCreatorOnly = location === "/veil-console" || location.startsWith("/veil-console/");

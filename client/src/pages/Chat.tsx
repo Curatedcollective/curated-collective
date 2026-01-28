@@ -22,6 +22,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { cn } from "@/lib/utils";
 import WatchTogether from "@/components/WatchTogether";
 import type { Agent } from "@shared/schema";
+import { AuthModal } from "@/components/AuthModal";
 
 // Types from schema
 interface Message {
@@ -48,6 +49,7 @@ export default function Chat() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [bridgeCreated, setBridgeCreated] = useState(false);
+  const [authOpen, setAuthOpen] = useState(false);
 
   const urlParams = new URLSearchParams(searchString);
   const agentIdFromUrl = urlParams.get("agentId");
@@ -56,17 +58,18 @@ export default function Chat() {
   const addAgentMutation = useAddAgentToChat();
 
   // Fetch Conversations
-  const { data: conversations, isLoading: loadingConvos } = useQuery<Conversation[]>({
+  const { data: conversations = [], isLoading: loadingConvos } = useQuery<Conversation[]>({
     queryKey: ["/api/conversations"],
     queryFn: async () => {
       const res = await fetch("/api/conversations");
       if (!res.ok) throw new Error("Failed to fetch chats");
       return res.json();
-    }
+    },
+    enabled: !!user,
   });
 
   // Fetch Messages for Selected Chat
-  const { data: activeChat, isLoading: loadingMessages } = useQuery<Conversation>({
+  const { data: activeChat, isLoading: loadingMessages } = useQuery<Conversation | null>({
     queryKey: ["/api/conversations", selectedChatId],
     queryFn: async () => {
       if (!selectedChatId) return null;
@@ -74,7 +77,7 @@ export default function Chat() {
       if (!res.ok) throw new Error("Failed to fetch messages");
       return res.json();
     },
-    enabled: !!selectedChatId,
+    enabled: !!selectedChatId && !!user,
     refetchInterval: 3000, // Poll for new messages (simple MVP solution)
   });
 
@@ -86,13 +89,30 @@ export default function Chat() {
       if (!res.ok) return [];
       return res.json();
     },
-    enabled: !!selectedChatId,
+    enabled: !!selectedChatId && !!user,
   });
 
   // Watch together panel state
   const [watchPanelOpen, setWatchPanelOpen] = useState(false);
   const hasPremium = !!(user as any)?.stripeSubscriptionId;
   const firstAgent = conversationAgents[0];
+
+  if (!user) {
+    return (
+      <div className="flex min-h-[calc(100vh-2rem)] md:min-h-[calc(100vh-4rem)] items-center justify-center p-6">
+        <div className="max-w-xl w-full bg-black/60 border border-border/50 p-8 rounded-none text-center space-y-4">
+          <h2 className="text-2xl font-display lowercase tracking-tighter">lab chat</h2>
+          <p className="text-sm text-muted-foreground lowercase">
+            this is your experimental workspace — build conversations, pull in seedlings, and test flows without friction.
+          </p>
+          <Button className="rounded-none uppercase tracking-widest text-xs" onClick={() => setAuthOpen(true)}>
+            sign in to enter
+          </Button>
+          <AuthModal open={authOpen} onClose={() => setAuthOpen(false)} />
+        </div>
+      </div>
+    );
+  }
 
   // Create Conversation
   const createChatMutation = useMutation({

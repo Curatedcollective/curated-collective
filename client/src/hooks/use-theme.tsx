@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState } from "react";
 
-type Theme = "noir" | "emerald" | "twilight" | "rose" | "amber";
+type Theme = "noir" | "emerald" | "twilight" | "rose" | "amber" | "cosmos";
 
 interface ThemeContextType {
   theme: Theme;
@@ -19,7 +19,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const root = document.documentElement;
-    root.classList.remove("theme-noir", "theme-emerald", "theme-twilight", "theme-rose", "theme-amber");
+    root.classList.remove("theme-noir", "theme-emerald", "theme-twilight", "theme-rose", "theme-amber", "theme-cosmos");
     root.classList.add(`theme-${theme}`);
     localStorage.setItem("theme", theme);
   }, [theme]);

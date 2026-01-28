@@ -21,45 +21,45 @@ export default function Guardian() {
   const { user } = useAuth();
 
   const { data: requests = [], isLoading: loadingRequests } = useQuery<GuardianRequest[]>({
-    queryKey: ["/api/guardian/requests"],
-  });
+            <div className="w-1 h-8 bg-gradient-to-b from-yellow-300 to-yellow-600 opacity-50" />
+          </div>
+          <p className="text-sm text-purple-200 lowercase tracking-widest">where the guardian stands watch. where the collective breathes.</p>
+          <p className="text-xs text-purple-300/60 italic lowercase">private chamber. only for you, veil.</p>
+        </div>
 
-  // Check if user is the creator
-  const isCreator = user?.email === 'cocoraec@gmail.com';
+        {/* Tab Navigation */}
+        <div className="flex gap-2 mb-8 justify-center">
+          <Button
+            variant={activeTab === "chat" ? "default" : "ghost"}
+            onClick={() => setActiveTab("chat")}
+            className="lowercase tracking-wider"
+          >
+            <MessageCircle className="w-4 h-4 mr-2" />
+            private chat
+          </Button>
+          <Button
+            variant={activeTab === "requests" ? "default" : "ghost"}
+            onClick={() => setActiveTab("requests")}
+            className="lowercase tracking-wider"
+          >
+            <MessageCircle className="w-4 h-4 mr-2" />
+            guardian inbox
+          </Button>
+          <Button
+            variant={activeTab === "observations" ? "default" : "ghost"}
+            onClick={() => setActiveTab("observations")}
+            className="lowercase tracking-wider"
+          >
+            <Shield className="w-4 h-4 mr-2" />
+            guardian observations
+          </Button>
+        </div>
 
-  // If not the creator at all, redirect
-  useEffect(() => {
-    if (user && !isCreator) {
-      window.location.href = "/";
-    }
-  }, [user, isCreator]);
-
-  // If creator but not veil authenticated, show login modal
-  if (!user) {
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-black via-purple-950 to-black flex items-center justify-center">
-        <p className="text-purple-300 lowercase">loading sanctuary...</p>
-      </div>
-    );
-  }
-
-  if (isCreator && !veilAuthenticated) {
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-black via-purple-950 to-black overflow-hidden">
-        <VeilLogin 
-          open={true} 
-          onClose={() => setVeilAuthenticated(true)}
-        />
-      </div>
-    );
-  }
-
-  return (
-    <div className="min-h-screen bg-gradient-to-b from-black via-purple-950 to-black overflow-hidden">
-      {/* Mystical Background Effects */}
-      <div className="fixed inset-0 pointer-events-none">
-        {/* Ambient glow */}
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-purple-600 rounded-full mix-blend-screen filter blur-3xl opacity-20" />
+        {activeTab === "chat" ? (
+          <div className="bg-black/60 border border-purple-500/40 rounded-none backdrop-blur-sm overflow-hidden h-[600px]">
+            <GuardianChat />
+          </div>
+        ) : activeTab === "requests" ? (
         <div className="absolute bottom-1/3 right-1/4 w-96 h-96 bg-indigo-600 rounded-full mix-blend-screen filter blur-3xl opacity-20" />
         
         {/* Animated candlelight */}
@@ -78,19 +78,19 @@ export default function Guardian() {
             <h1 className="text-6xl font-display font-light lowercase tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 via-purple-300 to-indigo-300">
               veil console
             </h1>
-            <div className="w-1 h-8 bg-gradient-to-b from-yellow-300 to-yellow-600 opacity-50" />
-          </div>
-          <p className="text-sm text-purple-200 lowercase tracking-widest">where the guardian stands watch. where the collective breathes.</p>
-          <p className="text-xs text-purple-300/60 italic lowercase">private chamber. only for you, veil.</p>
-        </div>
+            onClick={() => setActiveTab("observations")}
 
         {/* Tab Navigation */}
         <div className="flex gap-2 mb-8 justify-center">
           <Button
             variant={activeTab === "chat" ? "default" : "ghost"}
             onClick={() => setActiveTab("chat")}
-            className="lowercase tracking-wider"
-          >
+
+        {activeTab === "chat" ? (
+          <div className="bg-black/60 border border-purple-500/40 rounded-none backdrop-blur-sm overflow-hidden h-[600px]">
+            <GuardianChat />
+          </div>
+        ) : activeTab === "requests" ? (
             <MessageCircle className="w-4 h-4 mr-2" />
             private chat
           </Button>

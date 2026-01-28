@@ -133,6 +133,24 @@
   --theme-glow: 251, 191, 36;
 }
 
+/* Cosmos - Neon pride glow */
+.theme-cosmos {
+  --background: 260 60% 4%;
+  --foreground: 210 40% 98%;
+  --card: 260 55% 8%;
+  --card-foreground: 210 40% 98%;
+  --primary: 190 100% 60%;
+  --primary-foreground: 260 60% 4%;
+  --secondary: 300 80% 22%;
+  --secondary-foreground: 210 40% 98%;
+  --muted: 260 30% 16%;
+  --muted-foreground: 210 20% 70%;
+  --accent: 330 90% 60%;
+  --accent-foreground: 260 60% 4%;
+  --border: 260 30% 20%;
+  --theme-glow: 34, 211, 238;
+}
+
 .magical-glow {
   box-shadow: 0 0 20px rgba(var(--theme-glow), 0.15), 0 0 40px rgba(var(--theme-glow), 0.05);
 }

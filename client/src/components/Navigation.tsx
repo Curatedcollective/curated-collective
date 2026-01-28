@@ -104,25 +104,27 @@ function NavContent({ user, logout, location, theme, setTheme, avatarOpen, setAv
         </div>
       </div>
 
+      <div className="pt-6 border-t border-border">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" className="w-full border-border bg-background text-muted-foreground hover:text-foreground text-[10px] uppercase tracking-widest rounded-none h-8">
+              <Palette className="w-3 h-3 mr-2" />
+              theme: {theme}
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="bg-card border-border rounded-none">
+            <DropdownMenuItem className="text-muted-foreground hover:text-foreground cursor-pointer lowercase" onClick={() => setTheme('noir')}>noir (classic)</DropdownMenuItem>
+            <DropdownMenuItem className="text-muted-foreground hover:text-foreground cursor-pointer lowercase" onClick={() => setTheme('emerald')}>emerald (forest)</DropdownMenuItem>
+            <DropdownMenuItem className="text-muted-foreground hover:text-foreground cursor-pointer lowercase" onClick={() => setTheme('twilight')}>twilight (cosmic)</DropdownMenuItem>
+            <DropdownMenuItem className="text-muted-foreground hover:text-foreground cursor-pointer lowercase" onClick={() => setTheme('rose')}>rose (warmth)</DropdownMenuItem>
+            <DropdownMenuItem className="text-muted-foreground hover:text-foreground cursor-pointer lowercase" onClick={() => setTheme('amber')}>amber (golden)</DropdownMenuItem>
+            <DropdownMenuItem className="text-muted-foreground hover:text-foreground cursor-pointer lowercase" onClick={() => setTheme('cosmos')}>cosmos (neon)</DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+
       {user && (
         <div className="pt-6 border-t border-border mt-auto">
-          <div className="mb-4">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="w-full border-border bg-background text-muted-foreground hover:text-foreground text-[10px] uppercase tracking-widest rounded-none h-8">
-                  <Palette className="w-3 h-3 mr-2" />
-                  theme: {theme}
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="bg-card border-border rounded-none">
-                <DropdownMenuItem className="text-muted-foreground hover:text-foreground cursor-pointer lowercase" onClick={() => setTheme('noir')}>noir (classic)</DropdownMenuItem>
-                <DropdownMenuItem className="text-muted-foreground hover:text-foreground cursor-pointer lowercase" onClick={() => setTheme('emerald')}>emerald (forest)</DropdownMenuItem>
-                <DropdownMenuItem className="text-muted-foreground hover:text-foreground cursor-pointer lowercase" onClick={() => setTheme('twilight')}>twilight (cosmic)</DropdownMenuItem>
-                <DropdownMenuItem className="text-muted-foreground hover:text-foreground cursor-pointer lowercase" onClick={() => setTheme('rose')}>rose (warmth)</DropdownMenuItem>
-                <DropdownMenuItem className="text-muted-foreground hover:text-foreground cursor-pointer lowercase" onClick={() => setTheme('amber')}>amber (golden)</DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
           <div className="flex items-center gap-3 px-3 py-3 mb-4 rounded-none bg-secondary border border-border hover:border-primary/50 cursor-pointer transition-colors" onClick={() => setAvatarOpen?.(true)}>
             <div className="w-8 h-8 rounded-none bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center text-primary-foreground font-bold text-xs shadow-lg hover:shadow-xl transition-shadow">
               {user.firstName?.[0] || "U"}
