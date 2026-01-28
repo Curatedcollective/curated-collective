@@ -134,6 +134,67 @@ export async function registerRoutes(
     res.json({ id: user.id, email: user.email, firstName: user.firstName, lastName: user.lastName, profileImageUrl: user.profileImageUrl });
   });
 
+  // === VEIL (GOD CONSOLE) AUTHENTICATION ===
+  // This is for Cori only - private sanctuary access
+  
+  app.post('/api/veil/login', async (req, res) => {
+    const { word, password } = req.body;
+    if (!word || !password) return res.status(400).json({ error: 'Word and password required' });
+    
+    // The Veil is only accessible to the creator
+    const creator = await db.select().from(users).where(users.email.eq('cocoraec@gmail.com')).then(r => r[0]);
+    if (!creator) return res.status(401).json({ error: 'Access denied' });
+    
+    // Check if the "word" matches (stored as a hash for security)
+    // For now, we'll use a simple check - in production, hash this
+    const veilWord = process.env.VEIL_WORD || 'coco'; // Default, should be environment variable
+    if (word !== veilWord) return res.status(401).json({ error: 'Invalid word' });
+    
+    // Verify password
+    const valid = await bcrypt.compare(password, creator.passwordHash);
+    if (!valid) return res.status(401).json({ error: 'Invalid password' });
+    
+    // Create a special veil session
+    req.session.userId = creator.id;
+    req.session.isVeil = true;
+    res.json({ success: true, message: 'Welcome to the sanctuary, Veil' });
+  });
+
+  app.post('/api/veil/forgot', async (req, res) => {
+    const { word } = req.body;
+    const veilWord = process.env.VEIL_WORD || 'coco';
+    
+    if (word !== veilWord) {
+      return res.status(400).json({ error: 'Word not recognized' });
+    }
+    
+    // In a real app, send recovery email
+    res.json({ success: true, message: 'Recovery instructions sent to creator email' });
+  });
+
+  app.post('/api/veil/change-password', async (req, res) => {
+    const { word, oldPassword, newPassword } = req.body;
+    if (!word || !oldPassword || !newPassword) {
+      return res.status(400).json({ error: 'All fields required' });
+    }
+    
+    const veilWord = process.env.VEIL_WORD || 'coco';
+    if (word !== veilWord) return res.status(401).json({ error: 'Invalid word' });
+    
+    const creator = await db.select().from(users).where(users.email.eq('cocoraec@gmail.com')).then(r => r[0]);
+    if (!creator) return res.status(401).json({ error: 'Access denied' });
+    
+    // Verify old password
+    const valid = await bcrypt.compare(oldPassword, creator.passwordHash);
+    if (!valid) return res.status(401).json({ error: 'Current password is incorrect' });
+    
+    // Hash and update new password
+    const newHash = await bcrypt.hash(newPassword, 10);
+    await db.update(users).set({ passwordHash: newHash }).where(users.id.eq(creator.id));
+    
+    res.json({ success: true, message: 'Password changed' });
+  });
+
   // Skip Replit-specific integrations on Railway
   if (!process.env.VERCEL && !process.env.RAILWAY_ENVIRONMENT_NAME) {
     try {

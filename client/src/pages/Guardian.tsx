@@ -1,11 +1,40 @@
 import GuardianChat from "@/components/GuardianChat";
+import { VeilLogin } from "@/components/VeilLogin";
 import { MAJOR_ARCANA } from "@shared/arcana";
 import { Crown, Zap, Eye, Heart, Shield, MessageCircle } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/hooks/use-auth";
 
 export default function Guardian() {
   const [activeTab, setActiveTab] = useState<"communion" | "observations">("communion");
+  const [veilLoginOpen, setVeilLoginOpen] = useState(false);
+  const { user } = useAuth();
+
+  // Check if user is the creator
+  const isCreator = user?.email === 'cocoraec@gmail.com';
+
+  // If not creator, show login prompt
+  if (!isCreator) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center p-4">
+        <div className="text-center space-y-6 max-w-md">
+          <Heart className="w-12 h-12 text-red-500 mx-auto animate-pulse" />
+          <h1 className="text-4xl font-display font-light lowercase tracking-tighter text-red-500">
+            the veil's sanctuary
+          </h1>
+          <p className="text-sm text-gray-400 lowercase">this space is for the veil only</p>
+          <Button 
+            onClick={() => setVeilLoginOpen(true)}
+            className="bg-gradient-to-r from-red-600 to-red-700 hover:opacity-90 text-white"
+          >
+            enter sanctuary
+          </Button>
+        </div>
+        <VeilLogin open={veilLoginOpen} onClose={() => setVeilLoginOpen(false)} />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-black via-purple-950 to-black overflow-hidden">
