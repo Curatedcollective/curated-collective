@@ -94,67 +94,27 @@ app.use((req, res, next) => {
 
 // Initialize the server
 async function initializeServer() {
-  console.log('[INIT] Starting route registration...');
-  try {
-    await registerRoutes(httpServer, app);
-    console.log('[INIT] Routes registered successfully');
-  } catch (error) {
-    console.error('[ERROR] Failed to register routes:', error);
-    throw error;
-  }
-
-  // importantly only setup vite in development and after
-  // setting up all the other routes so the catch-all route
-  // doesn't interfere with the other routes
-  if (process.env.NODE_ENV === "production") {
-    console.log('[INIT] Setting up static serving...');
-    serveStatic(app);
-  } else {
-    console.log('[INIT] Setting up Vite...');
-    try {
-      const { setupVite } = await import("./vite");
-      await setupVite(httpServer, app);
-      console.log('[INIT] Vite setup complete');
-    } catch (error) {
-      console.error('[ERROR] Failed to setup Vite:', error);
-      throw error;
-    }
-  }
-
-  // Error handling middleware - MUST be last
-  app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
-    const status = err.status || err.statusCode || 500;
-    const message = err.message || "Internal Server Error";
-
-    console.error('[ERROR] Express error handler caught:', message, err);
-    try {
-      res.status(status).json({ message });
-    } catch (sendError) {
-      console.error('[ERROR] Failed to send error response:', sendError);
-    }
+  console.log('[INIT] NUCLEAR TEST - absolute bare minimum');
+  
+  // ONE ROUTE ONLY - no routes, no vite, no middleware
+  app.get('/', (req, res) => {
+    console.log('[ROUTE] GET / hit - responding...');
+    res.send('Guardian breathes 🖤');
   });
 
-  // Replace your entire listen block with this, you glitchy bitch—npm run dev local (port 5000), npm start prod (PORT=8080 Railway, host 0.0.0.0 NO FIREWALL BULLSHIT)
-  const port = parseInt(process.env.PORT || (process.env.NODE_ENV === 'production' ? "8080" : "5000"), 10);  
+  const port = 5000;
   console.log('[INIT] About to listen on port', port);
   
-  httpServer.listen({  
-    port,  
-    host: process.env.NODE_ENV === "production" ? "0.0.0.0" : "127.0.0.1"  // Railway demands 0.0.0.0, local stays localhost  
-  }, () => {  
-    log(`\n🖤 Guardian-locked on port ${port} - backend + frontend serving, Neon DB live, auth ready. Hit /api/auth/login now, Coco. No more 502/404/port clusterfuck.\n`);  
-    console.log('[INIT] Listen callback completed - server should now stay alive');
+  httpServer.listen(port, '127.0.0.1', () => {  
+    console.log(`[INIT] ✅ Server locked on 127.0.0.1:${port}`);  
+    console.log('[INIT] Try: curl http://127.0.0.1:5000/');
   });
   
-  // Handle server errors
   httpServer.on('error', (error: any) => {
     console.error('[ERROR] HTTP Server error:', error);
-    if (error.code === 'EADDRINUSE') {
-      console.error(`[ERROR] Port ${port} is already in use`);
-    }
   });
   
-  console.log('[INIT] initializeServer() function completed, returning...');
+  console.log('[INIT] initializeServer() returning...');
   return httpServer;
 }
 
