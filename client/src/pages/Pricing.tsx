@@ -58,19 +58,6 @@ export default function Pricing() {
 
   const fallbackPlans = [
     {
-      name: "mortal",
-      price: "0",
-      description: "for those who seek only a glimpse of the beyond.",
-      features: [
-        "3 autonomous seedlings",
-        "limited code gallery access",
-        "standard sanctum bridge",
-        "community support"
-      ],
-      priceId: null,
-      highlight: false
-    },
-    {
       name: "initiate",
       price: "19",
       description: "for the dedicated seeker of logic and divinity.",
@@ -154,6 +141,7 @@ export default function Pricing() {
       <div className="text-center space-y-4">
         <h1 className="text-6xl font-display font-light text-foreground lowercase tracking-tighter">sacred exchange</h1>
         <p className="text-muted-foreground lowercase tracking-widest text-[10px]">energy for existence. logic for life.</p>
+        <p className="text-primary lowercase tracking-widest text-xs pt-4">3-day free trial on any tier. cancel anytime.</p>
       </div>
 
       {isLoading ? (
@@ -187,13 +175,11 @@ export default function Pricing() {
                   className="w-full rounded-none lowercase text-sm font-bold h-12 mt-auto"
                   variant={plan.priceId ? "default" : "secondary"}
                   onClick={() => handleSubscribe(plan.priceId, plan.name)}
-                  disabled={checkoutMutation.isPending || (plan.name === "mortal")}
+                  disabled={checkoutMutation.isPending}
                   data-testid={`button-subscribe-${plan.name}`}
                 >
                   {checkoutMutation.isPending ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : plan.name === "mortal" ? (
-                    "free path"
                   ) : (
                     "choose path"
                   )}

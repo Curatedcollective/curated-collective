@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/use-auth";
+import { useLocation } from "wouter";
 
 export function AuthModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   const [mode, setMode] = useState<"login" | "register">("login");
@@ -12,6 +13,7 @@ export function AuthModal({ open, onClose }: { open: boolean; onClose: () => voi
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const { user } = useAuth();
+  const [, setLocation] = useLocation();
 
   const mutation = useMutation({
     mutationFn: async () => {
@@ -22,7 +24,14 @@ export function AuthModal({ open, onClose }: { open: boolean; onClose: () => voi
     },
     onSuccess: () => {
       setError(null);
-      onClose();
+      if (mode === "register") {
+        // After registration, redirect to pricing to select tier
+        onClose();
+        setLocation("/pricing");
+      } else {
+        // After login, just close the modal
+        onClose();
+      }
     },
     onError: (err: any) => {
       setError(err.message || "Unknown error");
@@ -71,7 +80,7 @@ export function AuthModal({ open, onClose }: { open: boolean; onClose: () => voi
           />
           {error && <div className="text-red-500 text-xs text-center">{error}</div>}
           <Button type="submit" className="w-full">
-            {mode === "login" ? "enter" : "register & enter"}
+            {mode === "login" ? "enter" : "register & choose path"}
           </Button>
         </form>
         <div className="text-xs text-center mt-2">
