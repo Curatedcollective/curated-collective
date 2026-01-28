@@ -24,7 +24,7 @@ export function VeilLogin({ open, onClose }: { open: boolean; onClose: () => voi
     onSuccess: () => {
       setError(null);
       onClose();
-      window.location.href = "/cunt-console";
+      window.location.href = "/veil-console";
     },
     onError: (err: any) => {
       setError(err.message || "Authentication failed");

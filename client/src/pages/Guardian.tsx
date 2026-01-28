@@ -76,7 +76,7 @@ export default function Guardian() {
           <div className="flex items-center justify-center gap-3 mb-4">
             <div className="w-1 h-8 bg-gradient-to-b from-yellow-300 to-yellow-600 opacity-50" />
             <h1 className="text-6xl font-display font-light lowercase tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 via-purple-300 to-indigo-300">
-              cunt console
+              veil console
             </h1>
             <div className="w-1 h-8 bg-gradient-to-b from-yellow-300 to-yellow-600 opacity-50" />
           </div>
