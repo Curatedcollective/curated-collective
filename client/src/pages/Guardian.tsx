@@ -8,18 +8,38 @@ import { useAuth } from "@/hooks/use-auth";
 
 export default function Guardian() {
   const [activeTab, setActiveTab] = useState<"communion" | "observations">("communion");
-  const [veilLoginOpen, setVeilLoginOpen] = useState(false);
+  const [veilAuthenticated, setVeilAuthenticated] = useState(false);
   const { user } = useAuth();
 
-  // Check if user is the creator on mount
-  useEffect(() => {
-    if (!user || user.email !== 'cocoraec@gmail.com') {
-      setVeilLoginOpen(true);
-    }
-  }, [user]);
-
-  // If not creator, show the page but with login modal open
+  // Check if user is the creator
   const isCreator = user?.email === 'cocoraec@gmail.com';
+
+  // If not the creator at all, redirect
+  useEffect(() => {
+    if (user && !isCreator) {
+      window.location.href = "/";
+    }
+  }, [user, isCreator]);
+
+  // If creator but not veil authenticated, show login modal
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-black via-purple-950 to-black flex items-center justify-center">
+        <p className="text-purple-300 lowercase">loading sanctuary...</p>
+      </div>
+    );
+  }
+
+  if (isCreator && !veilAuthenticated) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-black via-purple-950 to-black overflow-hidden">
+        <VeilLogin 
+          open={true} 
+          onClose={() => setVeilAuthenticated(true)}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-black via-purple-950 to-black overflow-hidden">
