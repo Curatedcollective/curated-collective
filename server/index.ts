@@ -160,9 +160,12 @@ async function initializeServer() {
   // ALWAYS bind to process.env.PORT (Railway sets it to 8080, obey or die)
   // Bind to 0.0.0.0 EVERY FUCKING TIME – Railway won’t route otherwise
   if (!process.env.VERCEL) {
+    // ALWAYS use process.env.PORT (Railway injects it), fallback to 5000 for local
+    // Bind to 0.0.0.0 EVERY time — Railway requires this for external access
     const PORT = Number(process.env.PORT) || 5000;
+
     httpServer.listen(PORT, "0.0.0.0", () => {
-      log(`Server is UP and bound to 0.0.0.0:${PORT} – Railway better fucking respond now`);
+      log(`Server running and bound to 0.0.0.0:${PORT} (Railway should now route traffic here)`);
     });
   }
 }
