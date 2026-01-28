@@ -56,7 +56,6 @@ function NavContent({ user, logout, location, theme, setTheme }: any) {
         <NavLink href="/pricing" icon={<Sparkles className="w-4 h-4" />} label="pricing" active={isActive("/pricing")} />
         <NavLink href="/social" icon={<Radio className="w-4 h-4" />} label="transmitter" active={isActive("/social")} />
         <NavLink href="/wisdom" icon={<Crown className="w-4 h-4" />} label="wisdom circle" active={isActive("/wisdom")} />
-        <NavLink href="/poetry" icon={<Mic className="w-4 h-4" />} label="poetry slam" active={isActive("/poetry")} />
         <NavLink href="/stories" icon={<BookOpen className="w-4 h-4" />} label="storytelling" active={isActive("/stories")} />
         <NavLink href="/literary" icon={<Eye className="w-4 h-4" />} label="literary sanctuary" active={isActive("/literary")} />
         
@@ -120,11 +119,11 @@ function NavContent({ user, logout, location, theme, setTheme }: any) {
           </div>
           <Button 
             variant="ghost" 
-            className="w-full justify-start text-muted-foreground hover:text-foreground text-xs lowercase"
+            className="w-full justify-start text-muted-foreground hover:text-destructive hover:bg-destructive/10 text-xs lowercase transition-all duration-300"
             onClick={() => logout()}
           >
             <LogOut className="w-3 h-3 mr-2" />
-            sign out
+            dissolve
           </Button>
         </div>
       )}
