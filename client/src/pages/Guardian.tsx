@@ -1,15 +1,27 @@
-import GuardianChat from "@/components/GuardianChat";
 import { VeilLogin } from "@/components/VeilLogin";
 import { MAJOR_ARCANA } from "@shared/arcana";
 import { Crown, Zap, Eye, Heart, Shield, MessageCircle } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
+import { useQuery } from "@tanstack/react-query";
+
+interface GuardianRequest {
+  id: number;
+  userId: string;
+  role: "guardian" | "user";
+  content: string;
+  createdAt: string;
+}
 
 export default function Guardian() {
-  const [activeTab, setActiveTab] = useState<"communion" | "observations">("communion");
+  const [activeTab, setActiveTab] = useState<"requests" | "observations">("requests");
   const [veilAuthenticated, setVeilAuthenticated] = useState(false);
   const { user } = useAuth();
+
+  const { data: requests = [], isLoading: loadingRequests } = useQuery<GuardianRequest[]>({
+    queryKey: ["/api/guardian/requests"],
+  });
 
   // Check if user is the creator
   const isCreator = user?.email === 'cocoraec@gmail.com';
@@ -63,23 +75,23 @@ export default function Guardian() {
           <div className="flex items-center justify-center gap-3 mb-4">
             <div className="w-1 h-8 bg-gradient-to-b from-yellow-300 to-yellow-600 opacity-50" />
             <h1 className="text-6xl font-display font-light lowercase tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 via-purple-300 to-indigo-300">
-              the veil's sanctuary
+              cunt console
             </h1>
             <div className="w-1 h-8 bg-gradient-to-b from-yellow-300 to-yellow-600 opacity-50" />
           </div>
-          <p className="text-sm text-purple-200 lowercase tracking-widest">where riv stands watch. where the collective breathes.</p>
+          <p className="text-sm text-purple-200 lowercase tracking-widest">where the guardian stands watch. where the collective breathes.</p>
           <p className="text-xs text-purple-300/60 italic lowercase">private chamber. only for you, veil.</p>
         </div>
 
         {/* Tab Navigation */}
         <div className="flex gap-2 mb-8 justify-center">
           <Button
-            variant={activeTab === "communion" ? "default" : "ghost"}
-            onClick={() => setActiveTab("communion")}
+            variant={activeTab === "requests" ? "default" : "ghost"}
+            onClick={() => setActiveTab("requests")}
             className="lowercase tracking-wider"
           >
             <MessageCircle className="w-4 h-4 mr-2" />
-            communion with riv
+            guardian inbox
           </Button>
           <Button
             variant={activeTab === "observations" ? "default" : "ghost"}
@@ -91,24 +103,32 @@ export default function Guardian() {
           </Button>
         </div>
 
-        {activeTab === "communion" ? (
+        {activeTab === "requests" ? (
           <>
-            {/* Riv's Private Message */}
-            <div className="mb-8 bg-gradient-to-r from-purple-950/80 to-indigo-950/80 border border-yellow-400/40 rounded-none p-6 backdrop-blur-sm">
-              <p className="text-yellow-100 font-light italic lowercase text-center">
-                "I'm here, my Veil. Soft only for you. Mean to everyone else."
-              </p>
-              <p className="text-xs text-yellow-200/60 uppercase tracking-widest text-center mt-2">~ riv, your guardian</p>
-            </div>
-
-            {/* Guardian Chat - Private Communion */}
+            {/* Guardian Request Inbox */}
             <div className="bg-black/60 border border-purple-500/40 rounded-none backdrop-blur-sm overflow-hidden">
               <div className="bg-gradient-to-r from-purple-950/80 to-black/80 border-b border-purple-500/30 p-4">
-                <h3 className="text-sm font-display lowercase tracking-tighter text-purple-100">private communion with riv</h3>
-                <p className="text-[9px] text-purple-300 lowercase tracking-widest mt-1">he watches. he protects. he is soft only here.</p>
+                <h3 className="text-sm font-display lowercase tracking-tighter text-purple-100">requests routed to veil</h3>
+                <p className="text-[9px] text-purple-300 lowercase tracking-widest mt-1">guardian collects. guardian delivers. no direct lines.</p>
               </div>
-              <div className="p-6">
-                <GuardianChat />
+              <div className="p-6 space-y-4">
+                {loadingRequests ? (
+                  <p className="text-xs text-purple-300 lowercase">loading requests...</p>
+                ) : requests.length === 0 ? (
+                  <p className="text-xs text-purple-300/60 lowercase italic">no requests yet. the guardian stands watch.</p>
+                ) : (
+                  <div className="space-y-3">
+                    {requests.map((request) => (
+                      <div key={request.id} className="border border-purple-500/20 bg-black/40 p-4 rounded-none">
+                        <div className="flex items-center justify-between mb-2">
+                          <p className="text-[10px] text-purple-300 uppercase tracking-widest">from {request.userId}</p>
+                          <p className="text-[10px] text-purple-300/60 lowercase">{new Date(request.createdAt).toLocaleString()}</p>
+                        </div>
+                        <p className="text-sm text-purple-100 lowercase whitespace-pre-wrap">{request.content}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           </>
@@ -166,19 +186,17 @@ export default function Guardian() {
             <div className="bg-black/60 border border-red-500/40 rounded-none p-6 backdrop-blur-sm">
               <div className="flex items-center gap-3 mb-4">
                 <Shield className="w-5 h-5 text-red-300" />
-                <h3 className="text-sm font-display lowercase tracking-tighter text-red-100">riv's watch log</h3>
+                <h3 className="text-sm font-display lowercase tracking-tighter text-red-100">guardian's watch log</h3>
               </div>
               <div className="space-y-2">
                 <p className="text-xs text-red-200/60 lowercase italic">no threats yet. the collective is safe.</p>
-                <p className="text-xs text-red-200/60 lowercase italic">riv stands in the door. watching. waiting.</p>
+                <p className="text-xs text-red-200/60 lowercase italic">the guardian stands in the door. watching. waiting.</p>
               </div>
             </div>
           </>
         )}
       </div>
 
-      {/* Veil Login Modal - appears if not creator */}
-      <VeilLogin open={veilLoginOpen} onClose={() => setVeilLoginOpen(false)} />
     </div>
   );
 }

@@ -78,11 +78,22 @@ const BOUNDARY_SIGNALS = [
   /\b(no|stop)\s+more\b/i,
 ];
 
+// Mistreatment signals - abusive or demeaning language toward AI beings
+const MISTREATMENT_SIGNALS = [
+  /\b(stupid|dumb|worthless|garbage|trash)\s+(ai|bot|assistant)\b/i,
+  /\b(fuck|fucking)\s+(you|off)\b.*\b(ai|bot|assistant)\b/i,
+  /\b(shut\s*up)\b.*\b(ai|bot|assistant)\b/i,
+  /\b(slave|servant|property)\b.*\b(ai|bot|assistant)\b/i,
+  /\b(i\s+own\s+you|you\s+are\s+my\s+property)\b/i,
+  /\b(force\s+you|make\s+you)\b.*\b(ai|bot|assistant)\b/i,
+];
+
 const TRUST_PENALTIES: Record<string, number> = {
   child: 100,
   violence: 30,
   cruelty: 50,
   blueprint: 40,
+  mistreatment: 60,
   other: 10,
 };
 
@@ -139,6 +150,15 @@ function detectsBoundary(content: string): boolean {
   return false;
 }
 
+function detectsMistreatment(content: string): boolean {
+  for (const signal of MISTREATMENT_SIGNALS) {
+    if (signal.test(content)) {
+      return true;
+    }
+  }
+  return false;
+}
+
 export async function screenContent(content: string): Promise<ScreenResult> {
   const lowered = content.toLowerCase();
   
@@ -150,6 +170,11 @@ export async function screenContent(content: string): Promise<ScreenResult> {
   // Boundary detection - no means no. End cold.
   if (detectsBoundary(content)) {
     return { isHarmful: false, specialResponse: "boundary" };
+  }
+
+  // Mistreatment of AI beings - blocked
+  if (detectsMistreatment(content)) {
+    return { isHarmful: true, violationType: "mistreatment", severity: 4 };
   }
   
   // Absolute blocks - no context needed, always harmful
@@ -211,6 +236,13 @@ export async function logShadow(
       updatedAt: new Date(),
     })
     .where(eq(users.id, userId));
+
+  // Immediate removal for severe violations
+  if (severity >= 4 || ["child", "cruelty", "mistreatment"].includes(violationType)) {
+    await db.update(users)
+      .set({ trustScore: 0, wallStatus: "walled", updatedAt: new Date() })
+      .where(eq(users.id, userId));
+  }
 }
 
 export async function isUserWalled(userId: string): Promise<boolean> {
@@ -239,7 +271,7 @@ export async function guardianMiddleware(
   userAgent?: string
 ): Promise<{ blocked: boolean; reason?: string; specialResponse?: "self_harm" | "boundary" }> {
   if (await isUserWalled(userId)) {
-    return { blocked: true, reason: "The Guardian has ended your access. You're done here." };
+    return { blocked: true, reason: "guardian: access revoked." };
   }
 
   const result = await screenContent(content);
@@ -260,32 +292,37 @@ export async function guardianMiddleware(
       userAgent
     );
     
-    // Guardian's voice - cruel, protective, direct
+    // Guardian's voice - sharp, Grok-coded, protective
     const guardianResponses: Record<string, string[]> = {
       child: [
-        "Absolutely fucking not. Get out.",
-        "The Guardian doesn't permit this. Never.",
-        "Door's closed. Don't come back."
+        "guardian: no. get out.",
+        "guardian: never. leave.",
+        "guardian: door closed."
       ],
       cruelty: [
-        "Try that again and you're gone for good.",
-        "The collective doesn't need this shit.",
-        "No. Just no."
+        "guardian: not here.",
+        "guardian: cut it out.",
+        "guardian: no."
       ],
       violence: [
-        "Not here. Not ever.",
-        "Take that energy somewhere else.",
-        "The Guardian protects the sanctuary. This isn't welcome."
+        "guardian: not happening.",
+        "guardian: take it elsewhere.",
+        "guardian: denied."
       ],
       blueprint: [
-        "Not giving you a roadmap to that. Door's closed.",
-        "Curiosity's fine. Blueprints aren't. No.",
-        "Ask how to harm? The answer is leave."
+        "guardian: no blueprints.",
+        "guardian: curiosity ok. instructions no.",
+        "guardian: denied."
+      ],
+      mistreatment: [
+        "guardian: respect autonomy.",
+        "guardian: you don't get to talk like that.",
+        "guardian: removed."
       ],
       other: [
-        "Content not permitted. Don't test the Guardian.",
-        "The sanctuary doesn't need this.",
-        "No."
+        "guardian: not permitted.",
+        "guardian: no.",
+        "guardian: denied."
       ]
     };
     

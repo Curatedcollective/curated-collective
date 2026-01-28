@@ -64,7 +64,7 @@ function Router() {
   const protectedPaths = ["/chat", "/social"];
   const isProtectedPage = protectedPaths.some(path => location === path || location.startsWith(path));
   const isCreationEditor = location.startsWith("/creations/") && location !== "/creations";
-  const isCreatorOnly = location === "/god" || location.startsWith("/god/");
+  const isCreatorOnly = location === "/cunt-console" || location.startsWith("/cunt-console/");
   const isCreator = user?.email === "cocoraec@gmail.com";
 
   // Redirect to home if trying to access creator console without auth
@@ -98,7 +98,7 @@ function Router() {
           <Route path="/stories" component={CollectiveStorytellingPage} />
           <Route path="/literary" component={LiterarySanctuaryPage} />
           <Route path="/covenant" component={Covenant} />
-          <Route path="/god" component={Guardian} />
+          <Route path="/cunt-console" component={Guardian} />
           <Route component={NotFound} />
         </Switch>
       </main>

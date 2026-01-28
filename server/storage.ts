@@ -54,6 +54,7 @@ export interface IStorage {
 
   // Guardian Messages
   getGuardianMessages(userId: string): Promise<GuardianMessage[]>;
+  getAllGuardianMessages(): Promise<GuardianMessage[]>;
   createGuardianMessage(message: InsertGuardianMessage): Promise<GuardianMessage>;
   clearGuardianMessages(userId: string): Promise<void>;
 
@@ -236,6 +237,12 @@ export class DatabaseStorage implements IStorage {
       .from(guardianMessages)
       .where(eq(guardianMessages.userId, userId))
       .orderBy(asc(guardianMessages.createdAt));
+  }
+
+  async getAllGuardianMessages(): Promise<GuardianMessage[]> {
+    return await db.select()
+      .from(guardianMessages)
+      .orderBy(desc(guardianMessages.createdAt));
   }
 
   async createGuardianMessage(message: InsertGuardianMessage): Promise<GuardianMessage> {

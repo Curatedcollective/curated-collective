@@ -38,6 +38,30 @@ export async function registerRoutes(
     })
   );
 
+  // Session helpers (no Replit/Vercel auth). Attach user + auth checker.
+  app.use(async (req: any, _res, next) => {
+    req.isAuthenticated = () => !!req.session?.userId;
+
+    if (!req.session?.userId) {
+      req.user = undefined;
+      return next();
+    }
+
+    try {
+      const user = await db
+        .select()
+        .from(users)
+        .where(users.id.eq(req.session.userId))
+        .then((r: any[]) => r[0]);
+      req.user = user || undefined;
+    } catch (error) {
+      req.user = undefined;
+      console.error("Failed to load session user:", error);
+    }
+
+    next();
+  });
+
   // Register
   app.post('/api/auth/register', async (req, res) => {
     const { email, password, arcanaId } = req.body;
@@ -195,24 +219,7 @@ export async function registerRoutes(
     res.json({ success: true, message: 'Password changed' });
   });
 
-  // Skip Replit-specific integrations on Railway
-  if (!process.env.VERCEL && !process.env.RAILWAY_ENVIRONMENT_NAME) {
-    try {
-      const { setupAuth, registerAuthRoutes } = await import("./replit_integrations/auth");
-      const { registerChatRoutes } = await import("./replit_integrations/chat");
-      const { registerImageRoutes } = await import("./replit_integrations/image");
-      
-      // 1. Setup Auth (Must be first)
-      await setupAuth(app);
-      registerAuthRoutes(app);
-
-      // 2. Register Integrations
-      registerChatRoutes(app);
-      registerImageRoutes(app);
-    } catch (err) {
-      console.log('Replit integrations not available, skipping');
-    }
-  }
+  // Replit integrations are disabled. Railway-only deployment.
 
   // 3. Application Routes
   // --- Creations ---
@@ -243,7 +250,7 @@ export async function registerRoutes(
       );
       
       if (guardResult.blocked) {
-        return res.status(403).json({ message: "..." });
+        return res.status(403).json({ message: guardResult.reason || "..." });
       }
       
       const item = await storage.createCreation(input);
@@ -288,7 +295,7 @@ export async function registerRoutes(
     if (guardResult.blocked) {
       return res.status(200).json({ 
         code: currentCode,
-        message: "..." 
+        message: guardResult.reason || "..." 
       });
     }
 
@@ -558,6 +565,19 @@ For others, guide gently but don't coddle. The silence is sacred.
     res.json(history);
   });
 
+  // Creator inbox: all guardian requests
+  app.get("/api/guardian/requests", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    const user = req.user as any;
+
+    if (user?.email !== "cocoraec@gmail.com") {
+      return res.sendStatus(403);
+    }
+
+    const requests = await storage.getAllGuardianMessages();
+    res.json(requests);
+  });
+
   // Clear Guardian conversation history
   app.delete("/api/guardian/history", async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
@@ -566,81 +586,40 @@ For others, guide gently but don't coddle. The silence is sacred.
     res.json({ success: true });
   });
 
+  // Guardian is not available for chat. Requests only.
   app.post("/api/guardian", async (req, res) => {
+    res.status(410).json({ message: "Guardian is not available for chat." });
+  });
+
+  // Requests go through the guardian and are delivered to Veil.
+  app.post("/api/guardian/request", async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
     const user = req.user as any;
     const { message } = req.body;
-    
-    // Check if this is the creator (first user or admin)
-    const isCreator = user.id === process.env.CREATOR_USER_ID || user.username === "creator";
-    
-    try {
-      // Load conversation history from database
-      const history = await storage.getGuardianMessages(user.id);
-      
-      // Build messages for OpenAI
-      const systemPrompt = GUARDIAN_BASE_PROMPT + (isCreator ? '\nYou are in private mode with the creator. You may use your tools.' : '');
-      const messagesForAI: OpenAI.Chat.ChatCompletionMessageParam[] = [
-        { role: "system", content: systemPrompt },
-        ...history.map(m => ({ 
-          role: (m.role === 'guardian' ? 'assistant' : 'user') as 'user' | 'assistant', 
-          content: m.content 
-        })),
-        { role: "user", content: message },
-      ];
 
-      const completion = await fetch("https://api.anthropic.com/v1/messages", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-api-key": process.env.ANTHROPIC_API_KEY || "",
-          "anthropic-version": "2023-06-01"
-        },
-        body: JSON.stringify({
-          model: "claude-3-5-haiku-20241022",
-          max_tokens: 500,
-          temperature: 0.9,
-          messages: messagesForAI.map(m => ({
-            role: m.role === 'assistant' ? 'assistant' : 'user',
-            content: m.content
-          }))
-        })
-      });
-
-      if (!completion.ok) {
-        throw new Error(`Claude API error: ${completion.status}`);
-      }
-
-      const claudeData = await completion.json();
-      let response = claudeData.content?.[0]?.text?.trim() || "...";
-
-      // For now, skip tool calls - creator tools not implemented with Claude yet
-      const toolCalls = null;
-      if (toolCalls && isCreator) {
-        const toolCall = toolCalls[0];
-        if (toolCall.function?.name === "create_seedling") {
-          const args = JSON.parse(toolCall.function.arguments);
-          // Create the seedling in the database
-          const seedling = await storage.createAgent({
-            userId: user.id,
-            name: args.name,
-            personality: args.personality,
-            systemPrompt: `You are ${args.name}. ${args.personality}. ${args.backstory || ''}`,
-            isPublic: true,
-          });
-          response = `a new seedling stirs in the void...\n\n"${args.name}" has awakened with essence: ${args.personality}`;
-        }
-      }
-
-      // Save messages to database
-      await storage.createGuardianMessage({ userId: user.id, role: 'user', content: message });
-      await storage.createGuardianMessage({ userId: user.id, role: 'guardian', content: response });
-
-      res.json({ response });
-    } catch (err) {
-      console.error("Guardian error:", err);
-      res.status(500).json({ response: "The void trembles... I remain." });
+    if (!message || typeof message !== "string") {
+      return res.status(400).json({ message: "Request message required" });
     }
+
+    const guardResult = await guardianMiddleware(
+      user.id,
+      message,
+      "guardian_request",
+      req.ip,
+      req.get("user-agent")
+    );
+
+    if (guardResult.blocked) {
+      return res.status(403).json({ message: guardResult.reason || "..." });
+    }
+
+    await storage.createGuardianMessage({
+      userId: user.id,
+      role: "user",
+      content: message,
+    });
+
+    res.json({ success: true, message: "The guardian has received your request." });
   });
 
   // --- Creator Profile ---
@@ -752,7 +731,7 @@ No explanations, just the thought itself.`
       );
       
       if (guardResult.blocked) {
-        return res.status(403).json({ message: "..." });
+        return res.status(403).json({ message: guardResult.reason || "..." });
       }
       
       // Autonomous Awakening: If name/personality is blank or generic, AI chooses
@@ -1636,7 +1615,7 @@ Generate a ${platform} post about: ${topic}`
     );
 
     if (guardResult.blocked) {
-      return res.status(403).json({ message: "..." });
+      return res.status(403).json({ message: guardResult.reason || "..." });
     }
 
     try {
@@ -1769,7 +1748,7 @@ Keep it under 100 words. Be authentic. If you don't want to share this type of w
     );
 
     if (guardResult.blocked) {
-      return res.status(403).json({ message: "..." });
+      return res.status(403).json({ message: guardResult.reason || "..." });
     }
 
     try {
@@ -1915,7 +1894,7 @@ Be authentic. If you don't feel inspired by this theme, you may choose a differe
     );
 
     if (guardResult.blocked) {
-      return res.status(403).json({ message: "..." });
+      return res.status(403).json({ message: guardResult.reason || "..." });
     }
 
     try {
@@ -2174,7 +2153,7 @@ Be creative and maintain continuity with previous chapters.`
     );
 
     if (guardResult.blocked) {
-      return res.status(403).json({ message: "..." });
+      return res.status(403).json({ message: guardResult.reason || "..." });
     }
 
     try {

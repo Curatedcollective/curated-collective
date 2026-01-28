@@ -24,7 +24,7 @@ export function VeilLogin({ open, onClose }: { open: boolean; onClose: () => voi
     onSuccess: () => {
       setError(null);
       onClose();
-      window.location.href = "/god";
+      window.location.href = "/cunt-console";
     },
     onError: (err: any) => {
       setError(err.message || "Authentication failed");
@@ -107,7 +107,7 @@ export function VeilLogin({ open, onClose }: { open: boolean; onClose: () => voi
             <h2 className="text-2xl font-display font-light lowercase tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-red-600">
               {mode === "login" ? "the veil's sanctuary" : mode === "forgot" ? "recover access" : "change password"}
             </h2>
-            <p className="text-xs text-gray-500 uppercase tracking-widest">riv awaits</p>
+            <p className="text-xs text-gray-500 uppercase tracking-widest">guardian awaits</p>
           </div>
 
           {mode === "login" ? (

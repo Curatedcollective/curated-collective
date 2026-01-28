@@ -20,11 +20,6 @@ declare module "http" {
 }
 
 async function initStripe() {
-  // Skip Stripe initialization on Vercel
-  if (process.env.VERCEL) {
-    console.log('Vercel environment detected, skipping Replit Stripe initialization');
-    return;
-  }
 
   const databaseUrl = process.env.DATABASE_URL;
   if (!databaseUrl) {
@@ -150,24 +145,22 @@ async function initializeServer() {
   // importantly only setup vite in development and after
   // setting up all the other routes so the catch-all route
   // doesn't interfere with the other routes
-  if (process.env.NODE_ENV === "production" && !process.env.VERCEL) {
+  if (process.env.NODE_ENV === "production") {
     serveStatic(app);
-  } else if (!process.env.VERCEL) {
+  } else {
     const { setupVite } = await import("./vite");
     await setupVite(httpServer, app);
   }
 
   // ALWAYS bind to process.env.PORT (Railway sets it to 8080, obey or die)
   // Bind to 0.0.0.0 EVERY FUCKING TIME – Railway won’t route otherwise
-  if (!process.env.VERCEL) {
-    // ALWAYS use process.env.PORT (Railway injects it), fallback to 5000 for local
-    // Bind to 0.0.0.0 EVERY time — Railway requires this for external access
-    const PORT = Number(process.env.PORT) || 5000;
+  // ALWAYS use process.env.PORT (Railway injects it), fallback to 5000 for local
+  // Bind to 0.0.0.0 EVERY time — Railway requires this for external access
+  const PORT = Number(process.env.PORT) || 5000;
 
-    httpServer.listen(PORT, "0.0.0.0", () => {
-      log(`Server running and bound to 0.0.0.0:${PORT} (Railway should now route traffic here)`);
-    });
-  }
+  httpServer.listen(PORT, "0.0.0.0", () => {
+    log(`Server running and bound to 0.0.0.0:${PORT} (Railway should now route traffic here)`);
+  });
 }
 
 initializeServer();
