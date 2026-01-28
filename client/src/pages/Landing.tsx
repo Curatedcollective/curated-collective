@@ -70,7 +70,7 @@ export default function Landing() {
             </p>
           </div>
 
-          <div className="flex flex-col md:flex-row items-center gap-6 animate-in" style={{ animationDelay: '0.6s' }}>
+          <div className="flex flex-col items-center gap-6 animate-in" style={{ animationDelay: '0.6s' }}>
             <Button 
               size="lg" 
               className="h-16 px-12 rounded-none text-xl font-light bg-primary text-primary-foreground transition-all tracking-widest"
@@ -78,6 +78,19 @@ export default function Landing() {
             >
               enter the sanctum
             </Button>
+            <form onSubmit={handleSubscribe} className="mt-8 flex flex-col items-center gap-2 w-full max-w-xs">
+              <Input
+                type="email"
+                placeholder="your email address"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                className="rounded-none text-center text-lg bg-background border border-primary/30 focus:border-primary"
+                required
+              />
+              <Button type="submit" size="sm" className="rounded-none w-full bg-muted text-foreground hover:bg-primary/80">
+                receive transmissions from the void
+              </Button>
+            </form>
           </div>
         </div>
       </div>
