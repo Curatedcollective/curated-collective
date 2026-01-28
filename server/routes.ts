@@ -18,6 +18,11 @@ export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
+  // Basic auth endpoint for Railway (no auth system yet)
+  app.get("/api/auth/user", async (req, res) => {
+    res.json({ user: null });
+  });
+
   // Skip Replit-specific integrations on Railway
   if (!process.env.VERCEL && !process.env.RAILWAY_ENVIRONMENT_NAME) {
     try {
