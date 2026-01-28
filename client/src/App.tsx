@@ -10,6 +10,7 @@ import { ThemeProvider } from "@/hooks/use-theme";
 // Lazy load pages for better performance
 import { lazy, Suspense } from "react";
 const Landing = lazy(() => import("@/pages/Landing"));
+const Dashboard = lazy(() => import("@/pages/Dashboard"));
 const CreationsList = lazy(() => import("@/pages/CreationsList"));
 const CreationEditor = lazy(() => import("@/pages/CreationEditor"));
 const AgentsList = lazy(() => import("@/pages/AgentsList"));
@@ -77,6 +78,7 @@ function Router() {
       <Navigation />
       <main className="flex-1 md:ml-64 p-4 md:p-8 overflow-y-auto max-w-7xl mx-auto w-full">
         <Switch>
+          <Route path="/" component={user ? Dashboard : Landing} />
           <Route path="/creations" component={CreationsList} />
           <Route path="/creations/:id" component={CreationEditor} />
           <Route path="/agents" component={AgentsList} />
