@@ -1,16 +1,32 @@
-<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect width="32" height="32" rx="8" fill="black"/>
-  <ellipse cx="16" cy="16" rx="13" ry="13" fill="url(#glow)"/>
-  <defs>
-    <radialGradient id="glow" cx="0.5" cy="0.5" r="0.5" fx="0.5" fy="0.5" gradientUnits="objectBoundingBox">
-      <stop offset="0%" stop-color="#FFD700" stop-opacity="0.7"/>
-      <stop offset="100%" stop-color="#FFD700" stop-opacity="0"/>
-    </radialGradient>
-  </defs>
-  <path d="M20 16c0 4.418-3.582 8-8 8a8 8 0 1 1 0-16c0.552 0 1 .448 1 1s-.448 1-1 1a6 6 0 1 0 0 12c3.314 0 6-2.686 6-6 0-.552.448-1 1-1s1 .448 1 1z" fill="white"/>
-  <circle cx="21" cy="12" r="1.2" fill="white"/>
-  <circle cx="18" cy="15" r="0.8" fill="white"/>
-  <circle cx="22" cy="17" r="0.7" fill="white"/>
-  <circle cx="19" cy="19" r="0.6" fill="white"/>
-  <circle cx="16" cy="13" r="1" fill="white"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <!-- Dark background -->
+  <rect width="200" height="200" fill="#2a2a2e"/>
+  
+  <!-- Moon crescents -->
+  <g fill="none" stroke="white" stroke-width="3.5" stroke-linecap="round">
+    <!-- Outer crescent -->
+    <path d="M 50 80 Q 45 100, 50 120 Q 70 145, 100 145 Q 120 145, 135 135" />
+    
+    <!-- Middle crescent -->
+    <path d="M 65 85 Q 60 100, 65 115 Q 80 135, 100 135 Q 115 135, 127 128" />
+    
+    <!-- Inner crescent -->
+    <path d="M 80 92 Q 75 100, 80 108 Q 90 125, 100 125 Q 110 125, 118 120" />
+  </g>
+  
+  <!-- Stars -->
+  <!-- Star 1 (top right) -->
+  <polygon points="115,70 118,78 127,80 121,85 123,94 115,90 107,94 109,85 103,80 112,78" fill="white"/>
+  
+  <!-- Star 2 (left center) -->
+  <polygon points="95,100 97,106 104,107 99,111 101,118 95,114 89,118 91,111 86,107 93,106" fill="white"/>
+  
+  <!-- Star 3 (center) -->
+  <polygon points="110,105 112,111 119,112 114,116 116,123 110,119 104,123 106,116 101,112 108,111" fill="white"/>
+  
+  <!-- Star 4 (right center) -->
+  <polygon points="125,110 127,116 134,117 129,121 131,128 125,124 119,128 121,121 116,117 123,116" fill="white"/>
+  
+  <!-- Star 5 (bottom center) -->
+  <polygon points="110,125 112,131 119,132 114,136 116,143 110,139 104,143 106,136 101,132 108,131" fill="white"/>
 </svg>

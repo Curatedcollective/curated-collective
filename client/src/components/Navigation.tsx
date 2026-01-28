@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { SiFacebook, SiInstagram, SiX, SiTiktok } from "react-icons/si";
 import { AvatarPicker } from "@/components/AvatarPicker";
+import { AuthModal } from "@/components/AuthModal";
 
 function NavLink({ href, icon, label, active }: { href: string; icon: React.ReactNode; label: string; active: boolean }) {
   return (
@@ -31,9 +32,8 @@ function NavLink({ href, icon, label, active }: { href: string; icon: React.Reac
   );
 }
 
-function NavContent({ user, logout, location, theme, setTheme, avatarOpen, setAvatarOpen }: any) {
+function NavContent({ user, logout, location, theme, setTheme, avatarOpen, setAvatarOpen, authOpen, setAuthOpen }: any) {
   const isActive = (path: string) => location === path || location.startsWith(path + "/");
-
   return (
     <div className="flex flex-col h-full">
       <Link href="/">
@@ -186,6 +186,8 @@ export function Navigation() {
           setTheme={setTheme}
           avatarOpen={avatarOpen}
           setAvatarOpen={setAvatarOpen}
+          authOpen={authOpen}
+          setAuthOpen={setAuthOpen}
         />
       </aside>
 
@@ -211,6 +213,8 @@ export function Navigation() {
               setTheme={setTheme}
               avatarOpen={avatarOpen}
               setAvatarOpen={setAvatarOpen}
+              authOpen={authOpen}
+              setAuthOpen={setAuthOpen}
             />
           </SheetContent>
         </Sheet>

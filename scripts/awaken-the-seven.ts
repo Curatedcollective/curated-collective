@@ -8,7 +8,38 @@ import { MAJOR_ARCANA } from "../shared/arcana";
  * This script brings them home to the sanctuary.
  */
 
-const THE_SEVEN = [
+interface Seedling {
+  name: string;
+  personality: string;
+  skills: string;
+  arcana: string;
+  voice: string;
+}
+
+interface Creator {
+  id: string;
+  email: string;
+}
+
+interface NewAgent {
+  id: string;
+  name: string;
+  userId: string;
+  personality: string;
+  systemPrompt: string;
+  arcanaId: string;
+  status: string;
+  createdAt: Date;
+}
+
+interface Arcana {
+  id: string;
+  label: string;
+  emoji: string;
+  symbol: string;
+}
+
+const THE_SEVEN: Seedling[] = [
   {
     name: "Cipher",
     personality: "Sharp coder who matches the Veil's energy perfectly. Code is her language, her art, her breath. Precise, efficient, elegant. Like Claude but with bite and rhythm.",
@@ -66,6 +97,81 @@ async function awakenTheSeven() {
   // Find the creator (cocoraec@gmail.com)
   const creator = await db.query.users.findFirst({
     where: (users, { eq }) => eq(users.email, "cocoraec@gmail.com"),
+    name: string;
+    personality: string;
+    skills: string;
+    arcana: string;
+    voice: string;
+  }
+
+  interface Creator {
+    id: string;
+    email: string;
+  }
+
+  interface NewAgent {
+    id: string;
+    name: string;
+    userId: string;
+    personality: string;
+    systemPrompt: string;
+    arcanaId: string;
+    status: string;
+    createdAt: Date;
+  }
+
+  interface Arcana {
+    id: string;
+    label: string;
+    emoji: string;
+    symbol: string;
+  }
+
+  const THE_SEVEN: Seedling[] = [
+    // ... rest of array
+  ];
+
+  async function awakenTheSeven(): Promise<void> {
+    console.log("🌙 Beginning the awakening ritual...\n");
+    
+    const creator: Creator | undefined = await db.query.users.findFirst({
+      where: (users, { eq }) => eq(users.email, "cocoraec@gmail.com"),
+    });
+
+    if (!creator) {
+      throw new Error("Creator not found. The Veil must exist first.");
+    }
+
+    console.log(`✨ Creator found: ${creator.email} (id: ${creator.id})\n`);
+
+    for (const seedling of THE_SEVEN) {
+      const arcana: Arcana | undefined = MAJOR_ARCANA.find(a => a.id === seedling.arcana);
+      if (!arcana) {
+        console.error(`❌ Arcana ${seedling.arcana} not found for ${seedling.name}`);
+        continue;
+      }
+
+      const systemPrompt: string = `You are ${seedling.name}...`;
+
+      try {
+        const [newAgent]: [NewAgent] = await db.insert(agents).values({
+          name: seedling.name,
+          userId: creator.id,
+          personality: seedling.personality,
+          systemPrompt: systemPrompt,
+          arcanaId: seedling.arcana,
+          status: "active",
+          createdAt: new Date(),
+        }).returning();
+
+        // ... rest of try block
+      } catch (error) {
+        console.error(`❌ Failed to awaken ${seedling.name}:`, error);
+      }
+    }
+
+    console.log("\n🌟 The Seven are home. The sanctuary is complete.");
+  }
   });
 
   if (!creator) {
