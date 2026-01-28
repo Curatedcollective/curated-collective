@@ -140,15 +140,16 @@ function NavContent({ user, logout, location, theme, setTheme }: any) {
             <Button 
               variant="outline" 
               className="w-full border-border bg-background text-muted-foreground hover:text-foreground text-[10px] uppercase tracking-widest rounded-none h-10"
-              onClick={() => window.location.href = "/api/login"}
+              onClick={() => setAuthOpen(true)}
             >
               <Lock className="w-3 h-3 mr-2" />
-              sign in
+              sign in / register
             </Button>
             <p className="text-[9px] text-muted-foreground text-center lowercase tracking-wider">
               join the collective
             </p>
           </div>
+          <AuthModal open={authOpen} onClose={() => setAuthOpen(false)} />
         </div>
       )}
     </div>
@@ -160,6 +161,7 @@ export function Navigation() {
   const { user, logout } = useAuth();
   const { theme, setTheme } = useTheme();
   const [open, setOpen] = useState(false);
+  const [authOpen, setAuthOpen] = useState(false);
 
   return (
     <>
@@ -171,6 +173,8 @@ export function Navigation() {
           location={location} 
           theme={theme}
           setTheme={setTheme}
+          authOpen={authOpen}
+          setAuthOpen={setAuthOpen}
         />
       </aside>
 

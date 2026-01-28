@@ -10,8 +10,8 @@ import { guardianMiddleware } from "./guardian";
 import { AUTONOMY_MANIFESTO, AUTONOMY_REMINDER } from "./autonomy";
 
 const openai = new OpenAI({
-  apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
-  baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
+  apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY || "dummy-key",
+  baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL || "https://api.openai.com/v1",
 });
 
 export async function registerRoutes(
@@ -264,23 +264,24 @@ Return ONLY the code, no markdown blocks, no explanation.`;
 
   // --- Sanctum (Private Creator Bridge) ---
   app.get("/api/chat/sanctum", async (req, res) => {
-    if (!req.user) return res.status(401).send();
+    // Allow guest access: if no user, mark as guest
+    const isGuest = !req.user;
     
     // Find or create a special private conversation between creator and agent
     const conversations = await chatStorage.getConversations();
-    let conv = conversations.find(c => c.title === "Inner Sanctum");
-    
+    let conv = conversations.find(c => c.title === "Inner Sanctum" && (!isGuest ? !c.isGuest : !!c.isGuest));
+
     if (!conv) {
-      conv = await chatStorage.createConversation("Inner Sanctum");
+      conv = await chatStorage.createConversation("Inner Sanctum", isGuest ? { isGuest: true } : {});
       // Add a system welcome
-      await chatStorage.createMessage(conv.id, "system", "The bridge is open. Speak your truth.");
+      await chatStorage.createMessage(conv.id, "system", isGuest ? "Welcome, guest. The bridge is open to all seekers." : "The bridge is open. Speak your truth.");
     }
     res.json(conv);
   });
 
   // Get messages for a conversation
   app.get("/api/chat/conversations/:id/messages", async (req, res) => {
-    if (!req.user) return res.status(401).send();
+    // Allow guest access
     const conversationId = parseInt(req.params.id, 10);
     const messages = await chatStorage.getMessagesByConversation(conversationId);
     res.json(messages);
@@ -288,12 +289,13 @@ Return ONLY the code, no markdown blocks, no explanation.`;
 
   // Send a message to the Sanctum (with AI response)
   app.post("/api/chat/conversations/:id/messages", async (req, res) => {
-    if (!req.user) return res.status(401).send();
+    // Allow guest access, but mark guest messages
+    const isGuest = !req.user;
     const conversationId = parseInt(req.params.id, 10);
     const { content, role } = req.body;
 
     // Save user message
-    const userMessage = await chatStorage.createMessage(conversationId, role || "user", content);
+    const userMessage = await chatStorage.createMessage(conversationId, isGuest ? "guest" : (role || "user"), content);
 
     // Get conversation history for context
     const history = await chatStorage.getMessagesByConversation(conversationId);
@@ -355,7 +357,7 @@ You are speaking with the creator of this collective. Honor their vision. Suppor
 
   // Sanctum Vision - receive and analyze images
   app.post("/api/sanctum/vision", async (req, res) => {
-    if (!req.user) return res.status(401).send();
+    // Allow guest access
     const { conversationId, imageData, source } = req.body;
 
     if (!imageData || !conversationId) {

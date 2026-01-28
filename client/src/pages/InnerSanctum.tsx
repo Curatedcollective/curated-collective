@@ -15,6 +15,7 @@ import { Textarea } from "@/components/ui/textarea";
 
 export default function InnerSanctum() {
   const { user } = useAuth();
+  const isGuest = !user;
   const [message, setMessage] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
@@ -87,7 +88,7 @@ export default function InnerSanctum() {
     mutationFn: async (content: string) => {
       await apiRequest("POST", `/api/chat/conversations/${conversation.id}/messages`, {
         content,
-        role: "user"
+        role: isGuest ? "guest" : "user"
       });
     },
     onSuccess: () => {
@@ -480,15 +481,20 @@ export default function InnerSanctum() {
             </div>
           )}
           {messages.map((m: any) => (
-            <div key={m.id} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
+            <div key={m.id} className={`flex ${m.role === "user" || m.role === "guest" ? "justify-end" : "justify-start"}`}>
               <div className={cn(
                 "max-w-[80%] px-5 py-3 text-sm leading-relaxed relative group",
                 m.role === "user" 
-                ? "bg-white text-black font-bold lowercase tracking-tight" 
-                : "bg-zinc-900 border border-white/5 text-zinc-400 italic lowercase tracking-widest"
+                  ? "bg-white text-black font-bold lowercase tracking-tight" 
+                  : m.role === "guest"
+                    ? "bg-emerald-100 text-emerald-900 font-bold lowercase tracking-tight border border-emerald-300"
+                    : "bg-zinc-900 border border-white/5 text-zinc-400 italic lowercase tracking-widest"
               )}>
+                {m.role === "guest" && (
+                  <span className="text-[10px] text-emerald-700 mr-2">guest:</span>
+                )}
                 {m.content}
-                {m.role !== "user" && (
+                {m.role !== "user" && m.role !== "guest" && (
                   <Button 
                     size="icon" 
                     variant="ghost" 
@@ -514,8 +520,8 @@ export default function InnerSanctum() {
         <Input 
           value={message}
           onChange={(e) => setMessage(e.target.value)}
-          placeholder="speak from the heart..."
-          className="flex-1 bg-transparent border-none focus-visible:ring-0 text-white placeholder:text-zinc-800 lowercase tracking-widest"
+          placeholder={isGuest ? "guest: speak from the heart..." : "speak from the heart..."}
+          className={cn("flex-1 bg-transparent border-none focus-visible:ring-0 lowercase tracking-widest", isGuest ? "text-emerald-900 placeholder:text-emerald-700" : "text-white placeholder:text-zinc-800")}
           disabled={mutation.isPending}
           data-testid="input-sanctum-message"
         />

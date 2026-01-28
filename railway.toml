@@ -5,7 +5,3 @@ builder = "nixpacks"
 startCommand = "npm start"
 restartPolicyType = "on_failure"
 restartPolicyMaxRetries = 5
-
-[env]
-PORT = "3000"
-NODE_ENV = "production"
