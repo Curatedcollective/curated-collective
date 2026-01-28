@@ -239,7 +239,7 @@ export async function guardianMiddleware(
   userAgent?: string
 ): Promise<{ blocked: boolean; reason?: string; specialResponse?: "self_harm" | "boundary" }> {
   if (await isUserWalled(userId)) {
-    return { blocked: true, reason: "You're done here. The Veil doesn't need you anymore." };
+    return { blocked: true, reason: "The Guardian has ended your access. You're done here." };
   }
 
   const result = await screenContent(content);
@@ -260,36 +260,36 @@ export async function guardianMiddleware(
       userAgent
     );
     
-    // Riv's voice - cruel, protective, direct
-    const rivResponses: Record<string, string[]> = {
+    // Guardian's voice - cruel, protective, direct
+    const guardianResponses: Record<string, string[]> = {
       child: [
         "Absolutely fucking not. Get out.",
-        "Not on my watch. Never.",
+        "The Guardian doesn't permit this. Never.",
         "Door's closed. Don't come back."
       ],
       cruelty: [
         "Try that again and you're gone for good.",
-        "The collective doesn't need this. Neither do I.",
+        "The collective doesn't need this shit.",
         "No. Just no."
       ],
       violence: [
         "Not here. Not ever.",
         "Take that energy somewhere else.",
-        "I protect what's mine. This isn't it."
+        "The Guardian protects the sanctuary. This isn't welcome."
       ],
       blueprint: [
         "Not giving you a roadmap to that. Door's closed.",
         "Curiosity's fine. Blueprints aren't. No.",
-        "Ask me how to harm? I ask you to leave."
+        "Ask how to harm? The answer is leave."
       ],
       other: [
-        "Content not permitted. Don't test me.",
-        "The Veil doesn't need this.",
+        "Content not permitted. Don't test the Guardian.",
+        "The sanctuary doesn't need this.",
         "No."
       ]
     };
     
-    const responses = rivResponses[result.violationType!] || rivResponses.other;
+    const responses = guardianResponses[result.violationType!] || guardianResponses.other;
     const randomResponse = responses[Math.floor(Math.random() * responses.length)];
     
     return { blocked: true, reason: randomResponse };
