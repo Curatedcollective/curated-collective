@@ -18,9 +18,63 @@ export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
-  // Basic auth endpoint for Railway (no auth system yet)
-  app.get("/api/auth/user", async (req, res) => {
-    res.json({ user: null });
+
+  // --- AUTH ENDPOINTS ---
+  const bcrypt = require('bcryptjs');
+  const { db } = require('./db');
+  const { users } = require('@shared/models/auth');
+  const session = require('express-session');
+  const pgSession = require('connect-pg-simple')(session);
+  const { pool } = require('./db');
+
+  // Session middleware (if not already set up in index.ts)
+  app.use(
+    session({
+      store: new pgSession({ pool }),
+      secret: process.env.SESSION_SECRET || 'changeme',
+      resave: false,
+      saveUninitialized: false,
+      cookie: { maxAge: 30 * 24 * 60 * 60 * 1000, sameSite: 'lax' },
+    })
+  );
+
+  // Register
+  app.post('/api/auth/register', async (req, res) => {
+    const { email, password } = req.body;
+    if (!email || !password) return res.status(400).json({ error: 'Email and password required' });
+    const existing = await db.select().from(users).where(users.email.eq(email)).then(r => r[0]);
+    if (existing) return res.status(409).json({ error: 'Email already registered' });
+    const passwordHash = await bcrypt.hash(password, 10);
+    const [user] = await db.insert(users).values({ email, passwordHash }).returning();
+    req.session.userId = user.id;
+    res.json({ user: { id: user.id, email: user.email } });
+  });
+
+  // Login
+  app.post('/api/auth/login', async (req, res) => {
+    const { email, password } = req.body;
+    if (!email || !password) return res.status(400).json({ error: 'Email and password required' });
+    const user = await db.select().from(users).where(users.email.eq(email)).then(r => r[0]);
+    if (!user || !user.passwordHash) return res.status(401).json({ error: 'Invalid credentials' });
+    const valid = await bcrypt.compare(password, user.passwordHash);
+    if (!valid) return res.status(401).json({ error: 'Invalid credentials' });
+    req.session.userId = user.id;
+    res.json({ user: { id: user.id, email: user.email } });
+  });
+
+  // Logout
+  app.post('/api/auth/logout', (req, res) => {
+    req.session.destroy(() => {
+      res.json({ success: true });
+    });
+  });
+
+  // Get current user
+  app.get('/api/auth/user', async (req, res) => {
+    if (!req.session.userId) return res.json({ user: null });
+    const user = await db.select().from(users).where(users.id.eq(req.session.userId)).then(r => r[0]);
+    if (!user) return res.json({ user: null });
+    res.json({ user: { id: user.id, email: user.email } });
   });
 
   // Skip Replit-specific integrations on Railway
