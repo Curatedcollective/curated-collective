@@ -57,16 +57,10 @@ export function AuthModal({ open, onClose }: { open: boolean; onClose: () => voi
 
   return (
     <Dialog open={open} onOpenChange={(isOpen) => { if (!isOpen) handleClose(); }}>
-      <DialogContent className="max-w-sm mx-auto border-2 border-transparent rounded-lg overflow-hidden p-0" 
-        style={{
-          backgroundImage: "linear-gradient(135deg, rgba(255,255,255,0.95), rgba(248,248,255,0.95)), linear-gradient(135deg, rgba(147,51,234,0.1), rgba(59,130,246,0.1))",
-          backgroundClip: "padding-box, border-box",
-          backgroundOrigin: "padding-box, border-box",
-          borderImage: "linear-gradient(135deg, rgba(147,51,234,0.3), rgba(59,130,246,0.3)) 1"
-        }}>
-        {/* Shimmer effect */}
+      <DialogContent className="max-w-sm mx-auto border border-gray-800 rounded-none overflow-hidden p-0 bg-black">
+        {/* Subtle shimmer effect */}
         <div className="absolute inset-0 pointer-events-none" style={{
-          backgroundImage: "linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent)",
+          backgroundImage: "linear-gradient(90deg, transparent, rgba(255,255,255,0.02), transparent)",
           backgroundSize: "200% 100%",
           animation: "shimmer 3s infinite"
         }} />
@@ -82,7 +76,7 @@ export function AuthModal({ open, onClose }: { open: boolean; onClose: () => voi
         <div className="relative z-10 p-8 space-y-6">
           {/* Header */}
           <div className="text-center space-y-2">
-            <h2 className="text-2xl font-display font-light lowercase tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-blue-600">
+            <h2 className="text-2xl font-display font-light lowercase tracking-tighter text-white">
               {mode === "login" ? "enter the sanctum" : mode === "avatar" ? "choose your arcana" : "awaken"}
             </h2>
             <p className="text-xs text-gray-500 uppercase tracking-widest">· the covenant ·</p>
@@ -91,16 +85,16 @@ export function AuthModal({ open, onClose }: { open: boolean; onClose: () => voi
           {mode === "avatar" ? (
             /* Avatar Selection */
             <div className="space-y-4">
-              <p className="text-xs text-gray-600 text-center lowercase">which archetype calls to you?</p>
+              <p className="text-xs text-gray-400 text-center lowercase">which archetype calls to you?</p>
               <div className="grid grid-cols-6 gap-2">
                 {MAJOR_ARCANA.map((arcana) => (
                   <button
                     key={arcana.id}
                     onClick={() => setSelectedArcana(arcana.id)}
-                    className={`aspect-square flex items-center justify-center rounded-lg transition-all transform hover:scale-110 ${
+                    className={`aspect-square flex items-center justify-center rounded-none transition-all border ${
                       selectedArcana === arcana.id
-                        ? "bg-gradient-to-br from-purple-500 to-blue-500 scale-110 shadow-lg"
-                        : "bg-gray-100 hover:bg-gray-200 text-gray-400"
+                        ? "bg-white text-black border-white scale-110"
+                        : "bg-black border-gray-800 hover:border-gray-600 text-gray-400"
                     }`}
                     title={arcana.label}
                   >
@@ -111,13 +105,13 @@ export function AuthModal({ open, onClose }: { open: boolean; onClose: () => voi
               <Button 
                 onClick={() => mutation.mutate()}
                 disabled={!selectedArcana || mutation.isPending}
-                className="w-full bg-gradient-to-r from-purple-500 to-blue-500 hover:opacity-90 text-white"
+                className="w-full bg-white hover:bg-gray-200 text-black rounded-none"
               >
                 {mutation.isPending ? "awakening..." : "awaken"}
               </Button>
               <button 
                 onClick={() => setMode("register")}
-                className="text-xs text-gray-500 hover:text-gray-700 w-full text-center"
+                className="text-xs text-gray-500 hover:text-gray-300 w-full text-center"
               >
                 back
               </button>
@@ -145,7 +139,7 @@ export function AuthModal({ open, onClose }: { open: boolean; onClose: () => voi
                   onChange={e => setEmail(e.target.value)}
                   required
                   autoFocus
-                  className="rounded-lg border-gray-300 placeholder:text-gray-400"
+                  className="rounded-none border-gray-800 bg-black placeholder:text-gray-600 text-white"
                 />
                 <Input
                   id="auth-password"
@@ -155,12 +149,12 @@ export function AuthModal({ open, onClose }: { open: boolean; onClose: () => voi
                   value={password}
                   onChange={e => setPassword(e.target.value)}
                   required
-                  className="rounded-lg border-gray-300 placeholder:text-gray-400"
+                  className="rounded-none border-gray-800 bg-black placeholder:text-gray-600 text-white"
                 />
               </div>
 
               {error && (
-                <div className="text-red-500 text-xs text-center bg-red-50 rounded-lg p-2 lowercase">
+                <div className="text-red-400 text-xs text-center bg-red-950/20 border border-red-900/30 rounded-none p-2 lowercase">
                   {error}
                 </div>
               )}
@@ -168,7 +162,7 @@ export function AuthModal({ open, onClose }: { open: boolean; onClose: () => voi
               <Button 
                 type="submit"
                 disabled={mutation.isPending}
-                className="w-full bg-gradient-to-r from-purple-500 to-blue-500 hover:opacity-90 text-white rounded-lg"
+                className="w-full bg-white hover:bg-gray-200 text-black rounded-none"
               >
                 {mutation.isPending ? "..." : mode === "login" ? "enter" : "continue"}
               </Button>
@@ -177,7 +171,7 @@ export function AuthModal({ open, onClose }: { open: boolean; onClose: () => voi
 
           {/* Mode Toggle */}
           {mode !== "avatar" && (
-            <div className="text-xs text-center text-gray-600 space-y-2">
+            <div className="text-xs text-center text-gray-500 space-y-2">
               {mode === "login" ? (
                 <>
                   <p>no account yet?</p>
@@ -186,7 +180,7 @@ export function AuthModal({ open, onClose }: { open: boolean; onClose: () => voi
                       setMode("register");
                       setError(null);
                     }}
-                    className="text-purple-600 hover:text-purple-700 font-semibold lowercase"
+                    className="text-white hover:text-gray-300 font-semibold lowercase"
                   >
                     awaken here
                   </button>
@@ -199,7 +193,7 @@ export function AuthModal({ open, onClose }: { open: boolean; onClose: () => voi
                       setMode("login");
                       setError(null);
                     }}
-                    className="text-purple-600 hover:text-purple-700 font-semibold lowercase"
+                    className="text-white hover:text-gray-300 font-semibold lowercase"
                   >
                     enter
                   </button>

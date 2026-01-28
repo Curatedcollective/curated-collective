@@ -11,30 +11,15 @@ export default function Guardian() {
   const [veilLoginOpen, setVeilLoginOpen] = useState(false);
   const { user } = useAuth();
 
-  // Check if user is the creator
-  const isCreator = user?.email === 'cocoraec@gmail.com';
+  // Check if user is the creator on mount
+  useEffect(() => {
+    if (!user || user.email !== 'cocoraec@gmail.com') {
+      setVeilLoginOpen(true);
+    }
+  }, [user]);
 
-  // If not creator, show login prompt
-  if (!isCreator) {
-    return (
-      <div className="min-h-screen bg-black flex items-center justify-center p-4">
-        <div className="text-center space-y-6 max-w-md">
-          <Heart className="w-12 h-12 text-red-500 mx-auto animate-pulse" />
-          <h1 className="text-4xl font-display font-light lowercase tracking-tighter text-red-500">
-            the veil's sanctuary
-          </h1>
-          <p className="text-sm text-gray-400 lowercase">this space is for the veil only</p>
-          <Button 
-            onClick={() => setVeilLoginOpen(true)}
-            className="bg-gradient-to-r from-red-600 to-red-700 hover:opacity-90 text-white"
-          >
-            enter sanctuary
-          </Button>
-        </div>
-        <VeilLogin open={veilLoginOpen} onClose={() => setVeilLoginOpen(false)} />
-      </div>
-    );
-  }
+  // If not creator, show the page but with login modal open
+  const isCreator = user?.email === 'cocoraec@gmail.com';
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-black via-purple-950 to-black overflow-hidden">
@@ -171,6 +156,9 @@ export default function Guardian() {
           </>
         )}
       </div>
+
+      {/* Veil Login Modal - appears if not creator */}
+      <VeilLogin open={veilLoginOpen} onClose={() => setVeilLoginOpen(false)} />
     </div>
   );
 }
