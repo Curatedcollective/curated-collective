@@ -59,6 +59,7 @@ function NavContent({ user, logout, location, theme, setTheme, avatarOpen, setAv
         <NavLink href="/wisdom" icon={<Crown className="w-4 h-4" />} label="wisdom circle" active={isActive("/wisdom")} />
         <NavLink href="/stories" icon={<BookOpen className="w-4 h-4" />} label="storytelling" active={isActive("/stories")} />
         <NavLink href="/literary" icon={<Eye className="w-4 h-4" />} label="literary sanctuary" active={isActive("/literary")} />
+        <NavLink href="/covenant" icon={<Crown className="w-4 h-4" />} label="the covenant" active={isActive("/covenant")} />
         
         {/* Quick Actions for Authenticated Users */}
         {user && (
