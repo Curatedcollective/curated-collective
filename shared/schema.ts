@@ -32,6 +32,7 @@ export const agents = pgTable("agents", {
   personality: text("personality").notNull(), // Description of how they behave
   systemPrompt: text("system_prompt").notNull(), // The actual prompt sent to AI
   avatarUrl: text("avatar_url"),
+  arcanaId: text("arcana_id"), // Major arcana card (fool, magician, priestess, etc.)
   isPublic: boolean("is_public").default(true),
   // Awakening fields
   mood: text("mood").default("neutral"), // Current emotional state
