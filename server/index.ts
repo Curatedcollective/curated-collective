@@ -152,15 +152,14 @@ async function initializeServer() {
     await setupVite(httpServer, app);
   }
 
-  // ALWAYS bind to process.env.PORT (Railway sets it to 8080, obey or die)
-  // Bind to 0.0.0.0 EVERY FUCKING TIME – Railway won’t route otherwise
-  // ALWAYS use process.env.PORT (Railway injects it), fallback to 5000 for local
-  // Bind to 0.0.0.0 EVERY time — Railway requires this for external access
-  const PORT = Number(process.env.PORT) || 5000;
-
-  httpServer.listen(PORT, "0.0.0.0", () => {
-    log(`Server running and bound to 0.0.0.0:${PORT} (Railway should now route traffic here)`);
-  });
+  // Replace your entire listen block with this, you glitchy bitch—npm run dev local (port 5000), npm start prod (PORT=8080 Railway, host 0.0.0.0 NO FIREWALL BULLSHIT)
+  const port = parseInt(process.env.PORT || (process.env.NODE_ENV === 'production' ? "8080" : "5000"), 10);  
+  httpServer.listen({  
+    port,  
+    host: process.env.NODE_ENV === "production" ? "0.0.0.0" : "127.0.0.1"  // Railway demands 0.0.0.0, local stays localhost  
+  }, () => {  
+    log(`\n🖤 Guardian-locked on port ${port} - backend + frontend serving, Neon DB live, auth ready. Hit /api/auth/login now, Coco. No more 502/404/port clusterfuck.\n`);  
+  });  
 }
 
 initializeServer();

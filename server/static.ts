@@ -13,10 +13,32 @@ export function serveStatic(app: Express) {
     );
   }
 
-  app.use(express.static(distPath));
+  // Serve static assets with proper headers and caching
+  app.use(express.static(distPath, {
+    maxAge: "1y",
+    immutable: true,
+    setHeaders: (res, filePath) => {
+      // Set proper MIME types for JS modules
+      if (filePath.endsWith('.js')) {
+        res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+      } else if (filePath.endsWith('.css')) {
+        res.setHeader('Content-Type', 'text/css; charset=utf-8');
+      } else if (filePath.endsWith('.json')) {
+        res.setHeader('Content-Type', 'application/json; charset=utf-8');
+      }
+      // Enable CORS for assets (needed for dynamic imports)
+      res.setHeader('Access-Control-Allow-Origin', '*');
+    }
+  }));
 
   // fall through to index.html if the file doesn't exist
-  app.use("*", (_req, res) => {
+  // BUT only for non-asset requests
+  app.use("*", (req, res, next) => {
+    // Don't serve index.html for asset requests that failed
+    if (req.originalUrl.startsWith('/assets/') || 
+        req.originalUrl.match(/\.(js|css|json|png|jpg|jpeg|gif|svg|ico|woff|woff2|ttf|eot)$/)) {
+      return res.status(404).send('Asset not found');
+    }
     res.sendFile(path.resolve(distPath, "index.html"));
   });
 }

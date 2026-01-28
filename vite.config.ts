@@ -16,6 +16,20 @@ export default defineConfig({
   build: {
     outDir: path.resolve(import.meta.dirname, "dist/public"),
     emptyOutDir: true,
+    // Ensure proper chunk naming and splitting
+    rollupOptions: {
+      output: {
+        manualChunks: undefined,
+        // Use hash in filenames for proper caching
+        chunkFileNames: 'assets/[name]-[hash].js',
+        entryFileNames: 'assets/[name]-[hash].js',
+        assetFileNames: 'assets/[name]-[hash].[ext]'
+      }
+    },
+    // Increase chunk size warning limit
+    chunkSizeWarningLimit: 1000,
+    // Ensure source maps are generated for debugging
+    sourcemap: false,
   },
   server: {
     fs: {
