@@ -6,9 +6,6 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { serveStatic } from "./static";
 import { createServer } from "http";
-import { runMigrations } from 'stripe-replit-sync';
-import { getStripeSync } from './stripeClient';
-import { WebhookHandlers } from './webhookHandlers';
 
 const app = express();
 const httpServer = createServer(app);
@@ -19,50 +16,8 @@ declare module "http" {
   }
 }
 
-async function initStripe() {
-
-  const databaseUrl = process.env.DATABASE_URL;
-  if (!databaseUrl) {
-    console.log('DATABASE_URL not found, skipping Stripe initialization');
-    return;
-  }
-
-  try {
-    console.log('Initializing Stripe schema...');
-    await runMigrations({ databaseUrl });
-    console.log('Stripe schema ready');
-
-    try {
-      const stripeSync = await getStripeSync();
-
-      console.log('Setting up managed webhook...');
-      const webhookBaseUrl = `https://${process.env.REPLIT_DOMAINS?.split(',')[0]}`;
-      try {
-        const result = await stripeSync.findOrCreateManagedWebhook(
-          `${webhookBaseUrl}/api/stripe/webhook`
-        );
-        console.log('Webhook result:', result);
-      } catch (webhookErr) {
-        console.log('Webhook setup skipped (may need manual configuration):', webhookErr);
-      }
-
-      console.log('Syncing Stripe data...');
-      stripeSync.syncBackfill()
-        .then(() => console.log('Stripe data synced'))
-        .catch((err: any) => console.error('Error syncing Stripe data:', err));
-    } catch (stripeErr) {
-      console.error('Stripe sync failed (non-fatal):', stripeErr);
-      // Continue - don't crash the server
-    }
-  } catch (error) {
-    console.error('Failed to initialize Stripe:', error);
-    // Continue - don't crash the server
-  }
-}
-
-initStripe().catch(err => console.log('Stripe init skipped for now'));
-
-// Stripe webhook endpoint disabled until keys are configured
+// Stripe removed - will add back later when site is working
+// Stripe webhook endpoint disabled
 // app.post(
 //   '/api/stripe/webhook',
 //   express.raw({ type: 'application/json' }),
@@ -155,8 +110,10 @@ async function initializeServer() {
   if (process.env.NODE_ENV === "production") {
     serveStatic(app);
   } else {
+    console.log('Setting up Vite...');
     const { setupVite } = await import("./vite");
     await setupVite(httpServer, app);
+    console.log('Vite setup complete');
   }
 
   // Replace your entire listen block with this, you glitchy bitch—npm run dev local (port 5000), npm start prod (PORT=8080 Railway, host 0.0.0.0 NO FIREWALL BULLSHIT)
@@ -169,7 +126,10 @@ async function initializeServer() {
   });  
 }
 
-initializeServer();
+initializeServer().catch(err => {
+  console.error('Failed to initialize server:', err);
+  process.exit(1);
+});
 
 // Export for Vercel serverless
 export default app;

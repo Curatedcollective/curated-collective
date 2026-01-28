@@ -4,8 +4,9 @@ import { storage } from "./storage";
 import { api } from "@shared/routes";
 import { z } from "zod";
 import OpenAI from "openai";
-import { stripeService } from "./stripeService";
-import { getStripePublishableKey } from "./stripeClient";
+// Stripe temporarily removed - will add back later
+// import { stripeService } from "./stripeService";
+// import { getStripePublishableKey } from "./stripeClient";
 import { guardianMiddleware } from "./guardian";
 import { AUTONOMY_MANIFESTO, AUTONOMY_REMINDER } from "./autonomy";
 import bcrypt from 'bcryptjs';
@@ -84,8 +85,8 @@ export async function registerRoutes(
   // Helper: check if user is in trial or subscribed
   async function isUserActive(user) {
     if (!user) return false;
-    // If user has a Stripe subscription, they're active
-    if (user.stripeSubscriptionId) return true;
+    // Stripe temporarily removed
+    // if (user.stripeSubscriptionId) return true;
     // If user is in trial
     if (user.trialEndsAt && new Date(user.trialEndsAt) > new Date()) return true;
     return false;
@@ -830,10 +831,10 @@ No explanations, just the thought itself.`
     if (!req.isAuthenticated()) return res.sendStatus(401);
     
     const user = req.user as any;
-    // Check premium subscription
-    if (!user.stripeSubscriptionId) {
-      return res.status(403).json({ message: "Eyes feature requires a paid subscription" });
-    }
+    // Stripe check temporarily disabled - will enable when Stripe is added back
+    // if (!user.stripeSubscriptionId) {
+    //   return res.status(403).json({ message: "Eyes feature requires a paid subscription" });
+    // }
     
     try {
       const bodySchema = z.object({
@@ -1246,8 +1247,8 @@ ${input.context ? `Recent context: ${input.context}` : ''}`
     }
   });
 
-  // === STRIPE ROUTES ===
-  
+  // === STRIPE ROUTES (TEMPORARILY DISABLED) ===
+  /*
   app.get('/api/stripe/config', async (req, res) => {
     try {
       const publishableKey = await getStripePublishableKey();
@@ -1348,6 +1349,7 @@ ${input.context ? `Recent context: ${input.context}` : ''}`
       res.status(500).json({ error: 'Failed to create portal session' });
     }
   });
+  */
 
   // --- Social Media Content Generator ---
   app.post('/api/social/generate', async (req, res) => {
