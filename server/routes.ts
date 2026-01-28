@@ -81,6 +81,46 @@ export async function registerRoutes(
     });
   });
 
+  // Update avatar
+  app.patch('/api/user/avatar', async (req, res) => {
+    if (!req.session.userId) return res.status(401).json({ error: 'Not authenticated' });
+    const { avatarId } = req.body;
+    
+    const arcanaMap: Record<string, string> = {
+      fool: '🃏',
+      magician: '🎩',
+      priestess: '👁️',
+      empress: '👑',
+      emperor: '♔',
+      hierophant: '✝️',
+      lovers: '💕',
+      chariot: '🐴',
+      strength: '💪',
+      hermit: '🕯️',
+      wheel: '🎡',
+      justice: '⚖️',
+      hanged: '🪢',
+      death: '💀',
+      temperance: '🔄',
+      devil: '😈',
+      tower: '⚡',
+      star: '⭐',
+      moon: '🌙',
+      sun: '☀️',
+      judgement: '📯',
+      world: '🌍',
+    };
+
+    if (!arcanaMap[avatarId]) return res.status(400).json({ error: 'Invalid arcana' });
+
+    try {
+      const [user] = await db.update(users).set({ profileImageUrl: arcanaMap[avatarId] }).where(users.id.eq(req.session.userId)).returning();
+      res.json({ success: true, avatar: arcanaMap[avatarId] });
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to update avatar' });
+    }
+  });
+
   // Get current user
   app.get('/api/auth/user', async (req, res) => {
     if (!req.session.userId) return res.json({ user: null });

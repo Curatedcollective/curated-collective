@@ -1,7 +1,7 @@
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { useTheme } from "@/hooks/use-theme";
-import { Code, Bot, MessageSquare, LogOut, Menu, Lock, Sparkles, Palette, Eye, Radio, Loader2, Crown, Mic, BookOpen } from "lucide-react";
+import { Code, Bot, MessageSquare, LogOut, Menu, Lock, Sparkles, Palette, Eye, Radio, Loader2, Crown, BookOpen } from "lucide-react";
 import logoImage from "@assets/generated_images/constellation_seedling_logo_design.png";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
@@ -13,6 +13,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { SiFacebook, SiInstagram, SiX, SiTiktok } from "react-icons/si";
+import { AvatarPicker } from "@/components/AvatarPicker";
 
 function NavLink({ href, icon, label, active }: { href: string; icon: React.ReactNode; label: string; active: boolean }) {
   return (
@@ -30,7 +31,7 @@ function NavLink({ href, icon, label, active }: { href: string; icon: React.Reac
   );
 }
 
-function NavContent({ user, logout, location, theme, setTheme }: any) {
+function NavContent({ user, logout, location, theme, setTheme, avatarOpen, setAvatarOpen }: any) {
   const isActive = (path: string) => location === path || location.startsWith(path + "/");
 
   return (
@@ -108,14 +109,15 @@ function NavContent({ user, logout, location, theme, setTheme }: any) {
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
-          <div className="flex items-center gap-3 px-3 py-3 mb-4 rounded-none bg-secondary border border-border">
-            <div className="w-8 h-8 rounded-none bg-primary flex items-center justify-center text-primary-foreground font-bold text-xs">
+          <div className="flex items-center gap-3 px-3 py-3 mb-4 rounded-none bg-secondary border border-border hover:border-primary/50 cursor-pointer transition-colors" onClick={() => setAvatarOpen?.(true)}>
+            <div className="w-8 h-8 rounded-none bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center text-primary-foreground font-bold text-xs shadow-lg hover:shadow-xl transition-shadow">
               {user.firstName?.[0] || "U"}
             </div>
-            <div className="overflow-hidden">
+            <div className="overflow-hidden flex-1">
               <p className="font-bold text-xs truncate lowercase text-foreground">{user.firstName || "user"}</p>
               <p className="text-[10px] text-muted-foreground truncate">{user.email}</p>
             </div>
+            <span className="text-[8px] text-muted-foreground uppercase">edit</span>
           </div>
           <Button 
             variant="ghost" 
@@ -156,6 +158,7 @@ export function Navigation() {
   const { theme, setTheme } = useTheme();
   const [open, setOpen] = useState(false);
   const [authOpen, setAuthOpen] = useState(false);
+  const [avatarOpen, setAvatarOpen] = useState(false);
 
   return (
     <>
@@ -167,8 +170,8 @@ export function Navigation() {
           location={location} 
           theme={theme}
           setTheme={setTheme}
-          authOpen={authOpen}
-          setAuthOpen={setAuthOpen}
+          avatarOpen={avatarOpen}
+          setAvatarOpen={setAvatarOpen}
         />
       </aside>
 
@@ -192,6 +195,8 @@ export function Navigation() {
               location={location} 
               theme={theme}
               setTheme={setTheme}
+              avatarOpen={avatarOpen}
+              setAvatarOpen={setAvatarOpen}
             />
           </SheetContent>
         </Sheet>
@@ -199,6 +204,9 @@ export function Navigation() {
 
       {/* Spacer for mobile header */}
       <div className="md:hidden h-16" />
+
+      {/* Avatar Picker Modal */}
+      <AvatarPicker open={avatarOpen} onClose={() => setAvatarOpen(false)} />
     </>
   );
 }
