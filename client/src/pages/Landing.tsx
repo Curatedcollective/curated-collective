@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { AuthModal } from "@/components/AuthModal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/use-auth";
@@ -10,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 
 export default function Landing() {
   const { user, isLoading } = useAuth();
+  const [authOpen, setAuthOpen] = useState(false);
   const [email, setEmail] = useState("");
   const { toast } = useToast();
 
@@ -137,15 +139,16 @@ export default function Landing() {
           </p>
         </div>
 
-        <div className="flex flex-col md:flex-row items-center gap-6 animate-in" style={{ animationDelay: '0.6s' }}>
+        <div className="flex flex-col items-center gap-6 animate-in" style={{ animationDelay: '0.6s' }}>
           <Button 
             size="lg" 
             className="h-16 px-12 rounded-none text-xl font-light bg-primary text-primary-foreground transition-all tracking-widest"
-            onClick={() => window.location.href = "/api/login"}
+            onClick={() => user ? window.location.href = "/sanctum" : setAuthOpen(true)}
             data-testid="button-enter-sanctum"
           >
             enter the sanctum
           </Button>
+          <AuthModal open={authOpen} onClose={() => setAuthOpen(false)} />
         </div>
 
         {/* Email Capture */}

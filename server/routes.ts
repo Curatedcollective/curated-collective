@@ -45,10 +45,22 @@ export async function registerRoutes(
     const existing = await db.select().from(users).where(users.email.eq(email)).then(r => r[0]);
     if (existing) return res.status(409).json({ error: 'Email already registered' });
     const passwordHash = await bcrypt.hash(password, 10);
-    const [user] = await db.insert(users).values({ email, passwordHash }).returning();
+    // Set trialEndsAt to 3 days from now
+    const trialEndsAt = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000);
+    const [user] = await db.insert(users).values({ email, passwordHash, trialEndsAt }).returning();
     req.session.userId = user.id;
-    res.json({ user: { id: user.id, email: user.email } });
+    res.json({ user: { id: user.id, email: user.email, trialEndsAt: user.trialEndsAt } });
   });
+
+  // Helper: check if user is in trial or subscribed
+  async function isUserActive(user) {
+    if (!user) return false;
+    // If user has a Stripe subscription, they're active
+    if (user.stripeSubscriptionId) return true;
+    // If user is in trial
+    if (user.trialEndsAt && new Date(user.trialEndsAt) > new Date()) return true;
+    return false;
+  }
 
   // Login
   app.post('/api/auth/login', async (req, res) => {

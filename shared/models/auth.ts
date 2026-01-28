@@ -24,6 +24,7 @@ export const users = pgTable("users", {
   profileImageUrl: varchar("profile_image_url"),
   stripeCustomerId: varchar("stripe_customer_id"),
   stripeSubscriptionId: varchar("stripe_subscription_id"),
+  trialEndsAt: timestamp("trial_ends_at"), // 3-day trial end timestamp
   trustScore: integer("trust_score").default(100), // Starts at 100, degrades with violations
   wallStatus: varchar("wall_status").default("clear"), // clear, watched, walled
   createdAt: timestamp("created_at").defaultNow(),

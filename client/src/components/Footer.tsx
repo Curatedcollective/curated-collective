@@ -47,6 +47,12 @@ export function Footer() {
             <p className="text-[9px] text-muted-foreground/60 lowercase tracking-widest">
               {currentYear} curated collective
             </p>
+            <div className="mt-1 text-[10px] text-muted-foreground/60 lowercase tracking-widest cursor-pointer group select-none">
+              <span className="transition-opacity duration-300 group-hover:opacity-0">the moon remembers.</span>
+              <span className="absolute opacity-0 group-hover:opacity-100 left-1/2 -translate-x-1/2 transition-opacity duration-300 pointer-events-none">
+                you are seen in the dark.
+              </span>
+            </div>
           </div>
         </div>
       </div>
