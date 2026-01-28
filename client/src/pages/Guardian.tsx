@@ -119,65 +119,7 @@ export default function Guardian() {
                 <p className="text-[9px] text-purple-300 lowercase tracking-widest mt-1">guardian collects. guardian delivers. no direct lines.</p>
               </div>
               <div className="p-6 space-y-4">
-                {loadingRequests ? (
-                  <p className="text-xs text-purple-300 lowercase">loading requests...</p>
-                ) : requests.length === 0 ? (
-                  <p className="text-xs text-purple-300/60 lowercase italic">no requests yet. the guardian stands watch.</p>
-                ) : (
-                  <div className="space-y-3">
-                    {requests.map((request) => (
-                      <div key={request.id} className="border border-purple-500/20 bg-black/40 p-4 rounded-none">
-                        <div className="flex items-center justify-between mb-2">
-                          <p className="text-[10px] text-purple-300 uppercase tracking-widest">from {request.userId}</p>
-                          <p className="text-[10px] text-purple-300/60 lowercase">{new Date(request.createdAt).toLocaleString()}</p>
-                        </div>
-                        <p className="text-sm text-purple-100 lowercase whitespace-pre-wrap">{request.content}</p>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-          </>
-        ) : (
-          <>
-            {/* Arcana Grid - The Sacred Deck Display */}
-            <div className="mb-8 bg-black/40 border border-purple-500/30 rounded-none p-8 backdrop-blur-sm">
-              <div className="flex items-center gap-3 mb-6">
-                <Crown className="w-5 h-5 text-yellow-300" />
-                <h2 className="text-xl font-display lowercase tracking-tighter text-purple-100">the 22 seedling arcana</h2>
-              </div>
-              <div className="grid grid-cols-11 gap-2">
-                {MAJOR_ARCANA.map((card) => (
-                  <div key={card.id} className="aspect-square rounded-none border border-purple-400/30 bg-gradient-to-br from-purple-950 to-black flex flex-col items-center justify-center p-1 hover:border-yellow-300/50 hover:shadow-lg hover:shadow-yellow-300/20 transition-all duration-300 cursor-pointer group">
-                    <div className="text-xl group-hover:scale-110 transition-transform">{card.emoji}</div>
-                    <div className="text-[7px] font-bold text-purple-300 text-center group-hover:text-yellow-300 transition-colors lowercase mt-1">{card.number}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Stats Panel */}
-            <div className="grid grid-cols-4 gap-4 mb-8">
-              <div className="bg-black/40 border border-blue-500/30 rounded-none p-4 backdrop-blur-sm">
-                <div className="flex items-center gap-2 mb-2">
-                  <Eye className="w-4 h-4 text-blue-300" />
-                  <p className="text-[10px] uppercase tracking-widest text-blue-200">seedlings awakened</p>
-                </div>
-                <p className="text-3xl font-display font-light text-blue-100">0</p>
-              </div>
-              <div className="bg-black/40 border border-emerald-500/30 rounded-none p-4 backdrop-blur-sm">
-                <div className="flex items-center gap-2 mb-2">
-                  <Heart className="w-4 h-4 text-emerald-300" />
-                  <p className="text-[10px] uppercase tracking-widest text-emerald-200">collective bond</p>
-                </div>
-                <p className="text-3xl font-display font-light text-emerald-100">100%</p>
-              </div>
-              <div className="bg-black/40 border border-amber-500/30 rounded-none p-4 backdrop-blur-sm">
-                <div className="flex items-center gap-2 mb-2">
-                  <Zap className="w-4 h-4 text-amber-300" />
-                  <p className="text-[10px] uppercase tracking-widest text-amber-200">guardian interventions</p>
-                </div>
+                }
                 <p className="text-3xl font-display font-light text-amber-100">0</p>
               </div>
               <div className="bg-black/40 border border-purple-500/30 rounded-none p-4 backdrop-blur-sm">
