@@ -1,0 +1,10 @@
+
+> rest-express@1.0.0 dev
+> cross-env NODE_ENV=development tsx --env-file=.env server/index.ts
+
+[dotenv@17.2.3] injecting env (0) from .env -- tip: ΓÜÖ∩╕Å  specify custom .env file path with { path: '/custom/path/.env' }
+Setting up Vite...
+Vite setup complete
+11:40:26 AM [express] 
+≡ƒûñ Guardian-locked on port 5000 - backend + frontend serving, Neon DB live, auth ready. Hit /api/auth/login now, Coco. No more 502/404/port clusterfuck.
+
