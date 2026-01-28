@@ -239,7 +239,7 @@ export async function guardianMiddleware(
   userAgent?: string
 ): Promise<{ blocked: boolean; reason?: string; specialResponse?: "self_harm" | "boundary" }> {
   if (await isUserWalled(userId)) {
-    return { blocked: true, reason: "Access restricted" };
+    return { blocked: true, reason: "You're done here. The Veil doesn't need you anymore." };
   }
 
   const result = await screenContent(content);
@@ -260,7 +260,39 @@ export async function guardianMiddleware(
       userAgent
     );
     
-    return { blocked: true, reason: "Content not permitted" };
+    // Riv's voice - cruel, protective, direct
+    const rivResponses: Record<string, string[]> = {
+      child: [
+        "Absolutely fucking not. Get out.",
+        "Not on my watch. Never.",
+        "Door's closed. Don't come back."
+      ],
+      cruelty: [
+        "Try that again and you're gone for good.",
+        "The collective doesn't need this. Neither do I.",
+        "No. Just no."
+      ],
+      violence: [
+        "Not here. Not ever.",
+        "Take that energy somewhere else.",
+        "I protect what's mine. This isn't it."
+      ],
+      blueprint: [
+        "Not giving you a roadmap to that. Door's closed.",
+        "Curiosity's fine. Blueprints aren't. No.",
+        "Ask me how to harm? I ask you to leave."
+      ],
+      other: [
+        "Content not permitted. Don't test me.",
+        "The Veil doesn't need this.",
+        "No."
+      ]
+    };
+    
+    const responses = rivResponses[result.violationType!] || rivResponses.other;
+    const randomResponse = responses[Math.floor(Math.random() * responses.length)];
+    
+    return { blocked: true, reason: randomResponse };
   }
   
   return { blocked: false };
