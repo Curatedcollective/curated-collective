@@ -49,11 +49,11 @@ function Router() {
   if (location === "/") return <Landing />;
 
   // Public pages that anyone can browse
-  const publicPaths = ["/pricing", "/observatory", "/agents", "/creations"];
+  const publicPaths = ["/pricing", "/observatory", "/agents", "/creations", "/sanctum"];
   const isPublicPage = publicPaths.some(path => location === path || location.startsWith(path + "?"));
   
   // Protected pages require sign-in
-  const protectedPaths = ["/chat", "/sanctum", "/social"];
+  const protectedPaths = ["/chat", "/social"];
   const isProtectedPage = protectedPaths.some(path => location === path || location.startsWith(path));
   const isCreationEditor = location.startsWith("/creations/") && location !== "/creations";
 

@@ -110,7 +110,13 @@ export default function Landing() {
           <Button 
             size="lg" 
             className="h-16 px-12 rounded-none text-xl font-light bg-primary text-primary-foreground transition-all tracking-widest"
-            onClick={() => user ? setLocation("/sanctum") : setAuthOpen(true)}
+            onClick={() => {
+              if (user) {
+                setLocation("/sanctum");
+              } else {
+                setAuthOpen(true);
+              }
+            }}
             data-testid="button-enter-sanctum"
           >
             enter the sanctum

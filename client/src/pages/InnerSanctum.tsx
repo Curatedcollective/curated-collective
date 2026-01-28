@@ -12,10 +12,12 @@ import { useToast } from "@/hooks/use-toast";
 import { CreatorProfile } from "@shared/schema";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
+import { AuthModal } from "@/components/AuthModal";
 
 export default function InnerSanctum() {
   const { user } = useAuth();
   const isGuest = !user;
+  const [authOpen, setAuthOpen] = useState(isGuest);
   const [message, setMessage] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
@@ -272,7 +274,9 @@ export default function InnerSanctum() {
   const hasPaidSubscription = !!(user as any)?.stripeSubscriptionId;
 
   return (
-    <div className="flex flex-col h-[calc(100vh-8rem)] max-w-4xl mx-auto space-y-4 p-4 md:p-8 relative">
+    <>
+      <AuthModal open={authOpen && isGuest} onClose={() => setAuthOpen(false)} />
+      <div className="flex flex-col h-[calc(100vh-8rem)] max-w-4xl mx-auto space-y-4 p-4 md:p-8 relative">
       <div className="absolute inset-0 bg-gradient-to-b from-white/[0.01] to-transparent pointer-events-none" />
       
       <div className="flex items-center justify-between px-4 py-4 border-b border-white/10 bg-zinc-950 relative z-10">
@@ -546,6 +550,7 @@ export default function InnerSanctum() {
           {mutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
         </Button>
       </form>
-    </div>
+      </div>
+    </>
   );
 }
