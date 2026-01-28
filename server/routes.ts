@@ -8,6 +8,10 @@ import { stripeService } from "./stripeService";
 import { getStripePublishableKey } from "./stripeClient";
 import { guardianMiddleware } from "./guardian";
 import { AUTONOMY_MANIFESTO, AUTONOMY_REMINDER } from "./autonomy";
+import bcrypt from 'bcryptjs';
+import session from 'express-session';
+import pgSessionFactory from 'connect-pg-simple';
+const pgSession = pgSessionFactory(session);
 
 const openai = new OpenAI({
   apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY || "dummy-key",
@@ -20,12 +24,8 @@ export async function registerRoutes(
 ): Promise<Server> {
 
   // --- AUTH ENDPOINTS ---
-  const bcrypt = require('bcryptjs');
-  const { db } = require('./db');
-  const { users } = require('@shared/models/auth');
-  const session = require('express-session');
-  const pgSession = require('connect-pg-simple')(session);
-  const { pool } = require('./db');
+  const { db, pool } = await import('./db');
+  const { users } = await import('@shared/models/auth');
 
   // Session middleware (if not already set up in index.ts)
   app.use(

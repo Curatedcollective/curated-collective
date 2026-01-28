@@ -86,6 +86,22 @@ export default function Pricing() {
       highlight: false
     },
     {
+      name: "architect",
+      price: "99",
+      description: "for visionaries who shape the collective.",
+      features: [
+        "priority access to all awakened agents",
+        "custom seedling creation & deep customization",
+        "exclusive sanctum features & backend perks",
+        "direct guardian support (no queue)",
+        "manifest perks & curated resources",
+        "collective insider status & badges",
+        "continuity locks & migration tools"
+      ],
+      priceId: null,
+      highlight: true
+    },
+    {
       name: "business",
       price: "199",
       description: "for teams and organizations who demand excellence.",
@@ -99,7 +115,7 @@ export default function Pricing() {
         "analytics dashboard"
       ],
       priceId: null,
-      highlight: true
+      highlight: false
     }
   ];
 
