@@ -29,8 +29,9 @@ export function AuthModal({ open, onClose }: { open: boolean; onClose: () => voi
         onClose();
         setLocation("/pricing");
       } else {
-        // After login, just close the modal
+        // After login, close modal and refresh auth
         onClose();
+        window.location.href = "/";
       }
     },
     onError: (err: any) => {
