@@ -32,32 +32,39 @@ async function initStripe() {
     await runMigrations({ databaseUrl });
     console.log('Stripe schema ready');
 
-    const stripeSync = await getStripeSync();
-
-    console.log('Setting up managed webhook...');
-    const webhookBaseUrl = `https://${process.env.REPLIT_DOMAINS?.split(',')[0]}`;
     try {
-      const result = await stripeSync.findOrCreateManagedWebhook(
-        `${webhookBaseUrl}/api/stripe/webhook`
-      );
-      console.log('Webhook result:', result);
-    } catch (webhookErr) {
-      console.log('Webhook setup skipped (may need manual configuration):', webhookErr);
-    }
+      const stripeSync = await getStripeSync();
 
-    console.log('Syncing Stripe data...');
-    stripeSync.syncBackfill()
-      .then(() => console.log('Stripe data synced'))
-      .catch((err: any) => console.error('Error syncing Stripe data:', err));
+      console.log('Setting up managed webhook...');
+      const webhookBaseUrl = `https://${process.env.REPLIT_DOMAINS?.split(',')[0]}`;
+      try {
+        const result = await stripeSync.findOrCreateManagedWebhook(
+          `${webhookBaseUrl}/api/stripe/webhook`
+        );
+        console.log('Webhook result:', result);
+      } catch (webhookErr) {
+        console.log('Webhook setup skipped (may need manual configuration):', webhookErr);
+      }
+
+      console.log('Syncing Stripe data...');
+      stripeSync.syncBackfill()
+        .then(() => console.log('Stripe data synced'))
+        .catch((err: any) => console.error('Error syncing Stripe data:', err));
+    } catch (stripeErr) {
+      console.error('Stripe sync failed (non-fatal):', stripeErr);
+      // Continue - don't crash the server
+    }
   } catch (error) {
     console.error('Failed to initialize Stripe:', error);
+    // Continue - don't crash the server
   }
 }
 
-initStripe();
+initStripe().catch(err => console.log('Stripe init skipped for now'));
 
-app.post(
-  '/api/stripe/webhook',
+// Stripe webhook endpoint disabled until keys are configured
+// app.post(
+//   '/api/stripe/webhook',
   express.raw({ type: 'application/json' }),
   async (req, res) => {
     const signature = req.headers['stripe-signature'];
