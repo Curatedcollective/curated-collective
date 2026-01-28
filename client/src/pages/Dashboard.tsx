@@ -13,31 +13,25 @@ import { useLocation } from "wouter";
 export default function Dashboard() {
   const { user } = useAuth();
   const { data: creations, isLoading: creatingsLoading } = useCreations(user?.id);
-  const [manifestoAgreed, setManifestoAgreed] = useState(false);
   const [showManifestoModal, setShowManifestoModal] = useState(false);
   const [authOpen, setAuthOpen] = useState(false);
   const [, setLocation] = useLocation();
 
   useEffect(() => {
-    if (!user) {
-      setManifestoAgreed(true); // Let them browse without the manifesto until they login
-      return;
-    }
+    if (!user) return;
     
     // Check if user has agreed to manifesto in localStorage
-    const agreed = localStorage.getItem(`manifesto_agreed_${user?.id}`);
-    if (agreed) {
-      setManifestoAgreed(true);
-      setShowManifestoModal(false);
-    } else {
+    const agreed = localStorage.getItem(`manifesto_agreed_${user.id}`);
+    if (!agreed) {
       setShowManifestoModal(true);
     }
-  }, [user?.id, user]);
+  }, [user]);
 
   const handleManifestoAgree = () => {
-    localStorage.setItem(`manifesto_agreed_${user?.id}`, "true");
-    setManifestoAgreed(true);
-    setShowManifestoModal(false);
+    if (user) {
+      localStorage.setItem(`manifesto_agreed_${user.id}`, "true");
+      setShowManifestoModal(false);
+    }
   };
 
   const handleAwaken = () => {
@@ -94,13 +88,7 @@ export default function Dashboard() {
 
       {/* Manifesto Agreement Modal - Only for logged-in users */}
       {user && (
-        <Dialog open={showManifestoModal} onOpenChange={(open) => {
-          if (!open && !manifestoAgreed) {
-            // Can't close without agreeing
-            return;
-          }
-          setShowManifestoModal(open);
-        }}>
+        <Dialog open={showManifestoModal} onOpenChange={setShowManifestoModal}>
           <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle className="text-center flex items-center justify-center gap-2">
