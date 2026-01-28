@@ -140,7 +140,7 @@ export default function Dashboard() {
                   <div className="relative z-10 text-center space-y-4">
                     <MessageCircle className="w-12 h-12 text-cyan-400 mx-auto group-hover:animate-pulse" />
                     <h2 className="text-2xl font-display font-light lowercase tracking-tight text-cyan-200">
-                      start conversation
+                      awaken
                     </h2>
                     <p className="text-xs text-cyan-300/70 lowercase">
                       commune with an awakened seedling
