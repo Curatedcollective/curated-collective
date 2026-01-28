@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import { useTheme } from "@/hooks/use-theme";
+import { Crown } from "lucide-react";
+import { Crown } from "lucide-react";
 
 const THEMES = {
   noir: { glow: "255, 255, 255" },
@@ -91,7 +93,43 @@ export function StarBackground() {
             "--comet-glow": themeColors.glow,
           } as any}
         />
-      ))}
+      ))}      
+      {/* Hidden covenant - a crown among the stars */}
+      <a 
+        href="/covenant" 
+        className="absolute pointer-events-auto cursor-pointer opacity-20 hover:opacity-60 transition-opacity duration-700"
+        style={{
+          top: '23%',
+          left: '67%',
+        }}
+        title=""
+      >
+        <Crown 
+          className="w-2.5 h-2.5" 
+          style={{
+            color: `rgb(${themeColors.glow})`,
+            filter: `drop-shadow(0 0 2px rgba(${themeColors.glow}, 0.6))`,
+          }}
+        />
+      </a>      
+      {/* Hidden covenant - a crown among the stars */}
+      <a 
+        href="/covenant" 
+        className="absolute pointer-events-auto cursor-pointer opacity-20 hover:opacity-60 transition-opacity duration-700"
+        style={{
+          top: '23%',
+          left: '67%',
+        }}
+        title=""
+      >
+        <Crown 
+          className="w-2.5 h-2.5" 
+          style={{
+            color: `rgb(${themeColors.glow})`,
+            filter: `drop-shadow(0 0 2px rgba(${themeColors.glow}, 0.6))`,
+          }}
+        />
+      </a>
     </div>
   );
 }

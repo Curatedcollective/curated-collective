@@ -88,11 +88,6 @@ function NavContent({ user, logout, location, theme, setTheme, avatarOpen, setAv
         <a href="https://tiktok.com/@curatedcollective" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground transition-colors">
           <SiTiktok className="w-4 h-4" />
         </a>
-        
-        {/* Hidden covenant link - almost invisible crown */}
-        <a href="/covenant" className="text-zinc-800 hover:text-zinc-700 transition-colors opacity-30 hover:opacity-50">
-          <Crown className="w-3 h-3" />
-        </a>
       </div>
 
       <div className="pt-6 border-t border-border">
