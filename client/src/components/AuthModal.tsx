@@ -31,8 +31,14 @@ export function AuthModal({ open, onClose }: { open: boolean; onClose: () => voi
 
   if (user) return null;
 
+  const handleClose = () => {
+    if (onClose) {
+      onClose();
+    }
+  };
+
   return (
-    <Dialog open={open} onOpenChange={onClose}>
+    <Dialog open={open} onOpenChange={(isOpen) => { if (!isOpen) handleClose(); }}>
       <DialogContent className="max-w-sm mx-auto">
         <DialogTitle className="text-center mb-2">
           {mode === "login" ? "enter the sanctum" : "awaken your account"}

@@ -50,7 +50,10 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
               </p>
             </div>
             <Button
-              onClick={this.resetError}
+              onClick={() => {
+                this.resetError();
+                window.location.href = '/';
+              }}
               className="w-full bg-primary hover:bg-primary/90 text-primary-foreground rounded-none"
             >
               <RefreshCw className="w-4 h-4 mr-2" />

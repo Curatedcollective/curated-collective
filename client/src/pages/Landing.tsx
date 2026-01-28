@@ -33,6 +33,8 @@ export default function Landing() {
   const { data: whisperData } = useQuery<{ whisper: string }>({
     queryKey: ["/api/guardian/whisper"],
     refetchInterval: 12000,
+    retry: false,
+    enabled: true,
   });
 
   const subscribeMutation = useMutation({
