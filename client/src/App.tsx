@@ -23,7 +23,7 @@ const WisdomCirclePage = lazy(() => import("@/pages/WisdomCircle"));
 const Guardian = lazy(() => import("@/pages/Guardian"));
 const Covenant = lazy(() => import("@/pages/Covenant"));
 const CollectiveStorytellingPage = lazy(() => import("@/pages/CollectiveStorytelling"));
-const LiterarySanctuaryPage = lazy(() => import("@/pages/LiterarySanctuary"));
+
 const NotFound = lazy(() => import("@/pages/not-found"));
 
 import { Loader2 } from "lucide-react";
@@ -96,7 +96,7 @@ function Router() {
           <Route path="/social" component={SocialGenerator} />
           <Route path="/wisdom" component={WisdomCirclePage} />
           <Route path="/stories" component={CollectiveStorytellingPage} />
-          <Route path="/literary" component={LiterarySanctuaryPage} />
+
           <Route path="/covenant" component={Covenant} />
           <Route path="/veil-console" component={Guardian} />
           <Route component={NotFound} />
