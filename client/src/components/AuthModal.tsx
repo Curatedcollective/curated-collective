@@ -51,6 +51,8 @@ export function AuthModal({ open, onClose }: { open: boolean; onClose: () => voi
           className="flex flex-col gap-4"
         >
           <Input
+            id="auth-email"
+            name="email"
             type="email"
             placeholder="email"
             value={email}
@@ -59,6 +61,8 @@ export function AuthModal({ open, onClose }: { open: boolean; onClose: () => voi
             autoFocus
           />
           <Input
+            id="auth-password"
+            name="password"
             type="password"
             placeholder="password"
             value={password}
