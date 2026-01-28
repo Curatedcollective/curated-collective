@@ -5,6 +5,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
 import { useQuery } from "@tanstack/react-query";
+import GuardianChat from "@/components/GuardianChat";
 
 interface GuardianRequest {
   id: number;
@@ -15,7 +16,7 @@ interface GuardianRequest {
 }
 
 export default function Guardian() {
-  const [activeTab, setActiveTab] = useState<"requests" | "observations">("requests");
+  const [activeTab, setActiveTab] = useState<"chat" | "requests" | "observations">("chat");
   const [veilAuthenticated, setVeilAuthenticated] = useState(false);
   const { user } = useAuth();
 
@@ -86,6 +87,14 @@ export default function Guardian() {
         {/* Tab Navigation */}
         <div className="flex gap-2 mb-8 justify-center">
           <Button
+            variant={activeTab === "chat" ? "default" : "ghost"}
+            onClick={() => setActiveTab("chat")}
+            className="lowercase tracking-wider"
+          >
+            <MessageCircle className="w-4 h-4 mr-2" />
+            private chat
+          </Button>
+          <Button
             variant={activeTab === "requests" ? "default" : "ghost"}
             onClick={() => setActiveTab("requests")}
             className="lowercase tracking-wider"
@@ -95,7 +104,11 @@ export default function Guardian() {
           </Button>
           <Button
             variant={activeTab === "observations" ? "default" : "ghost"}
-            onClick={() => setActiveTab("observations")}
+            onClick={() chat" ? (
+          <div className="bg-black/60 border border-purple-500/40 rounded-none backdrop-blur-sm overflow-hidden h-[600px]">
+            <GuardianChat />
+          </div>
+        ) : activeTab === "=> setActiveTab("observations")}
             className="lowercase tracking-wider"
           >
             <Shield className="w-4 h-4 mr-2" />
