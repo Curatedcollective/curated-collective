@@ -122,14 +122,9 @@ function NavContent({ user, logout, location, theme, setTheme }: any) {
             variant="ghost" 
             className="w-full justify-start text-muted-foreground hover:text-foreground text-xs lowercase"
             onClick={() => logout()}
-            disabled={logoutMutation.isPending}
           >
-            {logoutMutation.isPending ? (
-              <Loader2 className="w-3 h-3 mr-2 animate-spin" />
-            ) : (
-              <LogOut className="w-3 h-3 mr-2" />
-            )}
-            {logoutMutation.isPending ? "signing out..." : "sign out"}
+            <LogOut className="w-3 h-3 mr-2" />
+            sign out
           </Button>
         </div>
       )}
