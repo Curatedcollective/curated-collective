@@ -131,5 +131,16 @@ initializeServer().catch(err => {
   process.exit(1);
 });
 
+// Prevent process from exiting on unhandled rejections
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+});
+
+process.on('uncaughtException', (error) => {
+  console.error('Uncaught Exception:', error);
+  console.error('Stack:', error.stack);
+  process.exit(1);
+});
+
 // Export for Vercel serverless
 export default app;
