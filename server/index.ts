@@ -45,16 +45,15 @@ declare module "http" {
 //   }
 // );
 
-// DIAGNOSTIC: Disable body parsing to test if express.json/body-parser is crashing
-// app.use(
-//   express.json({
-//     verify: (req, _res, buf) => {
-//       req.rawBody = buf;
-//     },
-//   }),
-// );
+app.use(
+  express.json({
+    verify: (req, _res, buf) => {
+      req.rawBody = buf;
+    },
+  }),
+);
 
-// app.use(express.urlencoded({ extended: false }));
+app.use(express.urlencoded({ extended: false }));
 
 export function log(message: string, source = "express") {
   const formattedTime = new Date().toLocaleTimeString("en-US", {
@@ -96,20 +95,13 @@ app.use((req, res, next) => {
 // Initialize the server
 async function initializeServer() {
   console.log('[INIT] Starting route registration...');
-  // DIAGNOSTIC: Disable route registration to test if routes.ts is crashing
-  // try {
-  //   await registerRoutes(httpServer, app);
-  //   console.log('[INIT] Routes registered successfully');
-  // } catch (error) {
-  //   console.error('[ERROR] Failed to register routes:', error);
-  //   throw error;
-  // }
-  console.log('[INIT] Routes SKIPPED for diagnostic');
-
-  // Add a single test route
-  app.get('/', (req, res) => {
-    res.send('Test route - no body parser');
-  });
+  try {
+    await registerRoutes(httpServer, app);
+    console.log('[INIT] Routes registered successfully');
+  } catch (error) {
+    console.error('[ERROR] Failed to register routes:', error);
+    throw error;
+  }
 
   // importantly only setup vite in development and after
   // setting up all the other routes so the catch-all route
