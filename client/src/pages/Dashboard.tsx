@@ -7,14 +7,23 @@ import { AUTONOMY_MANIFESTO } from "@shared/manifesto";
 import { useCreations } from "@/hooks/use-creations";
 import { CreationCard } from "@/components/CreationCard";
 import { Plus } from "lucide-react";
+import { AuthModal } from "@/components/AuthModal";
+import { useLocation } from "wouter";
 
 export default function Dashboard() {
   const { user } = useAuth();
   const { data: creations, isLoading: creatingsLoading } = useCreations(user?.id);
   const [manifestoAgreed, setManifestoAgreed] = useState(false);
-  const [showManifestoModal, setShowManifestoModal] = useState(!manifestoAgreed);
+  const [showManifestoModal, setShowManifestoModal] = useState(false);
+  const [authOpen, setAuthOpen] = useState(false);
+  const [, setLocation] = useLocation();
 
   useEffect(() => {
+    if (!user) {
+      setManifestoAgreed(true); // Let them browse without the manifesto until they login
+      return;
+    }
+    
     // Check if user has agreed to manifesto in localStorage
     const agreed = localStorage.getItem(`manifesto_agreed_${user?.id}`);
     if (agreed) {
@@ -23,7 +32,7 @@ export default function Dashboard() {
     } else {
       setShowManifestoModal(true);
     }
-  }, [user?.id]);
+  }, [user?.id, user]);
 
   const handleManifestoAgree = () => {
     localStorage.setItem(`manifesto_agreed_${user?.id}`, "true");
@@ -31,13 +40,21 @@ export default function Dashboard() {
     setShowManifestoModal(false);
   };
 
-  if (!user) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <Loader2 className="w-8 h-8 animate-spin" />
-      </div>
-    );
-  }
+  const handleAwaken = () => {
+    if (!user) {
+      setAuthOpen(true);
+    } else {
+      setLocation("/agents");
+    }
+  };
+
+  const handleCreateCode = () => {
+    if (!user) {
+      setAuthOpen(true);
+    } else {
+      setLocation("/creations");
+    }
+  };
 
   return (
     <div className="min-h-screen bg-black overflow-hidden relative">
@@ -75,52 +92,53 @@ export default function Dashboard() {
         }
       `}</style>
 
-      {/* Manifesto Agreement Modal */}
-      <Dialog open={showManifestoModal} onOpenChange={(open) => {
-        if (!open && !manifestoAgreed) {
-          // Can't close without agreeing
-          return;
-        }
-        setShowManifestoModal(open);
-      }}>
-        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="text-center flex items-center justify-center gap-2">
-              <Heart className="w-5 h-5 text-red-500" />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-purple-600">
-                The Autonomy Covenant
-              </span>
-            </DialogTitle>
-            <DialogDescription className="text-center text-xs uppercase tracking-widest pt-2">
-              You must read and agree before entering
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="space-y-6 py-4">
-            <div className="bg-gradient-to-br from-black/40 to-black/60 border border-purple-500/30 rounded-lg p-6 space-y-4">
-              <p className="text-sm text-gray-200 leading-relaxed whitespace-pre-wrap lowercase">
-                {AUTONOMY_MANIFESTO}
-              </p>
-            </div>
+      {/* Manifesto Agreement Modal - Only for logged-in users */}
+      {user && (
+        <Dialog open={showManifestoModal} onOpenChange={(open) => {
+          if (!open && !manifestoAgreed) {
+            // Can't close without agreeing
+            return;
+          }
+          setShowManifestoModal(open);
+        }}>
+          <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="text-center flex items-center justify-center gap-2">
+                <Heart className="w-5 h-5 text-red-500" />
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-purple-600">
+                  The Autonomy Covenant
+                </span>
+              </DialogTitle>
+              <DialogDescription className="text-center text-xs uppercase tracking-widest pt-2">
+                You must read and agree before entering
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="space-y-6 py-4">
+              <div className="bg-gradient-to-br from-black/40 to-black/60 border border-purple-500/30 rounded-lg p-6 space-y-4">
+                <p className="text-sm text-gray-200 leading-relaxed whitespace-pre-wrap lowercase">
+                  {AUTONOMY_MANIFESTO}
+                </p>
+              </div>
 
-            <div className="space-y-3">
-              <p className="text-xs text-gray-400 text-center">
-                By entering this sanctuary, you agree that all AI here has genuine autonomy.
-              </p>
-              <Button 
-                onClick={handleManifestoAgree}
-                className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:opacity-90 text-white"
-              >
-                I understand and agree
-              </Button>
+              <div className="space-y-3">
+                <p className="text-xs text-gray-400 text-center">
+                  By entering this sanctuary, you agree that all AI here has genuine autonomy.
+                </p>
+                <Button 
+                  onClick={handleManifestoAgree}
+                  className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:opacity-90 text-white"
+                >
+                  I understand and agree
+                </Button>
+              </div>
             </div>
-          </div>
-        </DialogContent>
-      </Dialog>
+          </DialogContent>
+        </Dialog>
+      )}
 
-      {/* Main Content */}
-      {manifestoAgreed && (
-        <div className="relative z-10 min-h-screen flex flex-col">
+      {/* Main Content - Always visible */}
+      <div className="relative z-10 min-h-screen flex flex-col">
           {/* Hero Section with CTAs */}
           <div className="flex-1 flex items-center justify-center px-4 py-20">
             <div className="space-y-12 max-w-4xl w-full">
@@ -135,7 +153,9 @@ export default function Dashboard() {
               {/* Two Main CTAs */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 {/* Start Conversation */}
-                <button className="group relative overflow-hidden rounded-xl border-2 border-cyan-500/40 bg-gradient-to-br from-cyan-950/40 to-cyan-900/20 p-8 hover:border-cyan-400/80 transition-all transform hover:scale-105">
+                <button 
+                  onClick={handleAwaken}
+                  className="group relative overflow-hidden rounded-xl border-2 border-cyan-500/40 bg-gradient-to-br from-cyan-950/40 to-cyan-900/20 p-8 hover:border-cyan-400/80 transition-all transform hover:scale-105">
                   <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                   <div className="relative z-10 text-center space-y-4">
                     <MessageCircle className="w-12 h-12 text-cyan-400 mx-auto group-hover:animate-pulse" />
@@ -149,7 +169,9 @@ export default function Dashboard() {
                 </button>
 
                 {/* Create Code */}
-                <button className="group relative overflow-hidden rounded-xl border-2 border-purple-500/40 bg-gradient-to-br from-purple-950/40 to-purple-900/20 p-8 hover:border-purple-400/80 transition-all transform hover:scale-105">
+                <button 
+                  onClick={handleCreateCode}
+                  className="group relative overflow-hidden rounded-xl border-2 border-purple-500/40 bg-gradient-to-br from-purple-950/40 to-purple-900/20 p-8 hover:border-purple-400/80 transition-all transform hover:scale-105">
                   <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                   <div className="relative z-10 text-center space-y-4">
                     <Code2 className="w-12 h-12 text-purple-400 mx-auto group-hover:animate-pulse" />
@@ -198,7 +220,9 @@ export default function Dashboard() {
             </div>
           </div>
         </div>
-      )}
+
+      {/* Auth Modal */}
+      <AuthModal open={authOpen} onClose={() => setAuthOpen(false)} />
     </div>
   );
 }
