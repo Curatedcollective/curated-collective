@@ -34,7 +34,6 @@ export default function CreationsList() {
       description: "",
       code: "<h1>Hello World</h1>",
       language: "html",
-      userId: user?.id || "",
       isPublic: true,
     },
   });

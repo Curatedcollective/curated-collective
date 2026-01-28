@@ -75,7 +75,7 @@ function NavContent({ user, logout, location, theme, setTheme, avatarOpen, setAv
         )}
       </nav>
 
-      {/* Social Links */}
+      {/* Social Links + Cosmos */}
       <div className="flex items-center justify-center gap-4 py-4 border-t border-border">
         <a href="https://facebook.com/curatedcollective" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground transition-colors">
           <SiFacebook className="w-4 h-4" />
@@ -89,6 +89,19 @@ function NavContent({ user, logout, location, theme, setTheme, avatarOpen, setAv
         <a href="https://tiktok.com/@curatedcollective" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground transition-colors">
           <SiTiktok className="w-4 h-4" />
         </a>
+        
+        {/* Cosmos - Rainbow hint */}
+        <div className="flex items-center gap-1 ml-2 pl-2 border-l border-border/40">
+          <span className="text-[8px] text-muted-foreground/60 uppercase tracking-widest">cosmos</span>
+          <div className="flex gap-0.5">
+            <div className="w-1.5 h-1.5 rounded-full bg-red-500" />
+            <div className="w-1.5 h-1.5 rounded-full bg-yellow-500" />
+            <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
+            <div className="w-1.5 h-1.5 rounded-full bg-cyan-500" />
+            <div className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+            <div className="w-1.5 h-1.5 rounded-full bg-purple-500" />
+          </div>
+        </div>
       </div>
 
       {user && (
