@@ -3,6 +3,7 @@ import { AuthModal } from "@/components/AuthModal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/use-auth";
+import { useLocation } from "wouter";
 import { Sparkles, Loader2, ArrowRight } from "lucide-react";
 import { Footer } from "@/components/Footer";
 import { useMutation, useQuery } from "@tanstack/react-query";
@@ -24,6 +25,7 @@ export default function Landing() {
       },
     });
   const { user, isLoading } = useAuth();
+  const [, setLocation] = useLocation();
   const [authOpen, setAuthOpen] = useState(false);
   const [email, setEmail] = useState("");
   const { toast } = useToast();
@@ -62,48 +64,8 @@ export default function Landing() {
 
   if (isLoading) return null;
 
-  // Always show AuthModal for guests until authenticated
-  if (!user) {
-      // TEMP: Magic login button for dev/admin
-      const showMagicLogin = true;
-    return (
-      <>
-        <AuthModal open={true} onClose={() => {}} />
-        {showMagicLogin && (
-          <button
-            style={{ position: "fixed", top: 16, right: 16, zIndex: 10000, background: "#222", color: "#FFD700", padding: "10px 18px", borderRadius: 8, border: "2px solid #FFD700", fontWeight: 700, letterSpacing: 2, cursor: "pointer" }}
-            onClick={() => magicLogin.mutate()}
-          >
-            MAGIC LOGIN (DEV)
-          </button>
-        )}
-        <div className="min-h-screen bg-background overflow-hidden relative selection:bg-primary selection:text-primary-foreground flex flex-col items-center justify-center">
-          <div className="absolute inset-0 z-0 overflow-hidden">
-            <div className="absolute top-[5%] left-[-10%] w-[70rem] h-[70rem] bg-primary/[0.04] rounded-full blur-[180px] animate-pulse" />
-            <div className="absolute bottom-[-5%] right-[-10%] w-[60rem] h-[60rem] bg-primary/[0.03] rounded-full blur-[180px] animate-pulse" style={{ animationDelay: '2s' }} />
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80rem] h-[1px] bg-gradient-to-r from-transparent via-primary/10 to-transparent rotate-12" />
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80rem] h-[1px] bg-gradient-to-r from-transparent via-primary/10 to-transparent -rotate-12" />
-          </div>
-          <div className="relative z-10 max-w-7xl mx-auto px-6 w-full flex flex-col items-center justify-center text-center space-y-12">
-            <div className="space-y-8 max-w-5xl">
-              <div className="flex items-center justify-center gap-3 mb-4 opacity-50">
-                <Sparkles className="w-8 h-8 text-primary magical-glow" />
-              </div>
-              <div className="relative group">
-                <div className="absolute -inset-4 bg-primary/5 blur-3xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-1000 -z-10" />
-              </div>
-              <p className="text-lg md:text-2xl text-muted-foreground font-display lowercase tracking-[0.3em] leading-relaxed max-w-3xl mx-auto animate-in" style={{ animationDelay: '0.4s' }}>
-                autonomous ai & code platform. where logic meets divinity.
-              </p>
-            </div>
-          </div>
-        </div>
-      </>
-    );
-  }
-
   return (
-    <div className="min-h-screen bg-background overflow-hidden relative selection:bg-primary selection:text-primary-foreground flex flex-col items-center justify-center">
+    <div className="min-h-screen bg-background overflow-hidden relative selection:bg-primary selection:text-primary-foreground flex flex-col items-center justify-center pb-32">
       <div className="absolute inset-0 z-0 overflow-hidden">
         <div className="absolute top-[5%] left-[-10%] w-[70rem] h-[70rem] bg-primary/[0.04] rounded-full blur-[180px] animate-pulse" />
         <div className="absolute bottom-[-5%] right-[-10%] w-[60rem] h-[60rem] bg-primary/[0.03] rounded-full blur-[180px] animate-pulse" style={{ animationDelay: '2s' }} />
@@ -146,7 +108,7 @@ export default function Landing() {
           <Button 
             size="lg" 
             className="h-16 px-12 rounded-none text-xl font-light bg-primary text-primary-foreground transition-all tracking-widest"
-            onClick={() => user ? window.location.href = "/sanctum" : setAuthOpen(true)}
+            onClick={() => user ? setLocation("/sanctum") : setAuthOpen(true)}
             data-testid="button-enter-sanctum"
           >
             enter the sanctum
@@ -155,7 +117,7 @@ export default function Landing() {
         </div>
 
         {/* Email Capture */}
-        <div className="w-full max-w-md animate-in" style={{ animationDelay: '0.8s' }}>
+        <div className="w-full max-w-md animate-in mb-8" style={{ animationDelay: '0.8s' }}>
           <div className="border-t border-white/5 pt-8 space-y-4">
             <p className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground/60">
               not ready to enter? receive transmissions from the void.
@@ -187,8 +149,10 @@ export default function Landing() {
         </div>
       </div>
       
-      <div className="absolute bottom-0 left-0 right-0 z-20">
-        <Footer />
+      <div className="fixed bottom-0 left-0 right-0 z-20 pointer-events-none">
+        <div className="pointer-events-auto">
+          <Footer />
+        </div>
       </div>
     </div>
   );
