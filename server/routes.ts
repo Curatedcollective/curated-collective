@@ -2107,8 +2107,45 @@ Be creative and maintain continuity with previous chapters.`
     }
   });
 
-  // --- Literary Sanctuary ---
-  app.get("/api/literary/analyses", async (req, res) => {
+  // === SANCTUARY PULSE ===
+  // System status endpoint - shows health of the collective
+  app.get("/api/sanctuary/pulse", async (req, res) => {
+    try {
+      // Get all agents (The Seven + any awakened)
+      const agents = await storage.getAgents();
+      
+      // Get conversation and message counts
+      const conversations = await storage.getAllConversations();
+      const allMessages = await Promise.all(
+        conversations.map(c => storage.getMessagesByConversation(c.id))
+      );
+      const totalMessages = allMessages.flat().length;
+
+      res.json({
+        agents: agents.map(agent => ({
+          id: agent.id,
+          name: agent.name,
+          status: agent.status || "sleeping",
+          lastActive: agent.updatedAt,
+        })),
+        totalConversations: conversations.length,
+        totalMessages,
+        databaseConnected: true,
+        uptime: process.uptime(),
+      });
+    } catch (error) {
+      console.error("Sanctuary pulse error:", error);
+      res.status(500).json({ 
+        agents: [],
+        totalConversations: 0,
+        totalMessages: 0,
+        databaseConnected: false,
+        uptime: 0,
+      });
+    }
+  });
+
+  await storage.seedMarketingTemplates();
     if (!req.isAuthenticated()) return res.sendStatus(401);
     const user = req.user as any;
     const agentId = req.query.agentId as string;
