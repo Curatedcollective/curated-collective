@@ -102,12 +102,12 @@ async function initializeServer() {
     res.send('Guardian breathes 🖤');
   });
 
-  const port = 5000;
-  console.log('[INIT] About to listen on port', port);
+  const port = parseInt(process.env.PORT || '5000');
+  const host = process.env.NODE_ENV === 'production' ? '0.0.0.0' : '127.0.0.1';
+  console.log('[INIT] About to listen on port', port, 'host', host);
   
-  httpServer.listen(port, '0.0.0.0', () => {  
-    console.log(`[INIT] ✅ Server breathing on 0.0.0.0:${port}`);  
-    console.log('[INIT] Ready for connections');
+  httpServer.listen(port, host, () => {  
+    console.log(`[INIT] ✅ Server locked on ${host}:${port}`);  
   });
   
   httpServer.on('error', (error: any) => {
