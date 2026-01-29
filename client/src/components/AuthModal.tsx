@@ -29,28 +29,36 @@ export function AuthModal({ open, onClose }: { open: boolean; onClose: () => voi
       
       console.log(`[AUTH] Attempting ${mode} to ${endpoint}`, { email, mode });
       
-      const res = await apiRequest("POST", endpoint, body);
-      console.log(`[AUTH] Response status: ${res.status}`);
+      // Add timeout of 10 seconds
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
       
-      if (!res.ok) {
-        const errorData = await res.json();
-        console.error("[AUTH] Error response:", errorData);
-        throw new Error(errorData.error || `Authentication failed (${res.status})`);
+      try {
+        const res = await apiRequest("POST", endpoint, body);
+        clearTimeout(timeoutId);
+        console.log(`[AUTH] Response status: ${res.status}`);
+        
+        if (!res.ok) {
+          const errorData = await res.json();
+          console.error("[AUTH] Error response:", errorData);
+          throw new Error(errorData.error || `Authentication failed (${res.status})`);
+        }
+        const data = await res.json();
+        console.log("[AUTH] Success response received");
+        return data;
+      } catch (error) {
+        clearTimeout(timeoutId);
+        throw error;
       }
-      const data = await res.json();
-      console.log("[AUTH] Success response received");
-      return data;
     },
     onSuccess: (data) => {
       console.log("[AUTH] Mutation onSuccess fired:", data);
       setError(null);
       if (mode === "register") {
-        // After registration, redirect to pricing to select tier
         console.log("[AUTH] Redirecting to pricing...");
         onClose();
         setLocation("/pricing");
       } else {
-        // After login, close modal and reload to refresh auth
         console.log("[AUTH] Login successful, reloading...");
         onClose();
         window.location.reload();
