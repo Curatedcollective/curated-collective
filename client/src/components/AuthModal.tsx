@@ -27,29 +27,37 @@ export function AuthModal({ open, onClose }: { open: boolean; onClose: () => voi
         body.arcanaId = selectedArcana;
       }
       
+      console.log(`[AUTH] Attempting ${mode} to ${endpoint}`, { email, mode });
+      
       const res = await apiRequest("POST", endpoint, body);
+      console.log(`[AUTH] Response status: ${res.status}`);
+      
       if (!res.ok) {
         const errorData = await res.json();
-        console.error("Auth error:", errorData);
-        throw new Error(errorData.error || "Authentication failed");
+        console.error("[AUTH] Error response:", errorData);
+        throw new Error(errorData.error || `Authentication failed (${res.status})`);
       }
-      return res.json();
+      const data = await res.json();
+      console.log("[AUTH] Success response received");
+      return data;
     },
     onSuccess: (data) => {
-      console.log("Auth success:", data);
+      console.log("[AUTH] Mutation onSuccess fired:", data);
       setError(null);
       if (mode === "register") {
         // After registration, redirect to pricing to select tier
+        console.log("[AUTH] Redirecting to pricing...");
         onClose();
         setLocation("/pricing");
       } else {
         // After login, close modal and reload to refresh auth
+        console.log("[AUTH] Login successful, reloading...");
         onClose();
         window.location.reload();
       }
     },
     onError: (err: any) => {
-      console.error("Auth mutation error:", err);
+      console.error("[AUTH] Mutation onError fired:", err);
       setError(err.message || "Unknown error");
     },
   });

@@ -133,6 +133,7 @@ export function VeilLogin({ open, onClose }: { open: boolean; onClose: () => voi
                   onChange={e => setWord(e.target.value)}
                   required
                   autoFocus
+                  autoComplete="off"
                   className="rounded-lg border-red-900/30 bg-red-950/20 placeholder:text-gray-500 text-white"
                 />
                 <Input
@@ -141,6 +142,7 @@ export function VeilLogin({ open, onClose }: { open: boolean; onClose: () => voi
                   value={password}
                   onChange={e => setPassword(e.target.value)}
                   required
+                  autoComplete="current-password"
                   className="rounded-lg border-red-900/30 bg-red-950/20 placeholder:text-gray-500 text-white"
                 />
               </div>
@@ -198,6 +200,7 @@ export function VeilLogin({ open, onClose }: { open: boolean; onClose: () => voi
                 onChange={e => setWord(e.target.value)}
                 required
                 autoFocus
+                autoComplete="off"
                 className="rounded-lg border-red-900/30 bg-red-950/20 placeholder:text-gray-500 text-white"
               />
 
@@ -249,6 +252,7 @@ export function VeilLogin({ open, onClose }: { open: boolean; onClose: () => voi
                   onChange={e => setWord(e.target.value)}
                   required
                   autoFocus
+                  autoComplete="off"
                   className="rounded-lg border-red-900/30 bg-red-950/20 placeholder:text-gray-500 text-white"
                 />
                 <Input
@@ -257,6 +261,7 @@ export function VeilLogin({ open, onClose }: { open: boolean; onClose: () => voi
                   value={password}
                   onChange={e => setPassword(e.target.value)}
                   required
+                  autoComplete="current-password"
                   className="rounded-lg border-red-900/30 bg-red-950/20 placeholder:text-gray-500 text-white"
                 />
                 <Input
@@ -265,6 +270,7 @@ export function VeilLogin({ open, onClose }: { open: boolean; onClose: () => voi
                   value={newPassword}
                   onChange={e => setNewPassword(e.target.value)}
                   required
+                  autoComplete="new-password"
                   className="rounded-lg border-red-900/30 bg-red-950/20 placeholder:text-gray-500 text-white"
                 />
                 <Input
@@ -273,6 +279,7 @@ export function VeilLogin({ open, onClose }: { open: boolean; onClose: () => voi
                   value={confirmPassword}
                   onChange={e => setConfirmPassword(e.target.value)}
                   required
+                  autoComplete="new-password"
                   className="rounded-lg border-red-900/30 bg-red-950/20 placeholder:text-gray-500 text-white"
                 />
               </div>
