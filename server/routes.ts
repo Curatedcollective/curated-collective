@@ -3,6 +3,7 @@ import type { Server } from "http";
 import { storage } from "./storage";
 import { api } from "@shared/routes";
 import { z } from "zod";
+import { eq } from "drizzle-orm";
 import OpenAI from "openai";
 // Stripe temporarily removed - will add back later
 // import { stripeService } from "./stripeService";
@@ -84,7 +85,7 @@ export async function registerRoutes(
       }
 
       // Check if email exists
-      const existing = await db.select().from(users).where(users.email.eq(email)).limit(1);
+      const existing = await db.select().from(users).where(eq(users.email, email));
       if (existing.length > 0) {
         return res.status(409).json({ error: 'Email already registered' });
       }
@@ -131,7 +132,7 @@ export async function registerRoutes(
       }
 
       // Get user
-      const result = await db.select().from(users).where(users.email.eq(email)).limit(1);
+      const result = await db.select().from(users).where(eq(users.email, email));
       const user = result[0];
 
       if (!user || !user.passwordHash) {
