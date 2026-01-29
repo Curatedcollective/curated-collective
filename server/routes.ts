@@ -65,21 +65,38 @@ export async function registerRoutes(
 
   // Register
   app.post('/api/auth/register', async (req, res) => {
-    const { email, password, arcanaId } = req.body;
-    if (!email || !password) return res.status(400).json({ error: 'Email and password required' });
-    const existing = await db.select().from(users).where(users.email.eq(email)).then(r => r[0]);
-    if (existing) return res.status(409).json({ error: 'Email already registered' });
-    const passwordHash = await bcrypt.hash(password, 10);
-    // Set trialEndsAt to 3 days from now
-    const trialEndsAt = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000);
-    const [user] = await db.insert(users).values({ 
-      email, 
-      passwordHash, 
-      trialEndsAt,
-      arcanaId: arcanaId || null
-    }).returning();
-    req.session.userId = user.id;
-    res.json({ id: user.id, email: user.email, firstName: user.firstName, lastName: user.lastName, profileImageUrl: user.profileImageUrl });
+    try {
+      console.log('[REGISTER] Starting registration...');
+      const { email, password, arcanaId } = req.body;
+      console.log('[REGISTER] Received:', { email, arcanaId });
+      
+      if (!email || !password) return res.status(400).json({ error: 'Email and password required' });
+      
+      console.log('[REGISTER] Checking if user exists...');
+      const existing = await db.select().from(users).where(users.email.eq(email)).then(r => r[0]);
+      if (existing) return res.status(409).json({ error: 'Email already registered' });
+      
+      console.log('[REGISTER] Hashing password...');
+      const passwordHash = await bcrypt.hash(password, 10);
+      
+      console.log('[REGISTER] Creating user...');
+      const trialEndsAt = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000);
+      const [user] = await db.insert(users).values({ 
+        email, 
+        passwordHash, 
+        trialEndsAt,
+        arcanaId: arcanaId || null
+      }).returning();
+      
+      console.log('[REGISTER] User created, setting session...');
+      req.session.userId = user.id;
+      
+      console.log('[REGISTER] Success, returning user data');
+      res.json({ id: user.id, email: user.email, firstName: user.firstName, lastName: user.lastName, profileImageUrl: user.profileImageUrl });
+    } catch (error) {
+      console.error('[REGISTER] Error:', error);
+      res.status(500).json({ error: error instanceof Error ? error.message : 'Registration failed' });
+    }
   });
 
   // Helper: check if user is in trial or subscribed
