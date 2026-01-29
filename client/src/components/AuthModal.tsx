@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useMutation } from "@tanstack/react-query";
@@ -64,6 +65,12 @@ export function AuthModal({ open, onClose }: { open: boolean; onClose: () => voi
   return (
     <Dialog open={open} onOpenChange={(isOpen) => { if (!isOpen) handleClose(); }}>
       <DialogContent className="max-w-sm mx-auto border border-gray-800 rounded-none overflow-hidden p-0 bg-black">
+        <VisuallyHidden>
+          <DialogTitle>
+            {mode === "login" ? "Login" : mode === "avatar" ? "Choose Your Arcana" : "Register"}
+          </DialogTitle>
+        </VisuallyHidden>
+        
         {/* Subtle shimmer effect */}
         <div className="absolute inset-0 pointer-events-none" style={{
           backgroundImage: "linear-gradient(90deg, transparent, rgba(255,255,255,0.02), transparent)",

@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useMutation } from "@tanstack/react-query";
@@ -82,6 +83,12 @@ export function VeilLogin({ open, onClose }: { open: boolean; onClose: () => voi
           backgroundOrigin: "padding-box, border-box",
           borderImage: "linear-gradient(135deg, rgba(220,38,38,0.3), rgba(139,0,0,0.3)) 1"
         }}>
+        
+        <VisuallyHidden>
+          <DialogTitle>
+            {mode === "login" ? "Veil Login" : mode === "forgot" ? "Recover Access" : "Change Password"}
+          </DialogTitle>
+        </VisuallyHidden>
         
         {/* Shimmer effect */}
         <div className="absolute inset-0 pointer-events-none" style={{
