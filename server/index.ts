@@ -94,13 +94,22 @@ app.use((req, res, next) => {
 
 // Initialize the server
 async function initializeServer() {
-  console.log('[INIT] NUCLEAR TEST - absolute bare minimum');
+  console.log('[INIT] Initializing server...');
   
-  // ONE ROUTE ONLY - no routes, no vite, no middleware
-  app.get('/', (req, res) => {
-    console.log('[ROUTE] GET / hit - responding...');
-    res.send('Guardian breathes 🖤');
-  });
+  try {
+    // Register all API routes
+    console.log('[INIT] Registering routes...');
+    await registerRoutes(app);
+    
+    // Serve static files (React app)
+    console.log('[INIT] Setting up static file serving...');
+    serveStatic(app);
+    
+    console.log('[INIT] Server initialization complete');
+  } catch (error) {
+    console.error('[ERROR] Failed to initialize server:', error);
+    throw error;
+  }
 
   const port = parseInt(process.env.PORT || '5000');
   const host = process.env.NODE_ENV === 'production' ? '0.0.0.0' : '127.0.0.1';
