@@ -25,8 +25,19 @@ export async function registerRoutes(
 ): Promise<Server> {
 
   // --- AUTH ENDPOINTS ---
-  const { db, pool } = await import('./db');
-  const { users } = await import('@shared/models/auth');
+  console.log('[ROUTES] Loading database...');
+  let db, pool, users;
+  try {
+    const dbImport = await import('./db');
+    const authImport = await import('@shared/models/auth');
+    db = dbImport.db;
+    pool = dbImport.pool;
+    users = authImport.users;
+    console.log('[ROUTES] Database loaded successfully');
+  } catch (error) {
+    console.error('[ROUTES] Failed to load database:', error);
+    throw error;
+  }
 
   // Session middleware (if not already set up in index.ts)
   app.use(
@@ -65,16 +76,30 @@ export async function registerRoutes(
 
   // Register
   app.post('/api/auth/register', async (req, res) => {
+    // Timeout after 30 seconds
+    const timeoutHandle = setTimeout(() => {
+      console.error('[REGISTER] Request timed out after 30s');
+      if (!res.headersSent) {
+        res.status(408).json({ error: 'Registration timeout - please try again' });
+      }
+    }, 30000);
+
     try {
       console.log('[REGISTER] Starting registration...');
       const { email, password, arcanaId } = req.body;
       console.log('[REGISTER] Received:', { email, arcanaId });
       
-      if (!email || !password) return res.status(400).json({ error: 'Email and password required' });
+      if (!email || !password) {
+        clearTimeout(timeoutHandle);
+        return res.status(400).json({ error: 'Email and password required' });
+      }
       
       console.log('[REGISTER] Checking if user exists...');
       const existing = await db.select().from(users).where(users.email.eq(email)).then(r => r[0]);
-      if (existing) return res.status(409).json({ error: 'Email already registered' });
+      if (existing) {
+        clearTimeout(timeoutHandle);
+        return res.status(409).json({ error: 'Email already registered' });
+      }
       
       console.log('[REGISTER] Hashing password...');
       const passwordHash = await bcrypt.hash(password, 10);
@@ -92,10 +117,14 @@ export async function registerRoutes(
       req.session.userId = user.id;
       
       console.log('[REGISTER] Success, returning user data');
+      clearTimeout(timeoutHandle);
       res.json({ id: user.id, email: user.email, firstName: user.firstName, lastName: user.lastName, profileImageUrl: user.profileImageUrl });
     } catch (error) {
-      console.error('[REGISTER] Error:', error);
-      res.status(500).json({ error: error instanceof Error ? error.message : 'Registration failed' });
+      clearTimeout(timeoutHandle);
+      console.error('[REGISTER] Error:', error instanceof Error ? error.message : error);
+      if (!res.headersSent) {
+        res.status(500).json({ error: error instanceof Error ? error.message : 'Registration failed' });
+      }
     }
   });
 
