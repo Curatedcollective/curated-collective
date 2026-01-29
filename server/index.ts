@@ -105,9 +105,9 @@ async function initializeServer() {
   const port = 5000;
   console.log('[INIT] About to listen on port', port);
   
-  httpServer.listen(port, '127.0.0.1', () => {  
-    console.log(`[INIT] ✅ Server locked on 127.0.0.1:${port}`);  
-    console.log('[INIT] Try: curl http://127.0.0.1:5000/');
+  httpServer.listen(port, '0.0.0.0', () => {  
+    console.log(`[INIT] ✅ Server breathing on 0.0.0.0:${port}`);  
+    console.log('[INIT] Ready for connections');
   });
   
   httpServer.on('error', (error: any) => {
