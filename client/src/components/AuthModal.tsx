@@ -124,7 +124,10 @@ export function AuthModal({ open, onClose }: { open: boolean; onClose: () => voi
                 ))}
               </div>
               <Button 
-                onClick={() => mutation.mutate()}
+                onClick={() => {
+                  console.log("[AUTH-BUTTON] Awaken clicked, selectedArcana:", selectedArcana);
+                  mutation.mutate();
+                }}
                 disabled={!selectedArcana || mutation.isPending}
                 className="w-full bg-white hover:bg-gray-200 text-black rounded-none"
               >
