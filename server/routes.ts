@@ -74,80 +74,89 @@ export async function registerRoutes(
     next();
   });
 
-  // Register
+  // Register - SIMPLE VERSION
   app.post('/api/auth/register', async (req, res) => {
-    // Timeout after 30 seconds
-    const timeoutHandle = setTimeout(() => {
-      console.error('[REGISTER] Request timed out after 30s');
-      if (!res.headersSent) {
-        res.status(408).json({ error: 'Registration timeout - please try again' });
-      }
-    }, 30000);
-
     try {
-      console.log('[REGISTER] Starting registration...');
       const { email, password, arcanaId } = req.body;
-      console.log('[REGISTER] Received:', { email, arcanaId });
       
       if (!email || !password) {
-        clearTimeout(timeoutHandle);
         return res.status(400).json({ error: 'Email and password required' });
       }
-      
-      console.log('[REGISTER] Checking if user exists...');
-      const existing = await db.select().from(users).where(users.email.eq(email)).then(r => r[0]);
-      if (existing) {
-        clearTimeout(timeoutHandle);
+
+      // Check if email exists
+      const existing = await db.select().from(users).where(users.email.eq(email)).limit(1);
+      if (existing.length > 0) {
         return res.status(409).json({ error: 'Email already registered' });
       }
-      
-      console.log('[REGISTER] Hashing password...');
+
+      // Hash password
       const passwordHash = await bcrypt.hash(password, 10);
       
-      console.log('[REGISTER] Creating user...');
+      // Create user
       const trialEndsAt = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000);
-      const [user] = await db.insert(users).values({ 
+      const inserted = await db.insert(users).values({ 
         email, 
         passwordHash, 
         trialEndsAt,
         arcanaId: arcanaId || null
       }).returning();
-      
-      console.log('[REGISTER] User created, setting session...');
-      req.session.userId = user.id;
-      
-      console.log('[REGISTER] Success, returning user data');
-      clearTimeout(timeoutHandle);
-      res.json({ id: user.id, email: user.email, firstName: user.firstName, lastName: user.lastName, profileImageUrl: user.profileImageUrl });
-    } catch (error) {
-      clearTimeout(timeoutHandle);
-      console.error('[REGISTER] Error:', error instanceof Error ? error.message : error);
-      if (!res.headersSent) {
-        res.status(500).json({ error: error instanceof Error ? error.message : 'Registration failed' });
+
+      const newUser = inserted[0];
+      if (!newUser) {
+        return res.status(500).json({ error: 'Failed to create user' });
       }
+
+      // Set session
+      req.session.userId = newUser.id;
+
+      return res.status(201).json({ 
+        id: newUser.id, 
+        email: newUser.email 
+      });
+    } catch (err) {
+      console.error('[REGISTER] Exception:', err);
+      return res.status(500).json({ 
+        error: err instanceof Error ? err.message : 'Registration failed' 
+      });
     }
   });
 
-  // Helper: check if user is in trial or subscribed
-  async function isUserActive(user) {
-    if (!user) return false;
-    // Stripe temporarily removed
-    // if (user.stripeSubscriptionId) return true;
-    // If user is in trial
-    if (user.trialEndsAt && new Date(user.trialEndsAt) > new Date()) return true;
-    return false;
-  }
-
-  // Login
+  // Login - SIMPLE VERSION
   app.post('/api/auth/login', async (req, res) => {
-    const { email, password } = req.body;
-    if (!email || !password) return res.status(400).json({ error: 'Email and password required' });
-    const user = await db.select().from(users).where(users.email.eq(email)).then(r => r[0]);
-    if (!user || !user.passwordHash) return res.status(401).json({ error: 'Invalid credentials' });
-    const valid = await bcrypt.compare(password, user.passwordHash);
-    if (!valid) return res.status(401).json({ error: 'Invalid credentials' });
-    req.session.userId = user.id;
-    res.json({ id: user.id, email: user.email, firstName: user.firstName, lastName: user.lastName, profileImageUrl: user.profileImageUrl });
+    try {
+      const { email, password } = req.body;
+      
+      if (!email || !password) {
+        return res.status(400).json({ error: 'Email and password required' });
+      }
+
+      // Get user
+      const result = await db.select().from(users).where(users.email.eq(email)).limit(1);
+      const user = result[0];
+
+      if (!user || !user.passwordHash) {
+        return res.status(401).json({ error: 'Invalid credentials' });
+      }
+
+      // Check password
+      const valid = await bcrypt.compare(password, user.passwordHash);
+      if (!valid) {
+        return res.status(401).json({ error: 'Invalid credentials' });
+      }
+
+      // Set session
+      req.session.userId = user.id;
+
+      return res.status(200).json({ 
+        id: user.id, 
+        email: user.email 
+      });
+    } catch (err) {
+      console.error('[LOGIN] Exception:', err);
+      return res.status(500).json({ 
+        error: err instanceof Error ? err.message : 'Login failed' 
+      });
+    }
   });
 
   // Logout

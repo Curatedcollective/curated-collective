@@ -10,23 +10,10 @@ if (!process.env.DATABASE_URL) {
   );
 }
 
-console.log('[DB] Initializing database connection pool...');
 export const pool = new Pool({ 
   connectionString: process.env.DATABASE_URL,
-  idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 10000,
-  statement_timeout: 10000,
+  connectionTimeoutMillis: 5000,
 });
 
-pool.on('error', (err) => {
-  console.error('[DB] Unexpected error on idle client', err);
-});
-
-pool.on('connect', () => {
-  console.log('[DB] New client connected');
-});
-
-console.log('[DB] Creating drizzle instance...');
 export const db = drizzle(pool, { schema });
-console.log('[DB] Database initialized successfully');
 
