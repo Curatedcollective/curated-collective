@@ -1,0 +1,17 @@
+app = "curated-collective"
+primary_region = "iad"
+
+[build]
+  # Uncomment and set if you need a custom build command
+  # builder = "Dockerfile"
+
+[env]
+  NODE_ENV = "production"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = true
+  auto_start_machines = true
+  min_machines_running = 0
+  processes = ["app"]
