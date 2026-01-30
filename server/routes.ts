@@ -37,7 +37,7 @@ export async function registerRoutes(
     console.log('[ROUTES] Database loaded successfully');
   } catch (error) {
     console.error('[ROUTES] Failed to load database:', error);
-    throw error;
+    throw error; 
   }
 
   // Session middleware (if not already set up in index.ts)
