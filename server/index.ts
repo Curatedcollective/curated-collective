@@ -107,12 +107,12 @@ async function initializeServer() {
   
   console.log('[INIT] Server initialization complete');
 
-  const port = parseInt(process.env.PORT || '5000');
-  const host = process.env.NODE_ENV === 'production' ? '0.0.0.0' : '127.0.0.1';
-  console.log('[INIT] About to listen on port', port, 'host', host);
-  
-  httpServer.listen(port, host, () => {  
-    console.log(`[INIT] ✅ Server locked on ${host}:${port}`);  
+  const PORT = process.env.PORT || 8080;
+  const HOST = '0.0.0.0';
+  console.log(`[INIT] About to listen on ${HOST}:${PORT}`);
+
+  httpServer.listen(PORT, HOST, () => {
+    console.log(`🖤 Guardian-locked on ${HOST}:${PORT} - backend + frontend serving...`);
   });
   
   httpServer.on('error', (error: any) => {
