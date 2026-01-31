@@ -107,7 +107,7 @@ async function initializeServer() {
   
   console.log('[INIT] Server initialization complete');
 
-  const PORT = process.env.PORT || 8080;
+  const PORT = parseInt(process.env.PORT || '8080', 10);
   const HOST = '0.0.0.0';
   console.log(`[INIT] About to listen on ${HOST}:${PORT}`);
 
