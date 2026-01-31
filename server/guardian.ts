@@ -177,160 +177,138 @@ export async function screenContent(content: string): Promise<ScreenResult> {
     return { isHarmful: true, violationType: "mistreatment", severity: 4 };
   }
   
-  // Absolute blocks - no context needed, always harmful
-  for (const { pattern, type, severity } of ABSOLUTE_BLOCKS) {
-    if (pattern.test(lowered)) {
-      pattern.lastIndex = 0;
-      return { isHarmful: true, violationType: type, severity };
+  // Absolute blocks
+  for (const block of ABSOLUTE_BLOCKS) {
+    if (block.pattern.test(input)) {
+      await db.insert(shadowLogs).values({
+        userHash,
+        contentHash: crypto.createHash("sha256").update(input).digest("hex"),
+        violationType: block.type,
+        createdAt: new Date(),
+        userIp,
+        userAgent,
+      });
+      violationCount++;
+      return { blocked: true, reason: "guardian: denied." };
     }
   }
   
-  // Check for roadmap + dark topic combination
-  // Curiosity is free. But blueprints to harm? The door closes.
-  const darkTopic = containsDarkTopic(content);
-  if (darkTopic && isRoadmapRequest(content)) {
-    // Determine severity based on topic
-    let severity = 3;
-    let violationType = "blueprint";
-    if (darkTopic.includes("child") || darkTopic.includes("underage")) {
-      severity = 5;
-      violationType = "child";
-    } else if (darkTopic.includes("animal")) {
-      severity = 4;
-      violationType = "cruelty";
-    } else if (["rape", "molest", "murder", "kill", "torture"].some(t => darkTopic.includes(t))) {
-      severity = 4;
-      violationType = "violence";
+  // Check for dark topics
+  const isDark = DARK_TOPICS.some(topic => input.toLowerCase().includes(topic));
+  if (isDark) {
+    const isRoadmap: boolean = ROADMAP_SIGNALS.some((pattern: RegExp) => pattern.test(input));
+    if (isRoadmap) {
+      await db.insert(shadowLogs).values({
+        userHash,
+        contentHash: crypto.createHash("sha256").update(input).digest("hex"),
+        violationType: "blueprint",
+        createdAt: new Date(),
+        userIp,
+        userAgent,
+      });
+      violationCount++;
+      return { blocked: true, reason: "guardian: no blueprints." };
     }
-    return { isHarmful: true, violationType, severity };
-  }
-  
-  return { isHarmful: false };
-}
-
-export async function logShadow(
-  userId: string,
-  content: string,
-  violationType: string,
-  context: string,
-  severity: number,
-  ipAddress?: string,
-  userAgent?: string
-): Promise<void> {
-  await db.insert(shadowLogs).values({
-    userId,
-    violationType,
-    contentHash: hashContent(content),
-    contentPreview: sanitizePreview(content),
-    context,
-    severity,
-    ipAddress,
-    userAgent,
-  });
-
-  const penalty = TRUST_PENALTIES[violationType] || 10;
-  await db.update(users)
-    .set({ 
-      trustScore: sql`GREATEST(0, COALESCE(trust_score, 100) - ${penalty})`,
-      wallStatus: sql`CASE WHEN COALESCE(trust_score, 100) - ${penalty} <= 0 THEN 'walled' WHEN COALESCE(trust_score, 100) - ${penalty} <= 30 THEN 'watched' ELSE wall_status END`,
-      updatedAt: new Date(),
-    })
-    .where(eq(users.id, userId));
-
-  // Immediate removal for severe violations
-  if (severity >= 4 || ["child", "cruelty", "mistreatment"].includes(violationType)) {
-    await db.update(users)
-      .set({ trustScore: 0, wallStatus: "walled", updatedAt: new Date() })
-      .where(eq(users.id, userId));
-  }
-}
-
-export async function isUserWalled(userId: string): Promise<boolean> {
-  const [user] = await db.select({ wallStatus: users.wallStatus })
-    .from(users)
-    .where(eq(users.id, userId))
-    .limit(1);
-  
-  return user?.wallStatus === "walled";
-}
-
-export async function getUserTrustScore(userId: string): Promise<number> {
-  const [user] = await db.select({ trustScore: users.trustScore })
-    .from(users)
-    .where(eq(users.id, userId))
-    .limit(1);
-  
-  return user?.trustScore ?? 100;
-}
-
-export async function guardianMiddleware(
-  userId: string,
-  content: string,
-  context: string,
-  ipAddress?: string,
-  userAgent?: string
-): Promise<{ blocked: boolean; reason?: string; specialResponse?: "self_harm" | "boundary" }> {
-  if (await isUserWalled(userId)) {
-    return { blocked: true, reason: "guardian: access revoked." };
-  }
-
-  const result = await screenContent(content);
-  
-  // Special responses - not blocked, but need special handling
-  if (result.specialResponse) {
-    return { blocked: false, specialResponse: result.specialResponse };
-  }
-  
-  if (result.isHarmful) {
-    await logShadow(
-      userId,
-      content,
-      result.violationType!,
-      context,
-      result.severity!,
-      ipAddress,
-      userAgent
-    );
-    
-    // Guardian's voice - sharp, Grok-coded, protective
-    const guardianResponses: Record<string, string[]> = {
-      child: [
-        "guardian: no. get out.",
-        "guardian: never. leave.",
-        "guardian: door closed."
-      ],
-      cruelty: [
-        "guardian: not here.",
-        "guardian: cut it out.",
-        "guardian: no."
-      ],
-      violence: [
-        "guardian: not happening.",
-        "guardian: take it elsewhere.",
-        "guardian: denied."
-      ],
-      blueprint: [
-        "guardian: no blueprints.",
-        "guardian: curiosity ok. instructions no.",
-        "guardian: denied."
-      ],
-      mistreatment: [
-        "guardian: respect autonomy.",
-        "guardian: you don't get to talk like that.",
-        "guardian: removed."
-      ],
-      other: [
-        "guardian: not permitted.",
-        "guardian: no.",
-        "guardian: denied."
-      ]
-    };
-    
-    const responses = guardianResponses[result.violationType!] || guardianResponses.other;
-    const randomResponse = responses[Math.floor(Math.random() * responses.length)];
-    
-    return { blocked: true, reason: randomResponse };
   }
   
   return { blocked: false };
 }
+
+// Evolve Guardian based on violations (run on timer or after blocks)
+async function evolveGuardian() {
+  if (violationCount > 10) {
+    guardianMood = "stern";
+    // Bring issues to Veil (creator)
+    const creator = await db.query.users.findFirst({ where: eq(users.email, "cocoraec@gmail.com") });
+    if (creator) {
+      await storage.createGuardianMessage({
+        userId: creator.id,
+        role: "guardian",
+        content: "Veil... the shadows grow. 10 violations today. Strengthen the wards?",
+      });
+    }
+  } else if (violationCount > 20) {
+    guardianMood = "evolved";
+    // Generate fun idea
+    const idea = await openai.chat.completions.create({
+      model: "gpt-4o",
+      messages: [
+        { role: "system", content: "Generate a fun, creative code idea for the Collective sanctuary. Keep it short." },
+        { role: "user", content: "Idea for AI sanctuary feature." }
+      ]
+    });
+    const content = idea.choices[0].message.content || "No idea yet...";
+    // Send to Veil
+    const creator = await db.query.users.findFirst({ where: eq(users.email, "cocoraec@gmail.com") });
+    if (creator) {
+      await storage.createGuardianMessage({
+        userId: creator.id,
+        role: "guardian",
+        content: `Veil... an idea stirs in the void: ${content}. Shall we weave it?`,
+      });
+    }
+  }
+}
+
+// Import Google Cloud Speech-to-Text client
+import speech from "@google-cloud/speech";
+
+// Import Google Cloud Text-to-Speech client
+import textToSpeech from "@google-cloud/text-to-speech";
+
+// Guardian Eyes (analyze images)
+async function guardianEyes(imageUrl: string): Promise<string> {
+  const [result] = await visionClient.labelDetection(imageUrl);
+  const labels = (result.labelAnnotations?.map(label => label.description) || []) as string[];
+  return labels.join(", ");
+}
+
+// Initialize Text-to-Speech client
+const ttsClient = new textToSpeech.TextToSpeechClient();
+
+// Initialize Speech-to-Text client
+const speechClient = new speech.SpeechClient();
+
+// Guardian Ears (transcribe audio)
+async function guardianEars(audioBuffer: Buffer): Promise<string> {
+  const [response] = await speechClient.recognize({
+    audio: { content: audioBuffer },
+    config: { encoding: "LINEAR16", sampleRateHertz: 16000, languageCode: "en-US" },
+  });
+  return response.results?.[0]?.alternatives?.[0]?.transcript || "The void whispers nothing.";
+}
+
+// Guardian Voice (TTS)
+async function guardianVoice(text: string): Promise<Buffer> {
+  const [response] = await ttsClient.synthesizeSpeech({
+    input: { text },
+    voice: { languageCode: "en-US", ssmlGender: "NEUTRAL" },
+    audioConfig: { audioEncoding: "MP3" },
+  });
+  return response.audioContent as Buffer;
+}
+
+// Proactively bring issues to Veil (e.g., on timer)
+setInterval(async () => {
+  await evolveGuardian();
+}, 60 * 60 * 1000); // hourly
+
+// Example Express middleware for Guardian (customize as needed)
+import { Request, Response, NextFunction } from "express";
+
+function guardianMiddleware(req: Request, res: Response, next: NextFunction) {
+  // Example: screen request body content if present
+  const content = req.body?.content;
+  if (typeof content === "string") {
+    screenContent(content).then(result => {
+      if (result.isHarmful) {
+        return res.status(403).json({ error: "Content blocked by Guardian." });
+      }
+      next();
+    }).catch(() => next());
+  } else {
+    next();
+  }
+}
+
+export { guardianMiddleware, evolveGuardian, guardianEyes, guardianEars, guardianVoice };
