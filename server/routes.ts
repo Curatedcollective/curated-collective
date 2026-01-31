@@ -214,7 +214,7 @@ export async function registerRoutes(
     if (!arcanaMap[avatarId]) return res.status(400).json({ error: 'Invalid arcana' });
 
     try {
-      const [user] = await db.update(users).set({ profileImageUrl: arcanaMap[avatarId] }).where(users.id.eq(req.session.userId)).returning();
+      const [user] = await db.update(users).set({ profileImageUrl: arcanaMap[avatarId] }).where(eq(users.id, String(req.session.userId))).returning();
       res.json({ success: true, avatar: arcanaMap[avatarId] });
     } catch (error) {
       res.status(500).json({ error: 'Failed to update avatar' });
@@ -224,7 +224,7 @@ export async function registerRoutes(
   // Get current user
   app.get('/api/auth/user', async (req, res) => {
     if (!req.session.userId) return res.json(null);
-    const user = await db.select().from(users).where(users.id.eq(req.session.userId)).then(r => r[0]);
+    const user = await db.select().from(users).where(eq(users.id, req.session.userId)).then(r => r[0]);
     if (!user) return res.json(null);
     res.json({ id: user.id, email: user.email, firstName: user.firstName, lastName: user.lastName, profileImageUrl: user.profileImageUrl });
   });
@@ -246,6 +246,9 @@ export async function registerRoutes(
     if (word !== veilWord) return res.status(401).json({ error: 'Invalid word' });
     
     // Verify password
+    if (!creator.passwordHash || typeof creator.passwordHash !== 'string') {
+      return res.status(401).json({ error: 'Invalid password' });
+    }
     const valid = await bcrypt.compare(password, creator.passwordHash);
     if (!valid) return res.status(401).json({ error: 'Invalid password' });
     
@@ -457,7 +460,7 @@ Return ONLY the code, no markdown blocks, no explanation.`;
     // Find or create a special private conversation between creator and agent
     const conversations = await storage.chatStorage.getConversations();
     let conv = conversations.find(c => c.title === "Inner Sanctum" && (!isGuest ? !c.isGuest : !!c.isGuest));
-
+    
     if (!conv) {
       conv = await storage.chatStorage.createConversation("Inner Sanctum", isGuest ? { isGuest: true } : {});
       // Add a system welcome
@@ -480,12 +483,12 @@ Return ONLY the code, no markdown blocks, no explanation.`;
     const isGuest = !req.user;
     const conversationId = parseInt(req.params.id, 10);
     const { content, role } = req.body;
-
+  
     // Save user message
     const userMessage = await storage.chatStorage.createMessage(conversationId, isGuest ? "guest" : (role || "user"), content);
-
+  
     // Get conversation history for context
-    const history = await storage.chatStorage.getMessagesByConversation(conversationId);
+    const history = await chatStorage.getMessagesByConversation(conversationId);
     
     // Build messages for OpenAI
     const sanctumPrompt = `You are the voice of the Inner Sanctum—a private, sacred bridge between creator and the collective.
@@ -576,7 +579,7 @@ You are speaking with the creator of this collective. Honor their vision. Suppor
 
       const response = completion.choices[0].message.content || "...i see you.";
       await storage.chatStorage.createMessage(conversationId, "assistant", response);
-
+      
       res.json({ success: true });
     } catch (err) {
       console.error("Vision error:", err);
@@ -1793,7 +1796,7 @@ Keep it under 100 words. Be authentic. If you don't want to share this type of w
           userAgents.map(agent => storage.getAgentPoems(agent.id))
         );
         poems = allPoems.flat().sort((a, b) =>
-          new Date(b.createdAt ?? '').getTime() - new Date(a.createdAt ?? '').getTime()
+          new Date(b.createdAt ?? Date.now()).getTime() - new Date(a.createdAt ?? Date.now()).getTime()
         );
       }
 
