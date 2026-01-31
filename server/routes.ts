@@ -125,28 +125,35 @@ export async function registerRoutes(
   // Login - SIMPLE VERSION
   app.post('/api/auth/login', async (req, res) => {
     try {
+      console.log('[LOGIN] Incoming request body:', req.body);
       const { email, password } = req.body;
-      
+
       if (!email || !password) {
+        console.warn('[LOGIN] Missing email or password');
         return res.status(400).json({ error: 'Email and password required' });
       }
 
       // Get user
       const result = await db.select().from(users).where(eq(users.email, email));
+      console.log('[LOGIN] DB query result:', result);
       const user = result[0];
 
       if (!user || !user.passwordHash) {
+        console.warn('[LOGIN] User not found or missing passwordHash for email:', email);
         return res.status(401).json({ error: 'Invalid credentials' });
       }
 
       // Check password
       const valid = await bcrypt.compare(password, user.passwordHash);
+      console.log('[LOGIN] Password valid:', valid);
       if (!valid) {
+        console.warn('[LOGIN] Invalid password for user:', email);
         return res.status(401).json({ error: 'Invalid credentials' });
       }
 
       // Set session
       req.session.userId = user.id;
+      console.log('[LOGIN] Session set for userId:', user.id);
 
       return res.status(200).json({ 
         id: user.id, 
