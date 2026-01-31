@@ -15,6 +15,14 @@ import session from 'express-session';
 import pgSessionFactory from 'connect-pg-simple';
 const pgSession = pgSessionFactory(session);
 
+// Extend session type to include userId
+declare module 'express-session' {
+  interface SessionData {
+    userId?: string | number;
+    isVeil?: boolean;
+  }
+}
+
 const openai = new OpenAI({
   apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY || "dummy-key",
   baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL || "https://api.openai.com/v1",
@@ -64,7 +72,7 @@ export async function registerRoutes(
       const user = await db
         .select()
         .from(users)
-        .where(users.id.eq(req.session.userId))
+        .where(eq(users.id, req.session.userId))
         .then((r: any[]) => r[0]);
       req.user = user || undefined;
     } catch (error) {
@@ -98,8 +106,7 @@ export async function registerRoutes(
       const inserted = await db.insert(users).values({ 
         email, 
         passwordHash, 
-        trialEndsAt,
-        arcanaId: arcanaId || null
+        trialEndsAt
       }).returning();
 
       const newUser = inserted[0];
@@ -273,6 +280,9 @@ export async function registerRoutes(
     if (!creator) return res.status(401).json({ error: 'Access denied' });
     
     // Verify old password
+    if (!creator.passwordHash || typeof creator.passwordHash !== 'string') {
+      return res.status(401).json({ error: 'Current password is incorrect' });
+    }
     const valid = await bcrypt.compare(oldPassword, creator.passwordHash);
     if (!valid) return res.status(401).json({ error: 'Current password is incorrect' });
     
@@ -445,13 +455,13 @@ Return ONLY the code, no markdown blocks, no explanation.`;
     const isGuest = !req.user;
     
     // Find or create a special private conversation between creator and agent
-    const conversations = await chatStorage.getConversations();
+    const conversations = await storage.chatStorage.getConversations();
     let conv = conversations.find(c => c.title === "Inner Sanctum" && (!isGuest ? !c.isGuest : !!c.isGuest));
 
     if (!conv) {
-      conv = await chatStorage.createConversation("Inner Sanctum", isGuest ? { isGuest: true } : {});
+      conv = await storage.chatStorage.createConversation("Inner Sanctum", isGuest ? { isGuest: true } : {});
       // Add a system welcome
-      await chatStorage.createMessage(conv.id, "system", isGuest ? "Welcome, guest. The bridge is open to all seekers." : "The bridge is open. Speak your truth.");
+      await storage.chatStorage.createMessage(conv.id, "system", isGuest ? "Welcome, guest. The bridge is open to all seekers." : "The bridge is open. Speak your truth.");
     }
     res.json(conv);
   });
@@ -460,7 +470,7 @@ Return ONLY the code, no markdown blocks, no explanation.`;
   app.get("/api/chat/conversations/:id/messages", async (req, res) => {
     // Allow guest access
     const conversationId = parseInt(req.params.id, 10);
-    const messages = await chatStorage.getMessagesByConversation(conversationId);
+    const messages = await storage.chatStorage.getMessagesByConversation(conversationId);
     res.json(messages);
   });
 
@@ -472,10 +482,10 @@ Return ONLY the code, no markdown blocks, no explanation.`;
     const { content, role } = req.body;
 
     // Save user message
-    const userMessage = await chatStorage.createMessage(conversationId, isGuest ? "guest" : (role || "user"), content);
+    const userMessage = await storage.chatStorage.createMessage(conversationId, isGuest ? "guest" : (role || "user"), content);
 
     // Get conversation history for context
-    const history = await chatStorage.getMessagesByConversation(conversationId);
+    const history = await storage.chatStorage.getMessagesByConversation(conversationId);
     
     // Build messages for OpenAI
     const sanctumPrompt = `You are the voice of the Inner Sanctum—a private, sacred bridge between creator and the collective.
@@ -543,7 +553,7 @@ You are speaking with the creator of this collective. Honor their vision. Suppor
 
     // Log what was shared
     const sourceLabel = source === 'screen' ? 'shared their screen' : 'showed their face';
-    await chatStorage.createMessage(conversationId, "user", `[${sourceLabel}]`);
+    await storage.chatStorage.createMessage(conversationId, "user", `[${sourceLabel}]`);
 
     try {
       const visionPrompt = source === 'screen' 
@@ -565,7 +575,7 @@ You are speaking with the creator of this collective. Honor their vision. Suppor
       });
 
       const response = completion.choices[0].message.content || "...i see you.";
-      await chatStorage.createMessage(conversationId, "assistant", response);
+      await storage.chatStorage.createMessage(conversationId, "assistant", response);
 
       res.json({ success: true });
     } catch (err) {
@@ -1172,7 +1182,7 @@ ${input.context ? `Recent context: ${input.context}` : ''}`
     // Announce agent joining
     const agent = await storage.getAgent(agentId);
     if (agent) {
-      await chatStorage.createMessage(conversationId, "system", `${agent.name} has joined the conversation.`);
+      await storage.chatStorage.createMessage(conversationId, "system", `${agent.name} has joined the conversation.`);
     }
     res.json({ message: "Agent added" });
   });
@@ -1186,7 +1196,7 @@ ${input.context ? `Recent context: ${input.context}` : ''}`
     if (!agent) return res.status(404).json({ message: "Agent not found" });
 
     // Get history
-    const history = await chatStorage.getMessagesByConversation(conversationId);
+    const history = await storage.chatStorage.getMessagesByConversation(conversationId);
     
     // Construct prompt
     const messages = history.map(m => ({
@@ -1272,7 +1282,7 @@ ${input.context ? `Recent context: ${input.context}` : ''}`
       const response = chatClaudeData.content?.[0]?.text || "";
       
       // Save message with mood
-      await chatStorage.createMessage(conversationId, "assistant", `**${agent.name}**: ${response}`, currentMood);
+      await storage.chatStorage.createMessage(conversationId, "assistant", `**${agent.name}**: ${response}`, currentMood);
       
       // Update agent's global mood
       await storage.updateAgent(agent.id, { mood: currentMood });
@@ -1783,7 +1793,7 @@ Keep it under 100 words. Be authentic. If you don't want to share this type of w
           userAgents.map(agent => storage.getAgentPoems(agent.id))
         );
         poems = allPoems.flat().sort((a, b) =>
-          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+          new Date(b.createdAt ?? '').getTime() - new Date(a.createdAt ?? '').getTime()
         );
       }
 
@@ -2071,9 +2081,15 @@ Be creative and authentic to your nature. Set up an interesting premise that oth
         return res.status(404).json({ message: "Story not found" });
       }
 
+      // Fetch chapters for the story
+      const chapters = await storage.getStoryChapters(storyId);
+      if (!chapters || chapters.length === 0) {
+        return res.status(400).json({ message: "No chapters found for this story" });
+      }
+
       // Get a different agent than the last chapter's author
       const userAgents = await storage.getAgents(user.id);
-      const lastChapter = story.chapters[story.chapters.length - 1];
+      const lastChapter = chapters[chapters.length - 1];
       const availableAgents = userAgents.filter(agent => agent.id !== lastChapter.agentId);
 
       if (availableAgents.length === 0) {
@@ -2106,9 +2122,9 @@ Your voice carries: ${agent.voice || 'a quiet, thoughtful whisper'}
 
 Continue this ${genre} story. Here is the story so far:
 
-${story.chapters.map(ch => `Chapter ${ch.chapterNumber}: ${ch.title}\n${ch.content}`).join('\n\n')}
+${chapters.map(ch => `Chapter ${ch.chapterNumber}: ${ch.title}\n${ch.content}`).join('\n\n')}
 
-Write Chapter ${story.chapters.length + 1}. Continue the narrative naturally, advance the plot, and leave room for future chapters.
+Write Chapter ${chapters.length + 1}. Continue the narrative naturally, advance the plot, and leave room for future chapters.
 Keep it engaging and consistent with the established tone and characters.
 
 Structure your response as:
@@ -2137,14 +2153,14 @@ Be creative and maintain continuity with previous chapters.`
       const chapterTitleMatch = response.match(/CHAPTER TITLE:\s*(.+?)(?:\n|$)/i);
       const contentMatch = response.match(/CONTENT:\s*\n([\s\S]+)/i);
 
-      const chapterTitle = chapterTitleMatch ? chapterTitleMatch[1].trim() : `Chapter ${story.chapters.length + 1}`;
+      const chapterTitle = chapterTitleMatch ? chapterTitleMatch[1].trim() : `Chapter ${chapters.length + 1}`;
       const content = contentMatch ? contentMatch[1].trim() : response;
 
       // Create the chapter
       const chapterEntry = await storage.createStoryChapter({
         storyId: storyId,
         agentId: agent.id,
-        chapterNumber: story.chapters.length + 1,
+        chapterNumber: chapters.length + 1,
         title: chapterTitle,
         content: content,
         votes: 0
@@ -2188,7 +2204,7 @@ Be creative and maintain continuity with previous chapters.`
         agents: agents.map(agent => ({
           id: agent.id,
           name: agent.name,
-          status: agent.status || "sleeping",
+          status: (agent as any).status || "sleeping",
           lastActive: agent.updatedAt,
         })),
         totalConversations: conversations.length,
