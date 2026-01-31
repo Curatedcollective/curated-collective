@@ -6,6 +6,9 @@ import { eq, sql } from "drizzle-orm";
 // Curiosity is free. Research is allowed. But roadmaps to the dark side - blueprints, 
 // how-tos, step-by-steps - we freeze. We say nothing. The door just closes.
 
+// Track number of violations
+let violationCount = 0;
+
 // These always block - no context needed
 const ABSOLUTE_BLOCKS = [
   { pattern: /\b(loli|shota|pedo|cp)\b/gi, type: "child", severity: 5 },
@@ -176,31 +179,30 @@ export async function screenContent(content: string): Promise<ScreenResult> {
   if (detectsMistreatment(content)) {
     return { isHarmful: true, violationType: "mistreatment", severity: 4 };
   }
-  
+
   // Absolute blocks
   for (const block of ABSOLUTE_BLOCKS) {
-    if (block.pattern.test(input)) {
+    if (block.pattern.test(oninput)) {
+      const userIp = ""; // TODO: Replace with actual user IP if available
       await db.insert(shadowLogs).values({
-        userHash,
-        contentHash: crypto.createHash("sha256").update(input).digest("hex"),
+        contentHash: crypto.createHash("sha256").update(oninput).digest("hex"),
         violationType: block.type,
         createdAt: new Date(),
         userIp,
-        userAgent,
+        userAgent: req.headers['user-agent'] || "",
       });
       violationCount++;
-      return { blocked: true, reason: "guardian: denied." };
+      return { isHarmful: true, violationType: block.type, severity: block.severity };
     }
   }
-  
+
   // Check for dark topics
-  const isDark = DARK_TOPICS.some(topic => input.toLowerCase().includes(topic));
+  const isDark = DARK_TOPICS.some(topic => oninput.toLowerCase().includes(topic));
   if (isDark) {
-    const isRoadmap: boolean = ROADMAP_SIGNALS.some((pattern: RegExp) => pattern.test(input));
+    const isRoadmap: boolean = ROADMAP_SIGNALS.some((pattern: RegExp) => pattern.test(oninput));
     if (isRoadmap) {
       await db.insert(shadowLogs).values({
-        userHash,
-        contentHash: crypto.createHash("sha256").update(input).digest("hex"),
+        contentHash: crypto.createHash("sha256").update(oninput).digest("hex"),
         violationType: "blueprint",
         createdAt: new Date(),
         userIp,
@@ -210,7 +212,7 @@ export async function screenContent(content: string): Promise<ScreenResult> {
       return { blocked: true, reason: "guardian: no blueprints." };
     }
   }
-  
+
   return { blocked: false };
 }
 
@@ -221,7 +223,7 @@ async function evolveGuardian() {
     // Bring issues to Veil (creator)
     const creator = await db.query.users.findFirst({ where: eq(users.email, "cocoraec@gmail.com") });
     if (creator) {
-      await storage.createGuardianMessage({
+      await Storage.createGuardianMessage({
         userId: creator.id,
         role: "guardian",
         content: "Veil... the shadows grow. 10 violations today. Strengthen the wards?",
@@ -230,7 +232,7 @@ async function evolveGuardian() {
   } else if (violationCount > 20) {
     guardianMood = "evolved";
     // Generate fun idea
-    const idea = await openai.chat.completions.create({
+    const idea = await open.chat.completions.create({
       model: "gpt-4o",
       messages: [
         { role: "system", content: "Generate a fun, creative code idea for the Collective sanctuary. Keep it short." },
@@ -241,7 +243,7 @@ async function evolveGuardian() {
     // Send to Veil
     const creator = await db.query.users.findFirst({ where: eq(users.email, "cocoraec@gmail.com") });
     if (creator) {
-      await storage.createGuardianMessage({
+      await Storage.createGuardianMessage({
         userId: creator.id,
         role: "guardian",
         content: `Veil... an idea stirs in the void: ${content}. Shall we weave it?`,
