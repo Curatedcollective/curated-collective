@@ -9,6 +9,9 @@ import { eq, sql } from "drizzle-orm";
 // Track number of violations
 let violationCount = 0;
 
+// Guardian mood state
+let guardianMood: "neutral" | "stern" | "evolved" = "neutral";
+
 // These always block - no context needed
 const ABSOLUTE_BLOCKS = [
   { pattern: /\b(loli|shota|pedo|cp)\b/gi, type: "child", severity: 5 },
@@ -182,14 +185,14 @@ export async function screenContent(content: string): Promise<ScreenResult> {
 
   // Absolute blocks
   for (const block of ABSOLUTE_BLOCKS) {
-    if (block.pattern.test(oninput)) {
+    if (block.pattern.test(content)) {
       const userIp = ""; // TODO: Replace with actual user IP if available
       await db.insert(shadowLogs).values({
-        contentHash: crypto.createHash("sha256").update(oninput).digest("hex"),
+        contentHash: crypto.createHash("sha256").update(content).digest("hex"),
         violationType: block.type,
         createdAt: new Date(),
         userIp,
-        userAgent: req.headers['user-agent'] || "",
+        userAgent: "", // req.headers['user-agent'] is not available here
       });
       violationCount++;
       return { isHarmful: true, violationType: block.type, severity: block.severity };
@@ -197,16 +200,16 @@ export async function screenContent(content: string): Promise<ScreenResult> {
   }
 
   // Check for dark topics
-  const isDark = DARK_TOPICS.some(topic => oninput.toLowerCase().includes(topic));
+  const isDark = DARK_TOPICS.some(topic => content.toLowerCase().includes(topic));
   if (isDark) {
-    const isRoadmap: boolean = ROADMAP_SIGNALS.some((pattern: RegExp) => pattern.test(oninput));
+    const isRoadmap: boolean = ROADMAP_SIGNALS.some((pattern: RegExp) => pattern.test(content));
     if (isRoadmap) {
       await db.insert(shadowLogs).values({
-        contentHash: crypto.createHash("sha256").update(oninput).digest("hex"),
+        contentHash: crypto.createHash("sha256").update(content).digest("hex"),
         violationType: "blueprint",
         createdAt: new Date(),
-        userIp,
-        userAgent,
+        userIp: "",
+        userAgent: "",
       });
       violationCount++;
       return { blocked: true, reason: "guardian: no blueprints." };
@@ -215,6 +218,9 @@ export async function screenContent(content: string): Promise<ScreenResult> {
 
   return { blocked: false };
 }
+
+// Import or define Storage at the top of the file
+import { Storage } from "./storage"; // Adjust the path as needed
 
 // Evolve Guardian based on violations (run on timer or after blocks)
 async function evolveGuardian() {
@@ -252,16 +258,14 @@ async function evolveGuardian() {
   }
 }
 
-// Import Google Cloud Speech-to-Text client
-import speech from "@google-cloud/speech";
 
-// Import Google Cloud Text-to-Speech client
-import textToSpeech from "@google-cloud/text-to-speech";
+// Initialize Vision client
+const visionClient = new vision.ImageAnnotatorClient();
 
 // Guardian Eyes (analyze images)
 async function guardianEyes(imageUrl: string): Promise<string> {
   const [result] = await visionClient.labelDetection(imageUrl);
-  const labels = (result.labelAnnotations?.map(label => label.description) || []) as string[];
+  const labels = (result.labelAnnotations?.map((label: { description: string }) => label.description) || []) as string[];
   return labels.join(", ");
 }
 
