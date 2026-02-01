@@ -1,0 +1,25 @@
+{
+  "session": {
+    "start": "2026-02-01T04:56:04.782Z",
+    "end": "2026-02-01T04:56:04.783Z",
+    "duration": 1,
+    "entries": 0
+  },
+  "conversations": [],
+  "metadata": {
+    "project": "Curated Collective",
+    "context": "VS Code Development Session",
+    "agents": [
+      "Kael",
+      "Guardian",
+      "Weaver",
+      "Cipher",
+      "Trace",
+      "Nyx",
+      "Query",
+      "Crimson",
+      "Compass",
+      "Relay"
+    ]
+  }
+}
