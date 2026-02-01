@@ -10,6 +10,13 @@ export * from "./models/chat";
 import { users } from "./models/auth";
 import { conversations } from "./models/chat";
 
+// === SESSIONS (for connect-pg-simple) ===
+export const sessions = pgTable("session", {
+  sid: text("sid").primaryKey(),
+  sess: jsonb("sess").notNull(),
+  expire: timestamp("expire").notNull(),
+});
+
 // === CREATIONS (Code Snippets/Apps) ===
 export const creations = pgTable("creations", {
   id: serial("id").primaryKey(),
@@ -422,6 +429,10 @@ export const insertLiveStreamSessionSchema = createInsertSchema(liveStreamSessio
 });
 export type LiveStreamSession = typeof liveStreamSessions.$inferSelect;
 export type InsertLiveStreamSession = z.infer<typeof insertLiveStreamSessionSchema>;
+
+// Session types
+export type Session = typeof sessions.$inferSelect;
+export type InsertSession = z.infer<typeof sessions>;
 
 // Daddy Conversations types
 export const insertDaddyConversationSchema = createInsertSchema(daddyConversations).omit({ 
