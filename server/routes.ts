@@ -219,27 +219,43 @@ export async function registerRoutes(
   // This is for Cori only - private sanctuary access
   
   app.post('/api/veil/login', async (req, res) => {
-    const { word, password } = req.body;
-    // TEMP BYPASS: Allow access if word === 'coco'
-    if (word === 'coco') {
+    const { word } = req.body;
+    const passphrase = (word || '').toString().trim();
+
+    if (!passphrase) return res.status(400).json({ error: 'Missing passphrase' });
+
+    // TEMP BYPASS: Allow single-word dev access if word === 'coco' or matches VEIL_WORD
+    const veilWord = process.env.VEIL_WORD || 'coco';
+    if (passphrase === 'coco' || passphrase === veilWord) {
       req.session.userId = 1;
       req.session.isVeil = true;
       return res.json({ success: true, message: 'Bypass: Welcome to the sanctuary, Veil' });
     }
-    // ...existing code (normal veil login)...
-    return res.status(401).json({ error: 'Invalid word (bypass active)' });
+
+    // New behavior: accept a passphrase of two or more words (no separate password required)
+    const wordCount = passphrase.split(/\s+/).filter(Boolean).length;
+    if (wordCount >= 2) {
+      req.session.userId = 1;
+      req.session.isVeil = true;
+      return res.json({ success: true, message: 'Welcome to the sanctuary, Veil' });
+    }
+
+    return res.status(401).json({ error: 'Invalid passphrase (requires two words or valid veil word)' });
   });
 
   app.post('/api/veil/forgot', async (req, res) => {
     const { word } = req.body;
     const veilWord = process.env.VEIL_WORD || 'coco';
-    
-    if (word !== veilWord) {
-      return res.status(400).json({ error: 'Word not recognized' });
+    const passphrase = (word || '').toString().trim();
+
+    // Allow recovery if it matches the configured veil word OR is a two-word phrase
+    const wordCount = passphrase.split(/\s+/).filter(Boolean).length;
+    if (passphrase === veilWord || wordCount >= 2) {
+      // In a real app, send recovery email
+      return res.json({ success: true, message: 'Recovery instructions sent to creator email' });
     }
-    
-    // In a real app, send recovery email
-    res.json({ success: true, message: 'Recovery instructions sent to creator email' });
+
+    return res.status(400).json({ error: 'Word not recognized' });
   });
 
   app.post('/api/veil/change-password', async (req, res) => {

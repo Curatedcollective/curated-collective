@@ -10,15 +10,15 @@ import { Heart } from "lucide-react";
 export function VeilLogin({ open, onClose }: { open: boolean; onClose: () => void }) {
   const [mode, setMode] = useState<"login" | "forgot" | "change">("login");
   const [word, setWord] = useState("");
-  const [password, setPassword] = useState("");
+  // Password removed: veil now uses a passphrase (two words) only
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
   const loginMutation = useMutation({
-    mutationFn: async () => {
-      const res = await apiRequest("POST", "/api/veil/login", { word, password });
+      mutationFn: async () => {
+      const res = await apiRequest("POST", "/api/veil/login", { word });
       if (!res.ok) throw new Error((await res.json()).error || "Invalid credentials");
       return res.json();
     },
@@ -136,15 +136,7 @@ export function VeilLogin({ open, onClose }: { open: boolean; onClose: () => voi
                   autoComplete="off"
                   className="rounded-lg border-red-900/30 bg-red-950/20 placeholder:text-gray-500 text-white"
                 />
-                <Input
-                  type="password"
-                  placeholder="your password"
-                  value={password}
-                  onChange={e => setPassword(e.target.value)}
-                  required
-                  autoComplete="current-password"
-                  className="rounded-lg border-red-900/30 bg-red-950/20 placeholder:text-gray-500 text-white"
-                />
+                {/* Password removed: enter a two-word passphrase in the top field */}
               </div>
 
               {error && (
