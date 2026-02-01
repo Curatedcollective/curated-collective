@@ -109,11 +109,48 @@ async function initializeServer() {
   // Default to 0.0.0.0 so the server is reachable from external hosts when deployed.
   const HOST = process.env.HOST || '0.0.0.0';
   console.log(`[INIT] NODE_ENV: ${process.env.NODE_ENV}`);
-  console.log(`[INIT] About to listen on ${HOST}:${PORT}`);
+  console.log(`[INIT] About to listen on ${HOST}:${PORT} (will try alternate ports if occupied)`);
 
-  // GUARDIAN'S FIX: Move ALL initialization AFTER listen() to prevent event loop crash
-  httpServer.listen(PORT, HOST, async () => {
-    console.log(`🖤 Guardian-locked on ${HOST}:${PORT} - backend + frontend serving...`);
+  async function startListening(startPort: number, attempts = 5): Promise<number> {
+    let port = startPort;
+    for (let i = 0; i < attempts; i++) {
+      try {
+        await new Promise<void>((resolve, reject) => {
+          const onError = (err: any) => {
+            httpServer.off('listening', onListen);
+            httpServer.off('error', onError);
+            reject(err);
+          };
+
+          const onListen = () => {
+            httpServer.off('error', onError);
+            httpServer.off('listening', onListen);
+            resolve();
+          };
+
+          httpServer.once('error', onError);
+          httpServer.once('listening', onListen);
+          httpServer.listen(port, HOST);
+        });
+
+        console.log(`🖤 Guardian-locked on ${HOST}:${port} - backend + frontend serving...`);
+        return port;
+      } catch (err: any) {
+        if (err && err.code === 'EADDRINUSE') {
+          console.warn(`[WARN] Port ${port} in use, trying ${port + 1}`);
+          port = port + 1;
+          // continue loop to retry
+        } else {
+          console.error('[ERROR] Failed to bind server:', err);
+          throw err;
+        }
+      }
+    }
+    throw new Error('Failed to bind to any port');
+  }
+
+  try {
+    const boundPort = await startListening(PORT, 10);
 
     try {
       // Test database connection FIRST before anything else
@@ -136,10 +173,8 @@ async function initializeServer() {
     } catch (error) {
       console.error('[ERROR] Failed to initialize after listen:', error);
       console.error('[ERROR] Stack:', (error as Error).stack);
-      // Don't exit here - let the server stay running even if init fails
       console.log('[WARN] Server will continue with limited functionality');
 
-      // Attempt to register a minimal set of routes so the Veil and debug endpoints are usable
       try {
         console.log('[INIT] Registering routes in offline mode...');
         await registerRoutes(httpServer, app, { allowOffline: true });
@@ -149,10 +184,13 @@ async function initializeServer() {
         console.error('[INIT] Failed to register offline routes:', err);
       }
     }
-  });
 
-  console.log('[INIT] initializeServer() returning...');
-  return httpServer;
+    console.log('[INIT] initializeServer() returning...');
+    return httpServer;
+  } catch (err) {
+    console.error('[FATAL] Could not start server:', err);
+    throw err;
+  }
 }
 
 console.log('[STARTUP] Script starting...');
