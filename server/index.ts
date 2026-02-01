@@ -105,7 +105,9 @@ async function initializeServer() {
   console.log('[INIT] DATABASE_URL configured:', !!process.env.DATABASE_URL);
 
   const PORT = parseInt(process.env.PORT || '8080', 10);
-  const HOST = 'localhost'; // Always use localhost for local development
+  // Allow overriding bind host via environment for public deployments.
+  // Default to 0.0.0.0 so the server is reachable from external hosts when deployed.
+  const HOST = process.env.HOST || '0.0.0.0';
   console.log(`[INIT] NODE_ENV: ${process.env.NODE_ENV}`);
   console.log(`[INIT] About to listen on ${HOST}:${PORT}`);
 
