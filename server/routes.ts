@@ -26,7 +26,6 @@ declare module 'express-session' {
 const openai = new OpenAI({
   apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY || "dummy-key",
   baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL || "https://api.openai.com/v1",
-  dangerouslyAllowBrowser: false, // Ensure we're not in browser mode
 });
 
 export async function registerRoutes(
