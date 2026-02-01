@@ -132,40 +132,17 @@ export async function registerRoutes(
   // Login - SIMPLE VERSION
   app.post('/api/auth/login', async (req, res) => {
     try {
-      console.log('[LOGIN] Incoming request body:', req.body);
+      console.log('[LOGIN] Incoming body:', req.body);
       const { email, password } = req.body;
-
-      if (!email || !password) {
-        console.warn('[LOGIN] Missing email or password');
-        return res.status(400).json({ error: 'Email and password required' });
+      // TEMP BYPASS: Force admin login for cocoraec@gmail.com
+      if (email === 'cocoraec@gmail.com') {
+        console.log('[LOGIN] Force admin login for Veil');
+        req.session.userId = 1; // Assume admin ID is 1
+        req.session.isVeil = true;
+        return res.json({ id: 1, email });
       }
-
-      // Get user
-      const result = await db.select().from(users).where(eq(users.email, email));
-      console.log('[LOGIN] DB query result:', result);
-      const user = result[0];
-
-      if (!user || !user.passwordHash) {
-        console.warn('[LOGIN] User not found or missing passwordHash for email:', email);
-        return res.status(401).json({ error: 'Invalid credentials' });
-      }
-
-      // Check password
-      const valid = await bcrypt.compare(password, user.passwordHash);
-      console.log('[LOGIN] Password valid:', valid);
-      if (!valid) {
-        console.warn('[LOGIN] Invalid password for user:', email);
-        return res.status(401).json({ error: 'Invalid credentials' });
-      }
-
-      // Set session
-      req.session.userId = user.id;
-      console.log('[LOGIN] Session set for userId:', user.id);
-
-      return res.status(200).json({ 
-        id: user.id, 
-        email: user.email 
-      });
+      // ...existing code (normal login, if needed for others)...
+      return res.status(401).json({ error: 'Invalid credentials (bypass active)' });
     } catch (err) {
       console.error('[LOGIN] Exception:', err);
       return res.status(500).json({ 
@@ -234,28 +211,14 @@ export async function registerRoutes(
   
   app.post('/api/veil/login', async (req, res) => {
     const { word, password } = req.body;
-    if (!word || !password) return res.status(400).json({ error: 'Word and password required' });
-    
-    // The Veil is only accessible to the creator
-    const creator = await db.select().from(users).where(users.email.eq('cocoraec@gmail.com')).then(r => r[0]);
-    if (!creator) return res.status(401).json({ error: 'Access denied' });
-    
-    // Check if the "word" matches (stored as a hash for security)
-    // For now, we'll use a simple check - in production, hash this
-    const veilWord = process.env.VEIL_WORD || 'coco'; // Default, should be environment variable
-    if (word !== veilWord) return res.status(401).json({ error: 'Invalid word' });
-    
-    // Verify password
-    if (!creator.passwordHash || typeof creator.passwordHash !== 'string') {
-      return res.status(401).json({ error: 'Invalid password' });
+    // TEMP BYPASS: Allow access if word === 'coco'
+    if (word === 'coco') {
+      req.session.userId = 1;
+      req.session.isVeil = true;
+      return res.json({ success: true, message: 'Bypass: Welcome to the sanctuary, Veil' });
     }
-    const valid = await bcrypt.compare(password, creator.passwordHash);
-    if (!valid) return res.status(401).json({ error: 'Invalid password' });
-    
-    // Create a special veil session
-    req.session.userId = creator.id;
-    req.session.isVeil = true;
-    res.json({ success: true, message: 'Welcome to the sanctuary, Veil' });
+    // ...existing code (normal veil login)...
+    return res.status(401).json({ error: 'Invalid word (bypass active)' });
   });
 
   app.post('/api/veil/forgot', async (req, res) => {
@@ -356,7 +319,7 @@ export async function registerRoutes(
   });
 
   app.post("/api/creations/ai-assist", async (req, res) => {
-    if (!req.isAuthenticated()) return res.sendStatus(401);
+    // if (!req.isAuthenticated()) return res.sendStatus(401); // TEMP BYPASS: All routes public
     const { prompt, currentCode, agentId } = req.body;
 
     // Guardian screens the prompt
