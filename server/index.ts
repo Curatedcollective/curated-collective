@@ -124,7 +124,7 @@ async function initializeServer() {
 
       // Register all API routes AFTER database is confirmed working
       console.log('[INIT] Registering routes...');
-      await registerRoutes(httpServer, app);
+      await registerRoutes(httpServer, app, { allowOffline: false });
       console.log('[INIT] Routes registered successfully');
 
       // Serve static files (React app) AFTER routes
@@ -138,6 +138,16 @@ async function initializeServer() {
       console.error('[ERROR] Stack:', (error as Error).stack);
       // Don't exit here - let the server stay running even if init fails
       console.log('[WARN] Server will continue with limited functionality');
+
+      // Attempt to register a minimal set of routes so the Veil and debug endpoints are usable
+      try {
+        console.log('[INIT] Registering routes in offline mode...');
+        await registerRoutes(httpServer, app, { allowOffline: true });
+        console.log('[INIT] Offline routes registered');
+        serveStatic(app);
+      } catch (err) {
+        console.error('[INIT] Failed to register offline routes:', err);
+      }
     }
   });
 

@@ -30,39 +30,62 @@ const openai = new OpenAI({
 
 export async function registerRoutes(
   httpServer: Server,
-  app: Express
+  app: Express,
+  opts?: { allowOffline?: boolean }
 ): Promise<Server> {
 
   // --- AUTH ENDPOINTS ---
   console.log('[ROUTES] Loading database...');
-  let db, pool, users;
+  let db: any = undefined;
+  let pool: any = undefined;
+  let users: any = undefined;
   try {
-    const dbImport = await import('./db');
-    const authImport = await import('@shared/models/auth');
-    const schemaImport = await import('@shared/schema');
-    db = dbImport.db;
-    pool = dbImport.pool;
-    users = authImport.users;
-    const { daddyConversations } = schemaImport;
-    console.log('[ROUTES] Database loaded successfully');
+    if (!opts?.allowOffline) {
+      const dbImport = await import('./db');
+      const authImport = await import('@shared/models/auth');
+      const schemaImport = await import('@shared/schema');
+      db = dbImport.db;
+      pool = dbImport.pool;
+      users = authImport.users;
+      const { daddyConversations } = schemaImport;
+      console.log('[ROUTES] Database loaded successfully');
+    } else {
+      console.log('[ROUTES] Offline mode: skipping database import');
+    }
   } catch (error) {
     console.error('[ROUTES] Failed to load database:', error);
-    throw error; 
+    if (!opts?.allowOffline) {
+      console.log('[ROUTES] Database required but unavailable — rethrowing');
+      throw error;
+    }
+    console.log('[ROUTES] Continuing in offline mode');
   }
 
   // Session middleware (if not already set up in index.ts)
   console.log('[ROUTES] Setting up session middleware...');
   try {
-    app.use(
-      session({
-        store: new pgSession({ pool }),
-        secret: process.env.SESSION_SECRET || 'changeme',
-        resave: false,
-        saveUninitialized: false,
-        cookie: { maxAge: 30 * 24 * 60 * 60 * 1000, sameSite: 'lax' },
-      })
-    );
-    console.log('[ROUTES] Session middleware configured successfully');
+    if (pool) {
+      app.use(
+        session({
+          store: new pgSession({ pool }),
+          secret: process.env.SESSION_SECRET || 'changeme',
+          resave: false,
+          saveUninitialized: false,
+          cookie: { maxAge: 30 * 24 * 60 * 60 * 1000, sameSite: 'lax' },
+        })
+      );
+      console.log('[ROUTES] Session middleware configured with Postgres store');
+    } else {
+      app.use(
+        session({
+          secret: process.env.SESSION_SECRET || 'changeme',
+          resave: false,
+          saveUninitialized: false,
+          cookie: { maxAge: 30 * 24 * 60 * 60 * 1000, sameSite: 'lax' },
+        })
+      );
+      console.log('[ROUTES] Session middleware configured with in-memory store (offline)');
+    }
   } catch (sessionError) {
     console.error('[ROUTES] Failed to set up session middleware:', sessionError);
     throw sessionError;
