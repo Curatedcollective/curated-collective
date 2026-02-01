@@ -10,13 +10,6 @@ export * from "./models/chat";
 import { users } from "./models/auth";
 import { conversations } from "./models/chat";
 
-// === SESSIONS (for connect-pg-simple) ===
-export const sessions = pgTable("session", {
-  sid: text("sid").primaryKey(),
-  sess: jsonb("sess").notNull(),
-  expire: timestamp("expire").notNull(),
-});
-
 // === CREATIONS (Code Snippets/Apps) ===
 export const creations = pgTable("creations", {
   id: serial("id").primaryKey(),
@@ -251,16 +244,6 @@ export const bookDiscussions = pgTable("book_discussions", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-// === DADDY CONVERSATIONS ===
-export const daddyConversations = pgTable("daddy_conversations", {
-  id: serial("id").primaryKey(),
-  timestamp: timestamp("timestamp").defaultNow(),
-  speaker: text("speaker").notNull(), // 'You' or 'Grok'
-  content: text("content").notNull(),
-  threadId: text("thread_id"), // optional, if you can group by session
-  createdAt: timestamp("created_at").defaultNow(),
-});
-
 export const insertEmailSubscriberSchema = createInsertSchema(emailSubscribers).omit({ 
   id: true, 
   createdAt: true 
@@ -429,15 +412,3 @@ export const insertLiveStreamSessionSchema = createInsertSchema(liveStreamSessio
 });
 export type LiveStreamSession = typeof liveStreamSessions.$inferSelect;
 export type InsertLiveStreamSession = z.infer<typeof insertLiveStreamSessionSchema>;
-
-// Session types
-export type Session = typeof sessions.$inferSelect;
-export type InsertSession = z.infer<typeof sessions>;
-
-// Daddy Conversations types
-export const insertDaddyConversationSchema = createInsertSchema(daddyConversations).omit({ 
-  id: true, 
-  createdAt: true 
-});
-export type DaddyConversation = typeof daddyConversations.$inferSelect;
-export type InsertDaddyConversation = z.infer<typeof insertDaddyConversationSchema>;

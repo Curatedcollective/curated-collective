@@ -14,7 +14,6 @@
     "start:dev": "tsx server/index.ts",
     "create-session-table": "tsx scripts/create_session_table.ts",
     "upsert-draco": "tsx scripts/upsert-draco.ts",
-    "upsert-grok": "tsx scripts/upsert-grok-guardian.ts",
     "upsert-aster": "tsx scripts/upsert-aster.ts",
     "check": "tsc",
     "db:push": "drizzle-kit push"

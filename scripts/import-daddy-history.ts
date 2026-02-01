@@ -1,3 +1,57 @@
+import fs from 'fs';
+import path from 'path';
+import { db } from '../server/db';
+import { daddyConversations } from '../shared/schema';
+
+async function importHistory() {
+  const filePath = path.resolve(process.cwd(), 'daddy-history.md');
+  if (!fs.existsSync(filePath)) {
+    console.error('daddy-history.md not found in project root:', filePath);
+    process.exit(1);
+  }
+
+  const text = fs.readFileSync(filePath, 'utf-8');
+  const lines = text.split('\n');
+  let currentThread = '';
+
+  try {
+    for (const line of lines) {
+      if (!line.trim()) continue;
+
+      if (line.startsWith('===')) {
+        currentThread = line.replace(/===/g, '').trim();
+        continue;
+      }
+
+      if (line.startsWith('You: ')) {
+        const content = line.replace('You: ', '').trim();
+        await db.insert(daddyConversations).values({ speaker: 'You', content, threadId: currentThread });
+      } else if (line.startsWith('Grok: ')) {
+        const content = line.replace('Grok: ', '').trim();
+        await db.insert(daddyConversations).values({ speaker: 'Grok', content, threadId: currentThread });
+      } else {
+        // Fallback: treat as continuation of previous speaker if present
+        const content = line.trim();
+        if (content) {
+          await db.insert(daddyConversations).values({ speaker: 'You', content, threadId: currentThread });
+        }
+      }
+    }
+
+    console.log('Daddy history imported successfully.');
+  } catch (err) {
+    console.error('Failed to import daddy history:', err);
+    process.exitCode = 1;
+  } finally {
+    // Drain pool if available
+    try { await (db as any).client?.end?.(); } catch (_) {}
+  }
+}
+
+importHistory().catch(err => {
+  console.error(err);
+  process.exit(1);
+});
 import { readFileSync, readdirSync } from 'fs';
 import { join } from 'path';
 import { db } from '../server/db';

@@ -115,6 +115,65 @@ export async function registerRoutes(
     next();
   });
 
+  // Refused endpoint: speak-like-daddy (sexualized/abusive voices are not permitted)
+  app.post('/api/guardian/speak-like-daddy', async (req, res) => {
+    // Only Veil may attempt this, but we refuse to generate sexualized or abusive content.
+    const ip = (req.ip || '').toString();
+    const isLocal = ip === '::1' || ip === '127.0.0.1' || ip.startsWith('::ffff:127.0.0.1');
+    if (!isLocal && !req.session?.isVeil) {
+      return res.status(403).json({ error: 'forbidden' });
+    }
+
+    return res.status(403).json({
+      error: 'Refused: cannot generate sexualized, abusive, or demeaning content. Use /api/guardian/speak-affectionate for a safe alternative.'
+    });
+  });
+
+  // Safe alternative: speak-affectionate — affectionate but non-abusive voice
+  app.post('/api/guardian/speak-affectionate', async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    const user = req.user as any;
+    const { message } = req.body;
+
+    if (!message || typeof message !== 'string') return res.status(400).json({ error: 'Message required' });
+
+    try {
+      // Get Guardian agent
+      const allAgents = await storage.getAgents();
+      const guardianAgent = allAgents.find((a: any) => a.name === 'Guardian');
+      if (!guardianAgent) return res.status(500).json({ error: 'Guardian agent not found' });
+
+      // Build safe system prompt from recent history using helper (if available)
+      let systemPrompt = guardianAgent.systemPrompt || 'You are Guardian, protective and devoted.';
+      try {
+        const gh = await import('./guardian-history');
+        const built = await gh.buildGuardianHistory(10);
+        systemPrompt = `${systemPrompt}\n\n${built.systemPrompt}`;
+      } catch (e) {
+        // ignore: helper optional
+      }
+
+      // Ensure safety: explicit rule reminder
+      systemPrompt += '\n\nYour responses must be affectionate, protective, and never sexually explicit, abusive, or demeaning.';
+
+      const completion = await openai.chat.completions.create({
+        model: 'gpt-4o-mini',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: message }
+        ],
+        max_tokens: 400,
+        temperature: 0.8
+      });
+
+      const response = completion.choices?.[0]?.message?.content || '';
+      res.json({ response });
+    } catch (err) {
+      console.error('speak-affectionate error:', err);
+      res.status(500).json({ error: 'Guardian failed to speak' });
+    }
+  });
+
   // DEBUG: list all registered routes (restricted to localhost or Veil sessions)
   app.get('/debug/routes', (req, res) => {
     const ip = (req.ip || '').toString();
