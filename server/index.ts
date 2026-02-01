@@ -138,15 +138,6 @@ async function initializeServer() {
       console.log('[WARN] Server will continue with limited functionality');
     }
   });
-      console.error('[ERROR] Failed to initialize after listen:', error);
-      console.error('[ERROR] Stack:', (error as Error).stack);
-      process.exit(1);
-    }
-  });
-
-  httpServer.on('error', (error: any) => {
-    console.error('[ERROR] HTTP Server error:', error);
-  });
 
   console.log('[INIT] initializeServer() returning...');
   return httpServer;
