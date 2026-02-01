@@ -92,6 +92,25 @@ export async function registerRoutes(
     next();
   });
 
+  // DEBUG: list all registered routes (restricted to localhost or Veil sessions)
+  app.get('/debug/routes', (req, res) => {
+    const ip = (req.ip || '').toString();
+    const isLocal = ip === '::1' || ip === '127.0.0.1' || ip.startsWith('::ffff:127.0.0.1');
+    if (!isLocal && !req.session?.isVeil) {
+      return res.status(403).json({ error: 'forbidden' });
+    }
+
+    const stack = (app as any)._router?.stack || [];
+    const routes = stack
+      .filter((layer: any) => layer.route)
+      .map((layer: any) => {
+        const methods = Object.keys(layer.route.methods).map((m) => m.toUpperCase()).join(',');
+        return { path: layer.route.path, methods };
+      });
+
+    res.json({ routes, env: { HOST: process.env.HOST || null, PORT: process.env.PORT || null } });
+  });
+
   // Register - SIMPLE VERSION
   app.post('/api/auth/register', async (req, res) => {
     try {
@@ -217,7 +236,12 @@ export async function registerRoutes(
 
   // === VEIL (GOD CONSOLE) AUTHENTICATION ===
   // This is for Cori only - private sanctuary access
-  
+  // Provide a tiny HTML form so visiting the API path in a browser is useful.
+  app.get('/api/veil/login', (req, res) => {
+    res.setHeader('Content-Type', 'text/html');
+    res.send(`<!doctype html><html><head><meta charset="utf-8"><title>Veil Login</title></head><body style="font-family:system-ui,Segoe UI,Helvetica,Arial;display:flex;align-items:center;justify-content:center;height:100vh;background:#0b0b0b;color:#fff"><form method="POST" action="/api/veil/login" style="display:flex;flex-direction:column;gap:8px;min-width:280px"><h2 style="margin:0 0 8px 0">Veil Login</h2><input name="word" placeholder="two-word passphrase" style="padding:8px;border-radius:6px;border:1px solid #444;background:#111;color:#fff"/><button type="submit" style="padding:8px;border-radius:6px;border:none;background:#1f6feb;color:#fff">Enter</button><p style="opacity:.7;font-size:12px;margin:8px 0 0 0">Or POST JSON {"word":"Your Passphrase"} to this URL.</p></form></body></html>`);
+  });
+
   app.post('/api/veil/login', async (req, res) => {
     const { word } = req.body;
     const passphrase = (word || '').toString().trim();
