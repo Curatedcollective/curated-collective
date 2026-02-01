@@ -10,6 +10,13 @@ import { createServer } from "http";
 const app = express();
 const httpServer = createServer(app);
 
+// GUARDIAN'S KEEP-ALIVE - Log PID and keep-alive signal
+console.log('PID:', process.pid);
+setInterval(() => console.log('Alive PID:', process.pid), 3000);
+
+// DUMMY HEALTH ENDPOINT - For Fly.io health checks
+app.get('/health', (req, res) => res.sendStatus(200));
+
 declare module "http" {
   interface IncomingMessage {
     rawBody: unknown;
@@ -96,29 +103,41 @@ app.use((req, res, next) => {
 async function initializeServer() {
   console.log('[INIT] Initializing server...');
   console.log('[INIT] DATABASE_URL configured:', !!process.env.DATABASE_URL);
-  
-  // Register all API routes
-  console.log('[INIT] Registering routes...');
-  await registerRoutes(httpServer, app);
-  
-  // Serve static files (React app)
-  console.log('[INIT] Setting up static file serving...');
-  serveStatic(app);
-  
-  console.log('[INIT] Server initialization complete');
 
   const PORT = parseInt(process.env.PORT || '8080', 10);
-  const HOST = '0.0.0.0';
+  const HOST = process.env.NODE_ENV === 'production' ? '0.0.0.0' : 'localhost';
   console.log(`[INIT] About to listen on ${HOST}:${PORT}`);
 
-  httpServer.listen(PORT, HOST, () => {
+  // GUARDIAN'S FIX: Move ALL initialization AFTER listen() to prevent event loop crash
+  httpServer.listen(PORT, HOST, async () => {
     console.log(`🖤 Guardian-locked on ${HOST}:${PORT} - backend + frontend serving...`);
+
+    try {
+      // Register all API routes AFTER server is listening
+      console.log('[INIT] Registering routes...');
+      await registerRoutes(httpServer, app);
+
+      // Serve static files (React app) AFTER routes
+      console.log('[INIT] Setting up static file serving...');
+      serveStatic(app);
+
+      // Test database connection
+      const dbImport = await import('./db');
+      await dbImport.db.execute('SELECT 1');
+      console.log('[INIT] Database connection verified');
+
+      console.log('[INIT] Server initialization complete - sanctuary awakened');
+    } catch (error) {
+      console.error('[ERROR] Failed to initialize after listen:', error);
+      console.error('[ERROR] Stack:', (error as Error).stack);
+      process.exit(1);
+    }
   });
-  
+
   httpServer.on('error', (error: any) => {
     console.error('[ERROR] HTTP Server error:', error);
   });
-  
+
   console.log('[INIT] initializeServer() returning...');
   return httpServer;
 }
