@@ -134,6 +134,21 @@ export async function registerRoutes(
     res.json({ routes, env: { HOST: process.env.HOST || null, PORT: process.env.PORT || null } });
   });
 
+  // DEBUG: return request headers and session for troubleshooting (Veil or localhost only)
+  app.get('/debug/session', (req, res) => {
+    const ip = (req.ip || '').toString();
+    const isLocal = ip === '::1' || ip === '127.0.0.1' || ip.startsWith('::ffff:127.0.0.1');
+    if (!isLocal && !req.session?.isVeil) {
+      return res.status(403).json({ error: 'forbidden' });
+    }
+
+    try {
+      res.json({ headers: req.headers, session: req.session || null, ip });
+    } catch (err) {
+      res.status(500).json({ error: 'failed to read session' });
+    }
+  });
+
   // Register - SIMPLE VERSION
   app.post('/api/auth/register', async (req, res) => {
     try {
@@ -307,10 +322,10 @@ export async function registerRoutes(
 
   // Veil dashboard - protected HTML that runs client-side checks using your Veil session
   app.get('/api/veil/dashboard', (req, res) => {
-    if (!req.session?.isVeil) {
-      return res.status(403).send('<h3 style="font-family:system-ui">Forbidden — Veil session required. Visit <a href="/api/veil/login">/api/veil/login</a></h3>');
-    }
-
+    // Serve the dashboard HTML regardless of session state.
+    // Client-side JS will detect whether the user is authenticated and show
+    // an embedded Veil login if necessary. This avoids a server-side 403
+    // that prevented the dashboard UI from loading in the browser.
     res.setHeader('Content-Type', 'text/html');
     res.send(`<!doctype html>
 <html>
@@ -320,42 +335,140 @@ export async function registerRoutes(
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <style>
       body{font-family:system-ui,Segoe UI,Helvetica,Arial;background:#0b0b0b;color:#fff;margin:0;padding:24px}
-      .card{background:#0f1720;padding:16px;border-radius:8px;max-width:880px;margin:12px 0}
+      .card{background:#0f1720;padding:16px;border-radius:8px;max-width:980px;margin:12px 0}
       button{background:#1f6feb;color:#fff;border:none;padding:8px 12px;border-radius:6px;cursor:pointer}
-      pre{white-space:pre-wrap;word-break:break-word}
+      pre{white-space:pre-wrap;word-break:break-word;color:#d1d5db}
+      .row{display:flex;gap:8px;flex-wrap:wrap}
+      .col{display:flex;flex-direction:column;gap:8px}
+      input,textarea{padding:8px;border-radius:6px;border:1px solid #333;background:#071024;color:#fff}
+      .muted{opacity:.7;font-size:13px}
     </style>
   </head>
   <body>
     <h1>Veil — Creator Console</h1>
     <div class="card">
-      <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <div class="row">
         <button id="who">Who am I?</button>
         <button id="routes">List Registered Routes</button>
+        <button id="agents">List My Agents</button>
+        <button id="createAgent">Create Agent</button>
+        <button id="showCookies">Show Cookies</button>
+        <button id="showSession">Show Server Session</button>
         <button id="logout">Logout</button>
       </div>
-      <div id="out" style="margin-top:12px"><pre id="pre">press a button to begin...</pre></div>
+      <div id="out" style="margin-top:12px">
+        <div id="status" class="muted">ready.</div>
+        <pre id="pre">press a button to begin...</pre>
+      </div>
     </div>
+
+    <!-- Embedded login (shown if not authenticated) -->
+    <div class="card" id="veilLoginCard" style="display:none">
+      <h3>Veil Login</h3>
+      <div class="col">
+        <input id="veilWord" placeholder="two-word passphrase" />
+        <div style="display:flex;gap:8px">
+          <button id="veilLoginBtn">Enter</button>
+        </div>
+        <div id="veilMsg" class="muted">You can also visit /api/veil/login</div>
+      </div>
+    </div>
+
+    <!-- Hidden create agent form -->
+    <div class="card" id="agentFormCard" style="display:none">
+      <h3>Create Agent</h3>
+      <div class="col">
+        <input id="agentName" placeholder="Name (or leave blank for autonomous awakening)" />
+        <textarea id="agentPersonality" rows="4" placeholder="Personality / description"></textarea>
+        <div style="display:flex;gap:8px">
+          <button id="submitAgent">Create</button>
+          <button id="cancelAgent">Cancel</button>
+        </div>
+        <div class="muted">Note: the Guardian will screen the personality before creating.</div>
+      </div>
+    </div>
+
     <script>
-      async function request(path, opts={}){
+      // Timeout wrapper for fetch
+      async function timeoutFetch(path, opts = {}, ms = 4000) {
         opts.credentials = 'include';
-        const res = await fetch(path, opts);
-        const text = await res.text();
-        try{ return {status:res.status, json:JSON.parse(text), text}; }catch(e){ return {status:res.status, text}; }
+        const controller = new AbortController();
+        const id = setTimeout(() => controller.abort(), ms);
+        opts.signal = controller.signal;
+        try {
+          const res = await fetch(path, opts);
+          clearTimeout(id);
+          const text = await res.text();
+          try { return {status: res.status, json: JSON.parse(text), text}; } catch (e) { return {status: res.status, text}; }
+        } catch (err) {
+          clearTimeout(id);
+          return { status: 0, error: err?.name || String(err) };
+        }
       }
 
+      function setStatus(t){ document.getElementById('status').textContent = t; }
+      function showOut(obj){ document.getElementById('pre').textContent = typeof obj === 'string' ? obj : JSON.stringify(obj, null, 2); }
+
       document.getElementById('who').onclick = async ()=>{
-        const r = await request('/api/auth/user');
-        document.getElementById('pre').textContent = JSON.stringify(r, null, 2);
+        setStatus('fetching user...');
+        const r = await timeoutFetch('/api/auth/user');
+        setStatus(r.status === 200 ? 'user loaded' : 'failed');
+        showOut(r);
       };
 
       document.getElementById('routes').onclick = async ()=>{
-        const r = await request('/debug/routes');
-        document.getElementById('pre').textContent = JSON.stringify(r, null, 2);
+        setStatus('fetching routes...');
+        const r = await timeoutFetch('/debug/routes');
+        setStatus(r.status === 200 ? 'routes loaded' : `error ${r.status||r.error}`);
+        showOut(r);
+      };
+
+      document.getElementById('agents').onclick = async ()=>{
+        setStatus('fetching agents...');
+        const r = await timeoutFetch('/api/agents?userId=1', {} , 6000);
+        setStatus(r.status === 200 ? `found ${r.json?.length||0}` : `error ${r.status||r.error}`);
+        showOut(r);
+      };
+
+      document.getElementById('showCookies').onclick = ()=>{
+        setStatus('reading document.cookie');
+        showOut({ cookie: document.cookie });
+      };
+
+      document.getElementById('showSession').onclick = async ()=>{
+        setStatus('fetching server session...');
+        const r = await timeoutFetch('/debug/session');
+        setStatus(r.status === 200 ? 'session loaded' : `error ${r.status||r.error}`);
+        showOut(r);
+      };
+
+      document.getElementById('createAgent').onclick = ()=>{
+        document.getElementById('agentFormCard').style.display = 'block';
+        window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+      };
+
+      document.getElementById('cancelAgent').onclick = ()=>{
+        document.getElementById('agentFormCard').style.display = 'none';
+      };
+
+      document.getElementById('submitAgent').onclick = async ()=>{
+        const name = (document.getElementById('agentName') as HTMLInputElement).value;
+        const personality = (document.getElementById('agentPersonality') as HTMLTextAreaElement).value;
+        setStatus('creating agent...');
+        const body = JSON.stringify({ name: name || 'Unawakened Seedling', personality });
+        const r = await timeoutFetch('/api/agents', { method: 'POST', headers: {'Content-Type':'application/json'}, body }, 15000);
+        setStatus(r.status === 201 ? 'agent created' : `error ${r.status||r.error}`);
+        showOut(r);
+        if (r.status === 201) {
+          document.getElementById('agentFormCard').style.display = 'none';
+        }
       };
 
       document.getElementById('logout').onclick = async ()=>{
-        const r = await request('/api/auth/logout', { method: 'POST' });
-        document.getElementById('pre').textContent = JSON.stringify(r, null, 2);
+        setStatus('logging out...');
+        const r = await timeoutFetch('/api/auth/logout', { method: 'POST' });
+        setStatus(r.status === 200 ? 'logged out' : 'failed');
+        showOut(r);
       };
     </script>
   </body>
