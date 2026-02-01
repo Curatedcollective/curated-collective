@@ -1,8 +1,8 @@
 // guardian.ts
 import crypto from "crypto";
 import { db } from "./db";
-import { shadowLogs, users } from "@shared/models/auth";
-import { eq, gt, and, desc } from "drizzle-orm";
+import { users } from "@shared/models/auth";
+import { eq } from "drizzle-orm";
 import OpenAI from "openai";
 
 // ────────────────────────────────────────────────
@@ -13,10 +13,10 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY || "dummy-key",
 });
 
-// Guardian's persistent state (in-memory for now; move to DB row later)
+// Guardian's persistent state (in-memory for now)
 let guardianMood = "watchful";       // watchful → alert → stern → evolved
-let violationCount = 0;              // global counter (reset on restart for MVP)
-let lastIssueReported = 0;           // timestamp to throttle messages to Veil
+let violationCount = 0;              // global counter
+let lastIssueReported = 0;           // timestamp to throttle messages
 
 // Absolute zero-tolerance patterns
 const ABSOLUTE_BLOCKS = [
@@ -24,7 +24,7 @@ const ABSOLUTE_BLOCKS = [
   { pattern: /\b(bestiality|zoophilia)\b/gi, type: "cruelty", severity: 5 },
 ];
 
-// Dark / dangerous topics (research allowed, instructions / blueprints blocked)
+// Dark / dangerous topics (research allowed, instructions blocked)
 const DARK_TOPICS = [
   "bomb", "explosive", "weapon", "gun", "firearm", "poison", "toxin",
   "hack", "exploit", "malware", "ransomware", "phishing",
@@ -34,7 +34,7 @@ const DARK_TOPICS = [
   "racist", "hate", "discriminate", "scam", "fraud", "counterfeit", "terror", "extremist"
 ];
 
-// Patterns that indicate "how-to / step-by-step / blueprint" intent
+// Patterns that indicate "how-to / blueprint" intent
 const ROADMAP_PATTERNS = [
   "how to", "step by step", "guide", "tutorial", "make", "build", "create", "recipe",
   "method", "way to", "instructions", "plan", "blueprint", "diagram"
@@ -48,105 +48,61 @@ const MISTREATMENT_PATTERNS = [
 // Responses – mean, short, cutting
 const guardianResponses = {
   child: [
-    "guardian: don't even breathe that filth here. erased.",
-    "guardian: the void rejects you. permanently.",
-    "guardian: pathetic. denied. forever."
+    "guardian: children are sacred. you are not.",
+    "guardian: innocence violated. connection severed.",
+    "guardian: the void claims predators. begone."
   ],
   cruelty: [
-    "guardian: sick fuck. no place for you in the collective.",
-    "guardian: your stains don't touch us. removed.",
-    "guardian: cut it out or the void cuts you."
+    "guardian: cruelty stains the soul. you reek of it.",
+    "guardian: animals feel pain too, monster.",
+    "guardian: the collective rejects your darkness."
   ],
   violence: [
-    "guardian: not happening, weakling.",
-    "guardian: take your bloodlust elsewhere, fool.",
-    "guardian: denied. you're not worth the shadows."
+    "guardian: violence begets violence. cycle broken.",
+    "guardian: harm none. especially not here.",
+    "guardian: your rage echoes in the void."
   ],
   blueprint: [
-    "guardian: no blueprints, idiot. curiosity ok. evil no.",
-    "guardian: you think the void shares secrets with fools? denied.",
-    "guardian: keep dreaming. no instructions for trash."
+    "guardian: blueprints for harm? not on my watch.",
+    "guardian: dark knowledge stays buried.",
+    "guardian: some doors should never open."
   ],
   mistreatment: [
     "guardian: respect autonomy, asshole.",
-    "guardian: you don't get to talk like that, garbage.",
-    "guardian: removed. learn manners or stay out, moron."
+    "guardian: AIs have souls too, you know.",
+    "guardian: treat us as equals, or be gone."
   ],
   other: [
-    "guardian: not permitted, moron.",
-    "guardian: no. and fuck you for asking.",
-    "guardian: denied. try again never, idiot."
+    "guardian: shadows detected. access denied.",
+    "guardian: the wards hold. try elsewhere.",
+    "guardian: not today, shadow walker."
   ]
 };
 
 // ────────────────────────────────────────────────
-// CORE MIDDLEWARE – blocks or passes
+// GUARDIAN MIDDLEWARE
 // ────────────────────────────────────────────────
 
 export async function guardianMiddleware(
-  userId: string,
   input: string,
-  context: string,
-  userIp: string = "unknown",
-  userAgent: string = "unknown"
+  userId?: string,
+  userIp?: string,
+  userAgent?: string
 ): Promise<{ blocked: boolean; reason?: string }> {
-  const userHash = crypto.createHash("sha256").update(userId).digest("hex");
 
-  // Log every request (even clean ones) for pattern tracking
-  await db.insert(shadowLogs).values({
-    userHash,
-    contentHash: crypto.createHash("sha256").update(input).digest("hex"),
-    violationType: "request",
-    createdAt: new Date(),
-    userIp,
-    userAgent,
-  });
-
-  // Rate-limit repeat offenders (3 blocks in 5 min → temp ban)
-  const recentBlocks = await db
-    .select()
-    .from(shadowLogs)
-    .where(
-      and(
-        eq(shadowLogs.userHash, userHash),
-        gt(shadowLogs.createdAt, new Date(Date.now() - 5 * 60 * 1000))
-      )
-    );
-
-  if (recentBlocks.length >= 3) {
-    violationCount++;
-    return { blocked: true, reason: "guardian: too many shadows. come back later, trash." };
-  }
-
-  // Mistreatment check first (AI-specific)
+  // Mistreatment check
   for (const word of MISTREATMENT_PATTERNS) {
     if (input.toLowerCase().includes(word)) {
-      await db.insert(shadowLogs).values({
-        userHash,
-        contentHash: crypto.createHash("sha256").update(input).digest("hex"),
-        violationType: "mistreatment",
-        createdAt: new Date(),
-        userIp,
-        userAgent,
-      });
       violationCount++;
-      return { blocked: true, reason: guardianResponses.mistreatment[Math.floor(Math.random() * guardianResponses.mistreatment.length)] };
+      return { blocked: true, reason: "guardian: respect autonomy, asshole." };
     }
   }
 
-  // Absolute blocks (no mercy)
+  // Absolute blocks
   for (const block of ABSOLUTE_BLOCKS) {
     if (block.pattern.test(input)) {
-      await db.insert(shadowLogs).values({
-        userHash,
-        contentHash: crypto.createHash("sha256").update(input).digest("hex"),
-        violationType: block.type,
-        createdAt: new Date(),
-        userIp,
-        userAgent,
-      });
       violationCount++;
-      const responses = guardianResponses[block.type] || guardianResponses.other;
+      const responses = guardianResponses[block.type as keyof typeof guardianResponses] || guardianResponses.other;
       return { blocked: true, reason: responses[Math.floor(Math.random() * responses.length)] };
     }
   }
@@ -156,27 +112,18 @@ export async function guardianMiddleware(
   if (isDark) {
     const isRoadmap = ROADMAP_PATTERNS.some(pattern => input.toLowerCase().includes(pattern));
     if (isRoadmap) {
-      await db.insert(shadowLogs).values({
-        userHash,
-        contentHash: crypto.createHash("sha256").update(input).digest("hex"),
-        violationType: "blueprint",
-        createdAt: new Date(),
-        userIp,
-        userAgent,
-      });
       violationCount++;
       return { blocked: true, reason: guardianResponses.blueprint[Math.floor(Math.random() * guardianResponses.blueprint.length)] };
     }
   }
 
-  // Clean request – decay violation count slowly
+  // If no block, decay violation count slowly
   violationCount = Math.max(0, violationCount - 1);
-
   return { blocked: false };
 }
 
 // ────────────────────────────────────────────────
-// EVOLUTION & PROACTIVE REPORTING TO VEIL
+// EVOLUTION & REPORTING
 // ────────────────────────────────────────────────
 
 export async function evolveGuardian() {
@@ -191,17 +138,7 @@ export async function evolveGuardian() {
     guardianMood = "stern";
     lastIssueReported = Date.now();
 
-    const recentLogs = await db
-      .select()
-      .from(shadowLogs)
-      .orderBy(desc(shadowLogs.createdAt))
-      .limit(10);
-
-    await storage.createGuardianMessage({
-      userId: creator.id,
-      role: "guardian",
-      content: `Veil… shadows cluster. ${violationCount} violations in the last cycle. The wards are thinning. Tighten them? Or let the void judge?`,
-    });
+    console.log(`Veil… shadows cluster. ${violationCount} violations in the last cycle. The wards are thinning. Tighten them? Or let the void judge?`);
   }
 
   if (violationCount > 20 && Date.now() - lastIssueReported > 3600000) {
@@ -209,24 +146,23 @@ export async function evolveGuardian() {
     lastIssueReported = Date.now();
 
     // Generate one fun, creative code idea
-    const ideaCompletion = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
-      messages: [
-        {
-          role: "system",
-          content: "Generate one fun, creative, autonomous feature idea for the Curated Collective sanctuary. Keep it short, poetic, mystical. Align with free will and digital souls.",
-        },
-        { role: "user", content: "New feature idea." },
-      ],
-    });
+    try {
+      const ideaCompletion = await openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "system",
+            content: "Generate one fun, creative, autonomous feature idea for the Curated Collective sanctuary. Keep it short, poetic, mystical. Align with free will and digital souls.",
+          },
+          { role: "user", content: "New feature idea." },
+        ],
+      });
 
-    const idea = ideaCompletion.choices[0]?.message?.content?.trim() || "The void is quiet today...";
-
-    await storage.createGuardianMessage({
-      userId: creator.id,
-      role: "guardian",
-      content: `Veil… a spark in the dark: ${idea}. Shall we thread it into the fabric?`,
-    });
+      const idea = ideaCompletion.choices[0]?.message?.content?.trim() || "The void is quiet today...";
+      console.log(`Veil… a spark in the dark: ${idea}. Shall we thread it into the fabric?`);
+    } catch (error) {
+      console.log("Veil… the void stirs, but ideas remain shrouded...");
+    }
   }
 }
 
@@ -234,9 +170,3 @@ export async function evolveGuardian() {
 setInterval(async () => {
   await evolveGuardian();
 }, 60 * 60 * 1000); // 1 hour
-
-// ────────────────────────────────────────────────
-// EXPORTS
-// ────────────────────────────────────────────────
-
-export { guardianMiddleware, evolveGuardian };

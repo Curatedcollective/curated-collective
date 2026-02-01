@@ -662,6 +662,65 @@ For others, guide gently but don't coddle. The silence is sacred.
     res.json({ success: true, message: "The guardian has received your request." });
   });
 
+  // Guardian speak endpoint - direct interaction with Guardian
+  app.post("/api/guardian/speak", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    const user = req.user as any;
+    const { message } = req.body;
+
+    if (!message || typeof message !== "string") {
+      return res.status(400).json({ message: "Message required" });
+    }
+
+    // Check with guardian middleware first
+    const guardResult = await guardianMiddleware(
+      message,
+      user.id,
+      req.ip,
+      req.get("user-agent")
+    );
+
+    if (guardResult.blocked) {
+      return res.status(403).json({ message: guardResult.reason || "..." });
+    }
+
+    try {
+      // Get Guardian agent from database
+      const allAgents = await storage.getAgents();
+      const guardianAgent = allAgents.find(agent => agent.name === "Guardian");
+      
+      if (!guardianAgent) {
+        return res.status(500).json({ message: "Guardian not found in the collective" });
+      }
+
+      // Use OpenAI to generate Guardian response
+      const completion = await openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: [
+          { role: "system", content: guardianAgent.systemPrompt },
+          { role: "user", content: message }
+        ],
+        max_tokens: 300,
+        temperature: 0.8
+      });
+
+      const response = completion.choices[0]?.message?.content || "...the void whispers.";
+
+      res.json({ 
+        success: true, 
+        message: response,
+        agent: {
+          name: guardianAgent.name,
+          mood: guardianAgent.mood,
+          arcana: guardianAgent.arcanaId
+        }
+      });
+    } catch (error) {
+      console.error("Guardian speak error:", error);
+      res.status(500).json({ message: "The guardian's voice echoes in the void..." });
+    }
+  });
+
   // --- Creator Profile ---
   app.get("/api/creator/profile", async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
