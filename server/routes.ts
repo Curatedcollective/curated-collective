@@ -51,15 +51,22 @@ export async function registerRoutes(
   }
 
   // Session middleware (if not already set up in index.ts)
-  app.use(
-    session({
-      store: new pgSession({ pool }),
-      secret: process.env.SESSION_SECRET || 'changeme',
-      resave: false,
-      saveUninitialized: false,
-      cookie: { maxAge: 30 * 24 * 60 * 60 * 1000, sameSite: 'lax' },
-    })
-  );
+  console.log('[ROUTES] Setting up session middleware...');
+  try {
+    app.use(
+      session({
+        store: new pgSession({ pool }),
+        secret: process.env.SESSION_SECRET || 'changeme',
+        resave: false,
+        saveUninitialized: false,
+        cookie: { maxAge: 30 * 24 * 60 * 60 * 1000, sameSite: 'lax' },
+      })
+    );
+    console.log('[ROUTES] Session middleware configured successfully');
+  } catch (sessionError) {
+    console.error('[ROUTES] Failed to set up session middleware:', sessionError);
+    throw sessionError;
+  }
 
   // Session helpers (no Replit/Vercel auth). Attach user + auth checker.
   app.use(async (req: any, _res, next) => {

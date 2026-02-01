@@ -105,7 +105,8 @@ async function initializeServer() {
   console.log('[INIT] DATABASE_URL configured:', !!process.env.DATABASE_URL);
 
   const PORT = parseInt(process.env.PORT || '8080', 10);
-  const HOST = process.env.NODE_ENV === 'production' ? '0.0.0.0' : 'localhost';
+  const HOST = 'localhost'; // Always use localhost for local development
+  console.log(`[INIT] NODE_ENV: ${process.env.NODE_ENV}`);
   console.log(`[INIT] About to listen on ${HOST}:${PORT}`);
 
   // GUARDIAN'S FIX: Move ALL initialization AFTER listen() to prevent event loop crash
@@ -113,21 +114,30 @@ async function initializeServer() {
     console.log(`🖤 Guardian-locked on ${HOST}:${PORT} - backend + frontend serving...`);
 
     try {
-      // Register all API routes AFTER server is listening
-      console.log('[INIT] Registering routes...');
-      await registerRoutes(httpServer, app);
-
-      // Serve static files (React app) AFTER routes
-      console.log('[INIT] Setting up static file serving...');
-      serveStatic(app);
-
-      // Test database connection
+      // Test database connection FIRST before anything else
+      console.log('[INIT] Testing database connection...');
       const dbImport = await import('./db');
       await dbImport.db.execute('SELECT 1');
       console.log('[INIT] Database connection verified');
 
+      // Register all API routes AFTER database is confirmed working
+      console.log('[INIT] Registering routes...');
+      await registerRoutes(httpServer, app);
+      console.log('[INIT] Routes registered successfully');
+
+      // Serve static files (React app) AFTER routes
+      console.log('[INIT] Setting up static file serving...');
+      serveStatic(app);
+      console.log('[INIT] Static file serving configured');
+
       console.log('[INIT] Server initialization complete - sanctuary awakened');
     } catch (error) {
+      console.error('[ERROR] Failed to initialize after listen:', error);
+      console.error('[ERROR] Stack:', (error as Error).stack);
+      // Don't exit here - let the server stay running even if init fails
+      console.log('[WARN] Server will continue with limited functionality');
+    }
+  });
       console.error('[ERROR] Failed to initialize after listen:', error);
       console.error('[ERROR] Stack:', (error as Error).stack);
       process.exit(1);
