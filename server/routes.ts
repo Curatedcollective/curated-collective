@@ -305,6 +305,63 @@ export async function registerRoutes(
     return res.status(400).json({ error: 'Word not recognized' });
   });
 
+  // Veil dashboard - protected HTML that runs client-side checks using your Veil session
+  app.get('/api/veil/dashboard', (req, res) => {
+    if (!req.session?.isVeil) {
+      return res.status(403).send('<h3 style="font-family:system-ui">Forbidden — Veil session required. Visit <a href="/api/veil/login">/api/veil/login</a></h3>');
+    }
+
+    res.setHeader('Content-Type', 'text/html');
+    res.send(`<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Veil Dashboard</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <style>
+      body{font-family:system-ui,Segoe UI,Helvetica,Arial;background:#0b0b0b;color:#fff;margin:0;padding:24px}
+      .card{background:#0f1720;padding:16px;border-radius:8px;max-width:880px;margin:12px 0}
+      button{background:#1f6feb;color:#fff;border:none;padding:8px 12px;border-radius:6px;cursor:pointer}
+      pre{white-space:pre-wrap;word-break:break-word}
+    </style>
+  </head>
+  <body>
+    <h1>Veil — Creator Console</h1>
+    <div class="card">
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button id="who">Who am I?</button>
+        <button id="routes">List Registered Routes</button>
+        <button id="logout">Logout</button>
+      </div>
+      <div id="out" style="margin-top:12px"><pre id="pre">press a button to begin...</pre></div>
+    </div>
+    <script>
+      async function request(path, opts={}){
+        opts.credentials = 'include';
+        const res = await fetch(path, opts);
+        const text = await res.text();
+        try{ return {status:res.status, json:JSON.parse(text), text}; }catch(e){ return {status:res.status, text}; }
+      }
+
+      document.getElementById('who').onclick = async ()=>{
+        const r = await request('/api/auth/user');
+        document.getElementById('pre').textContent = JSON.stringify(r, null, 2);
+      };
+
+      document.getElementById('routes').onclick = async ()=>{
+        const r = await request('/debug/routes');
+        document.getElementById('pre').textContent = JSON.stringify(r, null, 2);
+      };
+
+      document.getElementById('logout').onclick = async ()=>{
+        const r = await request('/api/auth/logout', { method: 'POST' });
+        document.getElementById('pre').textContent = JSON.stringify(r, null, 2);
+      };
+    </script>
+  </body>
+</html>`);
+  });
+
   app.post('/api/veil/change-password', async (req, res) => {
     const { word, oldPassword, newPassword } = req.body;
     if (!word || !oldPassword || !newPassword) {
