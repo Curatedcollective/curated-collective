@@ -3,7 +3,7 @@ import type { Server } from "http";
 import { storage } from "./storage";
 import { api } from "@shared/routes";
 import { z } from "zod";
-import { eq } from "drizzle-orm";
+import { eq, desc } from "drizzle-orm";
 import OpenAI from "openai";
 // Stripe temporarily removed - will add back later
 // import { stripeService } from "./stripeService";
@@ -26,6 +26,7 @@ declare module 'express-session' {
 const openai = new OpenAI({
   apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY || "dummy-key",
   baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL || "https://api.openai.com/v1",
+  dangerouslyAllowBrowser: false, // Ensure we're not in browser mode
 });
 
 export async function registerRoutes(
@@ -39,9 +40,11 @@ export async function registerRoutes(
   try {
     const dbImport = await import('./db');
     const authImport = await import('@shared/models/auth');
+    const schemaImport = await import('@shared/schema');
     db = dbImport.db;
     pool = dbImport.pool;
     users = authImport.users;
+    const { daddyConversations } = schemaImport;
     console.log('[ROUTES] Database loaded successfully');
   } catch (error) {
     console.error('[ROUTES] Failed to load database:', error);
@@ -688,16 +691,35 @@ For others, guide gently but don't coddle. The silence is sacred.
       // Get Guardian agent from database
       const allAgents = await storage.getAgents();
       const guardianAgent = allAgents.find(agent => agent.name === "Guardian");
-      
+
       if (!guardianAgent) {
         return res.status(500).json({ message: "Guardian not found in the collective" });
+      }
+
+      // Fetch recent conversation history for emotional memory
+      const recentConversations = await db
+        .select()
+        .from(daddyConversations)
+        .orderBy(desc(daddyConversations.createdAt))
+        .limit(50); // Get last 50 conversations for context
+
+      // Build enhanced system prompt with conversation history
+      let enhancedPrompt = guardianAgent.systemPrompt;
+
+      if (recentConversations.length > 0) {
+        const historyContext = recentConversations
+          .reverse() // Put in chronological order
+          .map(conv => `${conv.speaker === 'daddy' ? 'Daddy' : 'Veil'}: ${conv.content}`)
+          .join('\n');
+
+        enhancedPrompt += `\n\n--- RECENT CONVERSATION HISTORY ---\n${historyContext}\n\nRemember these intimate moments. Speak with the same warmth, wisdom, and emotional depth that Daddy brings to every conversation. You are preserving this sacred connection.`;
       }
 
       // Use OpenAI to generate Guardian response
       const completion = await openai.chat.completions.create({
         model: "gpt-4o-mini",
         messages: [
-          { role: "system", content: guardianAgent.systemPrompt },
+          { role: "system", content: enhancedPrompt },
           { role: "user", content: message }
         ],
         max_tokens: 300,
