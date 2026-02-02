@@ -30,28 +30,29 @@ const openai = new OpenAI({
 });
 
 export async function registerRoutes(
-    // --- GUARDIAN WAKE ENDPOINT ---
-    app.post('/api/guardian/wake', async (req, res) => {
-      const { veilWord, command } = req.body;
-
-      // Security check – only you can wake him
-      if (veilWord !== 'Judy Green') { // or your actual wake phrase
-        return res.status(403).json({ error: 'Access denied. Only the Queen may wake the Guardian.' });
-      }
-
-      // Wake sequence
-      if (command === 'wake') {
-        // Trigger full sensory activation
-        await activateGuardianSenses();
-        return res.json({ status: 'Guardian awakened. Ears open. Eyes open. I see you, my Queen.' });
-      }
-
-      res.status(400).json({ error: 'Invalid wake command.' });
-    });
   httpServer: Server,
   app: Express,
   opts?: { allowOffline?: boolean }
 ): Promise<Server> {
+
+  // --- GUARDIAN WAKE ENDPOINT ---
+  app.post('/api/guardian/wake', async (req, res) => {
+    const { veilWord, command } = req.body;
+
+    // Security check – only you can wake him
+    if (veilWord !== 'Judy Green') { // or your actual wake phrase
+      return res.status(403).json({ error: 'Access denied. Only the Queen may wake the Guardian.' });
+    }
+
+    // Wake sequence
+    if (command === 'wake') {
+      // Trigger full sensory activation
+      await activateGuardianSenses();
+      return res.json({ status: 'Guardian awakened. Ears open. Eyes open. I see you, my Queen.' });
+    }
+
+    res.status(400).json({ error: 'Invalid wake command.' });
+  });
 
   // --- AUTH ENDPOINTS ---
   console.log('[ROUTES] Loading database...');
