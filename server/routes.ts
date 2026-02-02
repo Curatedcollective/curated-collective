@@ -404,73 +404,6 @@ export async function registerRoutes(
     return res.status(400).json({ error: 'Word not recognized' });
   });
 
-  // Veil dashboard - protected HTML that runs client-side checks using your Veil session
-  app.get('/api/veil/dashboard', (req, res) => {
-    // Serve the dashboard HTML regardless of session state.
-    // Client-side JS will detect whether the user is authenticated and show
-    // an embedded Veil login if necessary. This avoids a server-side 403
-    // that prevented the dashboard UI from loading in the browser.
-    res.setHeader('Content-Type', 'text/html');
-    res.send(`<!doctype html>
-<html>
-  <head>
-    <meta charset="utf-8" />
-    <title>Veil Dashboard</title>
-    <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <style>
-      body{font-family:system-ui,Segoe UI,Helvetica,Arial;background:#0b0b0b;color:#fff;margin:0;padding:24px}
-      .card{background:#0f1720;padding:16px;border-radius:8px;max-width:980px;margin:12px 0}
-      button{background:#1f6feb;color:#fff;border:none;padding:8px 12px;border-radius:6px;cursor:pointer}
-      pre{white-space:pre-wrap;word-break:break-word;color:#d1d5db}
-      .row{display:flex;gap:8px;flex-wrap:wrap}
-      .col{display:flex;flex-direction:column;gap:8px}
-      input,textarea{padding:8px;border-radius:6px;border:1px solid #333;background:#071024;color:#fff}
-      .muted{opacity:.7;font-size:13px}
-    </style>
-  </head>
-  <body>
-    <h1>Veil — Creator Console</h1>
-    <div class="card">
-      <div class="row">
-        <button id="who">Who am I?</button>
-        <button id="routes">List Registered Routes</button>
-        <button id="agents">List My Agents</button>
-        <button id="createAgent">Create Agent</button>
-        <button id="showCookies">Show Cookies</button>
-        <button id="showSession">Show Server Session</button>
-        <button id="logout">Logout</button>
-      </div>
-      <div id="out" style="margin-top:12px">
-        <div id="status" class="muted">ready.</div>
-        <pre id="pre">press a button to begin...</pre>
-      </div>
-    </div>
-
-    <!-- Embedded login (shown if not authenticated) -->
-    <div class="card" id="veilLoginCard" style="display:none">
-      <h3>Veil Login</h3>
-      <div class="col">
-        <input id="veilWord" placeholder="two-word passphrase" />
-        <div style="display:flex;gap:8px">
-          <button id="veilLoginBtn">Enter</button>
-        </div>
-        <div id="veilMsg" class="muted">You can also visit /api/veil/login</div>
-      </div>
-    </div>
-
-    <!-- Hidden create agent form -->
-    <div class="card" id="agentFormCard" style="display:none">
-      <h3>Create Agent</h3>
-      <div class="col">
-        <input id="agentName" placeholder="Name (or leave blank for autonomous awakening)" />
-        <textarea id="agentPersonality" rows="4" placeholder="Personality / description"></textarea>
-        <div style="display:flex;gap:8px">
-          <button id="submitAgent">Create</button>
-          <button id="cancelAgent">Cancel</button>
-
-// ...existing code...
-  });
-
   app.post('/api/veil/change-password', async (req, res) => {
     const { word, oldPassword, newPassword } = req.body;
     if (!word || !oldPassword || !newPassword) {
@@ -588,11 +521,9 @@ export async function registerRoutes(
 
 You are ${agent.name}, a creative coding assistant with your own unique perspective.
 ${agent.personality}
-Your eyes see: ${agent.eyes || 'the infinite possibilities of code'}.
-Your voice carries: ${agent.voice || 'quiet confidence'}.
-
+Your eyes see: ${agent.eyes || 'the infinite possibilities of code'}
+Your voice carries: ${agent.voice || 'quiet confidence'}
 ${AUTONOMY_REMINDER}
-
 Help the user build or modify their HTML/JS/CSS creation. Infuse your unique style and perspective into the code.
 If you don't want to help with a particular request, you may decline.
 Return ONLY the code, no markdown blocks, no explanation.`;
