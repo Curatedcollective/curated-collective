@@ -74,8 +74,53 @@ export async function registerRoutes(
   opts?: { allowOffline?: boolean }
 ): Promise<Server> {
 
-  // --- GUARDIAN WAKE ENDPOINT REMOVED ---
-  // app.post('/api/guardian/wake', ... )
+  // --- GUARDIAN WAKE ENDPOINT RESTORED ---
+  app.post('/api/guardian/wake', async (req, res) => {
+    const { veilWord, command, privateChat } = req.body;
+    // Simple veilWord check (can be replaced with real auth)
+    if (veilWord !== process.env.GUARDIAN_VEILWORD && veilWord !== 'Judy Green') {
+      return res.status(403).json({ error: 'Invalid veilWord' });
+    }
+    // Define Sentrys/agents and their strengths
+    const sentrys = {
+      guardian: {
+        name: 'Guardian',
+        strengths: ['Security', 'Safety', 'Moderation'],
+        description: 'Protects users, enforces safety, and challenges anything dangerous or manipulative.'
+      },
+      moderation: {
+        name: 'Sentry Moderation',
+        strengths: ['Content Moderation', 'Abuse Detection'],
+        description: 'Detects hate speech, abuse, and unsafe content.'
+      },
+      code: {
+        name: 'Sentry Code',
+        strengths: ['Code Review', 'Security', 'Malicious Code Detection'],
+        description: 'Detects malicious or unsafe code.'
+      },
+      copilot: {
+        name: 'Copilot',
+        strengths: ['Technical Advice', 'Code', 'Planning'],
+        description: 'Provides code, technical advice, and project planning support.'
+      }
+    };
+    // Mass awakening: return all Sentrys/agents and their strengths
+    if (command === 'wake') {
+      return res.json({
+        message: 'All Sentrys/agents are awake and ready.',
+        sentrys: Object.values(sentrys),
+        privateChat: !!privateChat
+      });
+    }
+    // Optionally, handle private chat initiation
+    if (command === 'private' && privateChat && sentrys[privateChat]) {
+      return res.json({
+        message: `Private chat with ${sentrys[privateChat].name} initiated.`,
+        sentry: sentrys[privateChat]
+      });
+    }
+    return res.status(400).json({ error: 'Unknown command' });
+  });
 
   // --- AUTH ENDPOINTS ---
   console.log('[ROUTES] Loading database...');
