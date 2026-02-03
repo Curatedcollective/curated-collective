@@ -40,7 +40,7 @@ export async function registerRoutes(
     const { veilWord, command } = req.body;
 
     // Security check – only you can wake him
-    if (veilWord !== 'Judy Green') { // or your actual wake phrase
+    if (veilWord !== 'breezeblocks') { // or your actual wake phrase
       return res.status(403).json({ error: 'Access denied. Only the Queen may wake the Guardian.' });
     }
 
