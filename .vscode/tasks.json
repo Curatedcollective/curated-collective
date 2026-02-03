@@ -7,6 +7,12 @@
 			"command": "curl -X POST http://localhost:8080/api/guardian/wake -H \"Content-Type: application/json\" -d '{\"veilWord\": \"Judy Green\", \"command\": \"wake\"}'",
 			"isBackground": false,
 			"problemMatcher": []
+		},
+		{
+			"label": "Test Guardian Wake Endpoint (Mass Awakening)",
+			"type": "shell",
+			"command": "curl -X POST http://localhost:8080/api/guardian/wake -H \"Content-Type: application/json\" -d '{\"veilWord\": \"Judy Green\", \"command\": \"wake\"}'",
+			"isBackground": false
 		}
 	]
 }
