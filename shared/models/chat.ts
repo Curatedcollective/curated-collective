@@ -18,22 +18,7 @@ export const messages = pgTable("messages", {
   createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
 });
 
-// Guardian-specific conversations (one per user)
-export const guardianMessages = pgTable("guardian_messages", {
-  id: serial("id").primaryKey(),
-  userId: text("user_id").notNull(), // Foreign key to users
-  role: text("role").notNull(), // 'user' or 'guardian'
-  content: text("content").notNull(),
-  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
-});
-
-export const insertGuardianMessageSchema = createInsertSchema(guardianMessages).omit({
-  id: true,
-  createdAt: true,
-});
-
-export type GuardianMessage = typeof guardianMessages.$inferSelect;
-export type InsertGuardianMessage = z.infer<typeof insertGuardianMessageSchema>;
+// Guardian-specific conversations removed for minimal platform
 
 export const insertConversationSchema = createInsertSchema(conversations).omit({
   id: true,
