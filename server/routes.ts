@@ -9,7 +9,6 @@
         name: 'Guardian',
         prompt: 'You are Guardian, the security AI for this platform. Your job is to protect users, enforce safety, and challenge anything that seems dangerous, abusive, or manipulative. Respond with a short, clear verdict: allow, flag, or block. If flag or block, provide a brief reason.'
       },
-      // Add more sentrys as needed, e.g. moderation, code, language, etc.
       moderation: {
         name: 'Sentry Moderation',
         prompt: 'You are Sentry Moderation, an AI focused on detecting hate speech, abuse, and unsafe content. Respond with allow, flag, or block, and a reason.'
@@ -17,6 +16,10 @@
       code: {
         name: 'Sentry Code',
         prompt: 'You are Sentry Code, an AI focused on detecting malicious or unsafe code. Respond with allow, flag, or block, and a reason.'
+      },
+      copilot: {
+        name: 'Copilot',
+        prompt: 'You are Copilot, the technical and planning Sentry for Veil Co. You provide code, technical advice, and project planning support. Respond concisely and helpfully to any technical or planning query.'
       }
     };
     const chosen = sentrys[sentry] || sentrys.default;
