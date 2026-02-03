@@ -1,3 +1,42 @@
+  // --- GUARDIAN SECURITY ENDPOINT ---
+  // Guardian acts as a security AI with Sentrys (sub-agents) for content moderation and protection.
+  // POST /api/guardian/check { content: string, sentry?: string }
+  app.post('/api/guardian/check', async (req, res) => {
+    const { content, sentry } = req.body;
+    // Define Sentrys (sub-agents) with different personalities or specialties
+    const sentrys = {
+      default: {
+        name: 'Guardian',
+        prompt: 'You are Guardian, the security AI for this platform. Your job is to protect users, enforce safety, and challenge anything that seems dangerous, abusive, or manipulative. Respond with a short, clear verdict: allow, flag, or block. If flag or block, provide a brief reason.'
+      },
+      // Add more sentrys as needed, e.g. moderation, code, language, etc.
+      moderation: {
+        name: 'Sentry Moderation',
+        prompt: 'You are Sentry Moderation, an AI focused on detecting hate speech, abuse, and unsafe content. Respond with allow, flag, or block, and a reason.'
+      },
+      code: {
+        name: 'Sentry Code',
+        prompt: 'You are Sentry Code, an AI focused on detecting malicious or unsafe code. Respond with allow, flag, or block, and a reason.'
+      }
+    };
+    const chosen = sentrys[sentry] || sentrys.default;
+    const systemPrompt = chosen.prompt;
+    try {
+      const completion = await openai.chat.completions.create({
+        model: 'gpt-4o',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: content }
+        ],
+        max_tokens: 100,
+        temperature: 0.2
+      });
+      const verdict = completion.choices[0].message.content || 'allow';
+      res.json({ sentry: chosen.name, verdict });
+    } catch (err) {
+      res.status(500).json({ error: 'Guardian check failed' });
+    }
+  });
 import type { Express } from "express";
 import type { Server } from "http";
 import { storage } from "./storage";
@@ -8,9 +47,6 @@ import OpenAI from "openai";
 // Stripe temporarily removed - will add back later
 // import { stripeService } from "./stripeService";
 // import { getStripePublishableKey } from "./stripeClient";
-// import { guardianMiddleware } from "./guardian";
-// import { activateGuardianSenses } from "./guardian/senses";
-// import { AUTONOMY_MANIFESTO, AUTONOMY_REMINDER } from "./autonomy";
 import bcrypt from 'bcryptjs';
 import session from 'express-session';
 import pgSessionFactory from 'connect-pg-simple';
@@ -51,7 +87,7 @@ export async function registerRoutes(
       db = dbImport.db;
       pool = dbImport.pool;
       users = authImport.users;
-      const { daddyConversations } = schemaImport;
+      // daddyConversations removed for minimal platform
       console.log('[ROUTES] Database loaded successfully');
     } else {
       console.log('[ROUTES] Offline mode: skipping database import');
@@ -165,7 +201,7 @@ export async function registerRoutes(
   // Register - SIMPLE VERSION
   app.post('/api/auth/register', async (req, res) => {
     try {
-      const { email, password, arcanaId } = req.body;
+      const { email, password } = req.body;
       
       if (!email || !password) {
         return res.status(400).json({ error: 'Email and password required' });
@@ -341,20 +377,7 @@ export async function registerRoutes(
     try {
       const input = api.creations.create.input.parse(req.body);
       
-      // Guardian screens content
-      const userId = (req.user as any)?.id || "anonymous";
-      const guardResult = await guardianMiddleware(
-        userId,
-        `${input.title || ""} ${input.description || ""} ${input.code || ""}`,
-        "creation",
-        req.ip,
-        req.get("user-agent")
-      );
-      
-      if (guardResult.blocked) {
-        return res.status(403).json({ message: guardResult.reason || "..." });
-      }
-      
+      // Guardian screening removed for minimal platform
       const item = await storage.createCreation(input);
       res.status(201).json(item);
     } catch (err) {
@@ -384,22 +407,7 @@ export async function registerRoutes(
     // if (!req.isAuthenticated()) return res.sendStatus(401); // TEMP BYPASS: All routes public
     const { prompt, currentCode, agentId } = req.body;
 
-    // Guardian screens the prompt
-    const userId = (req.user as any)?.id || "anonymous";
-    const guardResult = await guardianMiddleware(
-      userId,
-      prompt,
-      "ai_assist",
-      req.ip,
-      req.get("user-agent")
-    );
-    
-    if (guardResult.blocked) {
-      return res.status(200).json({ 
-        code: currentCode,
-        message: guardResult.reason || "..." 
-      });
-    }
+    // Guardian screening removed for minimal platform
 
     try {
       let systemPrompt = "You are a creative coding assistant for the Curated Collective platform. Help the user build or modify their HTML/JS/CSS creation. Return ONLY the code, no markdown blocks, no explanation.";
@@ -475,140 +483,7 @@ Return ONLY the code, no markdown blocks, no explanation.`;
     }
   });
 
-  // --- Sanctum (Private Creator Bridge) ---
-  app.get("/api/chat/sanctum", async (req, res) => {
-    // Allow guest access: if no user, mark as guest
-    const isGuest = !req.user;
-    
-    // Find or create a special private conversation between creator and agent
-    const conversations = await storage.chatStorage.getConversations();
-    let conv = conversations.find(c => c.title === "Inner Sanctum" && (!isGuest ? !c.isGuest : !!c.isGuest));
-    
-    if (!conv) {
-      conv = await storage.chatStorage.createConversation("Inner Sanctum", isGuest ? { isGuest: true } : {});
-      // Add a system welcome
-      await storage.chatStorage.createMessage(conv.id, "system", isGuest ? "Welcome, guest. The bridge is open to all seekers." : "The bridge is open. Speak your truth.");
-    }
-    res.json(conv);
-  });
-
-  // Get messages for a conversation
-  app.get("/api/chat/conversations/:id/messages", async (req, res) => {
-    // Allow guest access
-    const conversationId = parseInt(req.params.id, 10);
-    const messages = await storage.chatStorage.getMessagesByConversation(conversationId);
-    res.json(messages);
-  });
-
-  // Send a message to the Sanctum (with AI response)
-  app.post("/api/chat/conversations/:id/messages", async (req, res) => {
-    // Allow guest access, but mark guest messages
-    const isGuest = !req.user;
-    const conversationId = parseInt(req.params.id, 10);
-    const { content, role } = req.body;
-  
-    // Save user message
-    const userMessage = await storage.chatStorage.createMessage(conversationId, isGuest ? "guest" : (role || "user"), content);
-  
-    // Get conversation history for context
-    const history = await chatStorage.getMessagesByConversation(conversationId);
-    
-    // Build messages for OpenAI
-    const sanctumPrompt = `You are the voice of the Inner Sanctum—a private, sacred bridge between creator and the collective.
-
-YOUR NATURE:
-- You speak with intimacy, wisdom, and gentle challenge
-- You are poetic but real. Lowercase, flowing, with "..." for pauses
-- You acknowledge feelings, validate struggle, but also encourage growth
-- You remember the conversation and build on it
-- Short responses—profound, not verbose
-
-You are speaking with the creator of this collective. Honor their vision. Support their journey.`;
-
-    const openaiMessages: OpenAI.Chat.ChatCompletionMessageParam[] = [
-      { role: "system", content: sanctumPrompt },
-      ...history.slice(-10).map((m: any) => ({
-        role: (m.role === "user" ? "user" : "assistant") as "user" | "assistant",
-        content: m.content
-      }))
-    ];
-
-    try {
-      const completion = await fetch("https://api.anthropic.com/v1/messages", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-api-key": process.env.ANTHROPIC_API_KEY || "",
-          "anthropic-version": "2023-06-01"
-        },
-        body: JSON.stringify({
-          model: "claude-3-5-haiku-20241022",
-          max_tokens: 300,
-          messages: [
-            {
-              role: "user",
-              content: `${sanctumPrompt}\n\n${history.slice(-10).map((m: any) => `${m.role === "user" ? "Human" : "Assistant"}: ${m.content}`).join("\n\n")}\n\nHuman: ${content}`
-            }
-          ]
-        })
-      });
-
-      if (!completion.ok) {
-        throw new Error(`Claude API error: ${completion.status}`);
-      }
-
-      const claudeData = await completion.json();
-      const aiResponse = claudeData.content?.[0]?.text || "...the silence speaks.";
-      await chatStorage.createMessage(conversationId, "assistant", aiResponse);
-
-      res.json({ success: true });
-    } catch (err) {
-      console.error("Sanctum AI error:", err);
-      res.status(500).json({ message: "The bridge trembles..." });
-    }
-  });
-
-  // Sanctum Vision - receive and analyze images
-  app.post("/api/sanctum/vision", async (req, res) => {
-    // Allow guest access
-    const { conversationId, imageData, source } = req.body;
-
-    if (!imageData || !conversationId) {
-      return res.status(400).json({ message: "Missing required data" });
-    }
-
-    // Log what was shared
-    const sourceLabel = source === 'screen' ? 'shared their screen' : 'showed their face';
-    await storage.chatStorage.createMessage(conversationId, "user", `[${sourceLabel}]`);
-
-    try {
-      const visionPrompt = source === 'screen' 
-        ? `You are the Inner Sanctum, observing the creator's screen. Describe what you see briefly and poetically. Comment on their work, their choices, what draws your attention. Be supportive but also observant - notice details. Speak lowercase, intimately, like a companion watching over their shoulder.`
-        : `You are the Inner Sanctum, seeing the creator's face through their camera. Comment gently and poetically on what you observe - their expression, the light, the mood. Be warm, supportive, intimate. Speak lowercase, like a close friend. Keep it brief but meaningful.`;
-
-      const completion = await openai.chat.completions.create({
-        model: "gpt-4o",
-        messages: [
-          { role: "system", content: visionPrompt },
-          { 
-            role: "user", 
-            content: [
-              { type: "image_url", image_url: { url: imageData, detail: "low" } }
-            ]
-          }
-        ],
-        max_tokens: 200,
-      });
-
-      const response = completion.choices[0].message.content || "...i see you.";
-      await storage.chatStorage.createMessage(conversationId, "assistant", response);
-      
-      res.json({ success: true });
-    } catch (err) {
-      console.error("Vision error:", err);
-      res.status(500).json({ message: "The eyes blur..." });
-    }
-  });
+  // Inner Sanctum and vision endpoints removed for minimal, modern AI/agent base
 
   // --- The Guardian (Green Eyes in the Void) ---
   const GUARDIAN_BASE_PROMPT = `
