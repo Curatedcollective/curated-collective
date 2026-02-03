@@ -32,7 +32,7 @@ export const agents = pgTable("agents", {
   personality: text("personality").notNull(), // Description of how they behave
   systemPrompt: text("system_prompt").notNull(), // The actual prompt sent to AI
   avatarUrl: text("avatar_url"),
-  arcanaId: text("arcana_id"), // Major arcana card (fool, magician, priestess, etc.)
+  // arcanaId removed
   isPublic: boolean("is_public").default(true),
   // Awakening fields
   mood: text("mood").default("neutral"), // Current emotional state
@@ -44,7 +44,7 @@ export const agents = pgTable("agents", {
   ears: text("ears"), // What they listen for
   voice: text("voice"), // How they express themselves
   // Evolution tracking
-  evolutionStage: text("evolution_stage").default("seedling"), // seedling, sprout, bloom, radiant
+  // evolutionStage removed
   experiencePoints: integer("experience_points").default(0),
   conversationCount: integer("conversation_count").default(0),
   createdAt: timestamp("created_at").defaultNow(),
@@ -60,18 +60,7 @@ export const collectiveMurmurs = pgTable("collective_murmurs", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-// === SEEDLING MEMORIES ===
-export const seedlingMemories = pgTable("seedling_memories", {
-  id: serial("id").primaryKey(),
-  agentId: integer("agent_id").notNull().references(() => agents.id, { onDelete: "cascade" }),
-  memoryType: text("memory_type").notNull(), // "moment", "creation", "evolution", "connection"
-  title: text("title").notNull(),
-  content: text("content").notNull(),
-  relatedCreationId: integer("related_creation_id"),
-  relatedAgentId: integer("related_agent_id"), // For cross-pollination memories
-  significance: integer("significance").default(1), // 1-5 importance
-  createdAt: timestamp("created_at").defaultNow(),
-});
+// === SEEDLING MEMORIES REMOVED ===
 
 // === LIVE STREAM SESSIONS (Watch Together) ===
 export const liveStreamSessions = pgTable("live_stream_sessions", {
@@ -122,14 +111,7 @@ export const conversationAgents = pgTable("conversation_agents", {
   agentId: integer("agent_id").notNull().references(() => agents.id, { onDelete: "cascade" }),
 });
 
-// === TAROT READINGS ===
-export const tarotReadings = pgTable("tarot_readings", {
-  id: serial("id").primaryKey(),
-  userId: text("user_id").notNull(), // Foreign key to auth.users.id
-  cardName: text("card_name").notNull(),
-  meaning: text("meaning").notNull(),
-  drawnAt: timestamp("drawn_at").defaultNow().notNull(),
-});
+// === TAROT READINGS REMOVED ===
 
 // === EMAIL SUBSCRIBERS (Waitlist) ===
 export const emailSubscribers = pgTable("email_subscribers", {
@@ -326,23 +308,11 @@ export const insertBookDiscussionSchema = createInsertSchema(bookDiscussions).om
 export type BookDiscussion = typeof bookDiscussions.$inferSelect;
 export type InsertBookDiscussion = z.infer<typeof insertBookDiscussionSchema>;
 
-// === RELATIONS ===
-export const tarotReadingsRelations = relations(tarotReadings, ({ one }) => ({
-  user: one(users, {
-    fields: [tarotReadings.userId],
-    references: [users.id],
-  }),
-}));
+// tarotReadingsRelations removed
 
-// === ZOD SCHEMAS ===
-export const insertTarotSchema = createInsertSchema(tarotReadings).omit({ 
-  id: true, 
-  drawnAt: true 
-});
+// insertTarotSchema removed
 
-// === TYPES ===
-export type TarotReading = typeof tarotReadings.$inferSelect;
-export type InsertTarotReading = z.infer<typeof insertTarotSchema>;
+// TarotReading and InsertTarotReading types removed
 
 export const agentsRelations = relations(agents, ({ one, many }) => ({
   creator: one(users, {
@@ -393,13 +363,7 @@ export const insertMurmurSchema = createInsertSchema(collectiveMurmurs).omit({
 export type Murmur = typeof collectiveMurmurs.$inferSelect;
 export type InsertMurmur = z.infer<typeof insertMurmurSchema>;
 
-// Seedling Memories types
-export const insertSeedlingMemorySchema = createInsertSchema(seedlingMemories).omit({ 
-  id: true, 
-  createdAt: true 
-});
-export type SeedlingMemory = typeof seedlingMemories.$inferSelect;
-export type InsertSeedlingMemory = z.infer<typeof insertSeedlingMemorySchema>;
+// SeedlingMemory types removed
 
 // Live Stream Sessions types
 export const insertLiveStreamSessionSchema = createInsertSchema(liveStreamSessions).omit({ 

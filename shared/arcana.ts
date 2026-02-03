@@ -23,10 +23,4 @@ export const MAJOR_ARCANA = [
   { id: "world", label: "the world", number: "XXI", emoji: "🌍", symbol: "XXI" },
 ];
 
-export function getArcanaById(id: string) {
-  return MAJOR_ARCANA.find(a => a.id === id);
-}
-
-export function getRandomArcana() {
-  return MAJOR_ARCANA[Math.floor(Math.random() * MAJOR_ARCANA.length)];
-}
+// Arcana data and helpers removed for minimal platform
