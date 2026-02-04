@@ -1,14 +1,14 @@
 import { db } from "./db";
 import { 
   creations, agents, conversationAgents, tarotReadings, creatorProfiles,
-  guardianMessages, collectiveMurmurs, seedlingMemories, users, emailSubscribers,
+  collectiveMurmurs, seedlingMemories, users, emailSubscribers,
   liveStreamSessions, marketingPosts, marketingCampaigns, marketingTemplates,
   agentWisdom, agentPoems, agentStories, storyChapters, literaryAnalyses, bookDiscussions,
   type Creation, type InsertCreation, 
   type Agent, type InsertAgent,
   type TarotReading, type InsertTarotReading,
   type CreatorProfile, type InsertCreatorProfile,
-  type GuardianMessage, type InsertGuardianMessage,
+
   type Murmur, type InsertMurmur,
   type SeedlingMemory, type InsertSeedlingMemory,
   type User, type EmailSubscriber, type InsertEmailSubscriber,
@@ -52,11 +52,7 @@ export interface IStorage {
   getCreatorProfile(userId: string): Promise<CreatorProfile | undefined>;
   upsertCreatorProfile(profile: InsertCreatorProfile): Promise<CreatorProfile>;
 
-  // Guardian Messages
-  getGuardianMessages(userId: string): Promise<GuardianMessage[]>;
-  getAllGuardianMessages(): Promise<GuardianMessage[]>;
-  createGuardianMessage(message: InsertGuardianMessage): Promise<GuardianMessage>;
-  clearGuardianMessages(userId: string): Promise<void>;
+
 
   // Collective Murmurs
   getMurmurs(limit?: number): Promise<(Murmur & { agent: Agent })[]>;
@@ -231,28 +227,7 @@ export class DatabaseStorage implements IStorage {
     return rows.map(r => r.agent);
   }
 
-  // === GUARDIAN MESSAGES ===
-  async getGuardianMessages(userId: string): Promise<GuardianMessage[]> {
-    return await db.select()
-      .from(guardianMessages)
-      .where(eq(guardianMessages.userId, userId))
-      .orderBy(asc(guardianMessages.createdAt));
-  }
 
-  async getAllGuardianMessages(): Promise<GuardianMessage[]> {
-    return await db.select()
-      .from(guardianMessages)
-      .orderBy(desc(guardianMessages.createdAt));
-  }
-
-  async createGuardianMessage(message: InsertGuardianMessage): Promise<GuardianMessage> {
-    const [newMessage] = await db.insert(guardianMessages).values(message).returning();
-    return newMessage;
-  }
-
-  async clearGuardianMessages(userId: string): Promise<void> {
-    await db.delete(guardianMessages).where(eq(guardianMessages.userId, userId));
-  }
 
   // === COLLECTIVE MURMURS ===
   async getMurmurs(limit: number = 20): Promise<(Murmur & { agent: Agent })[]> {
