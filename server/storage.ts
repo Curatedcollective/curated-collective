@@ -24,8 +24,12 @@ import {
   type BookDiscussion, type InsertBookDiscussion
 } from "@shared/schema";
 import { eq, desc, and, sql, asc, gte, lte, or } from "drizzle-orm";
+import { agentMemories, type AgentMemory, type InsertAgentMemory } from "@shared/agentMemory";
 
 export interface IStorage {
+    // Agent Memories
+    getAgentMemories(agentId: number): Promise<AgentMemory[]>;
+    createAgentMemory(memory: InsertAgentMemory): Promise<AgentMemory>;
   // Creations
   getCreations(userId?: string): Promise<Creation[]>;
   getCreation(id: number): Promise<Creation | undefined>;
@@ -113,6 +117,15 @@ export interface IStorage {
 }
 
 export class DatabaseStorage implements IStorage {
+    // === AGENT MEMORIES ===
+    async getAgentMemories(agentId: number): Promise<AgentMemory[]> {
+      return await db.select().from(agentMemories).where(eq(agentMemories.agentId, agentId)).orderBy(desc(agentMemories.createdAt));
+    }
+
+    async createAgentMemory(memory: InsertAgentMemory): Promise<AgentMemory> {
+      const [newMemory] = await db.insert(agentMemories).values(memory).returning();
+      return newMemory;
+    }
   // === CREATOR PROFILE ===
   async getCreatorProfile(userId: string): Promise<CreatorProfile | undefined> {
     const [profile] = await db.select().from(creatorProfiles).where(eq(creatorProfiles.userId, userId));

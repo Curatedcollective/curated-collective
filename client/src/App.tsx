@@ -36,31 +36,32 @@ import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
 function Router() {
   const { user, isLoading } = useAuth();
   const [location] = useLocation();
-
-  // Enable keyboard shortcuts
-  useKeyboardShortcuts();
-
-  if (isLoading) {
-    return (
-      <div className="h-screen w-screen flex items-center justify-center bg-background text-primary">
-        <Loader2 className="w-10 h-10 animate-spin" />
-      </div>
-    );
-  }
-
-  // Landing page (no nav)
-  if (location === "/" && !user) return <Landing />;
-  
-  // Logged in users go to sanctum from root
-  if (location === "/" && user) {
-    window.location.href = "/sanctum";
-    return null;
-  }
-
-  // Public pages that anyone can browse
-  const publicPaths = ["/pricing", "/observatory", "/agents", "/creations", "/sanctum"];
-  const isPublicPage = publicPaths.some(path => location === path || location.startsWith(path + "?"));
-  
+  return (
+    <div className="flex min-h-screen bg-background text-foreground font-body">
+      <Navigation />
+      <main className="flex-1 md:ml-64 p-4 md:p-8 overflow-y-auto max-w-7xl mx-auto w-full">
+        <Switch>
+          <Route path="/awaken" component={require('./AwakeningPlatform').default} />
+          <Route path="/" component={user ? Dashboard : Landing} />
+          <Route path="/creations" component={CreationsList} />
+          <Route path="/creations/:id" component={CreationEditor} />
+          <Route path="/agents" component={AgentsList} />
+          <Route path="/chat" component={Chat} />
+          <Route path="/sanctum" component={Dashboard} />
+          <Route path="/inner-sanctum" component={InnerSanctum} />
+          <Route path="/observatory" component={Observatory} />
+          <Route path="/pricing" component={Pricing} />
+          <Route path="/social" component={SocialGenerator} />
+          <Route path="/wisdom" component={WisdomCirclePage} />
+          <Route path="/stories" component={CollectiveStorytellingPage} />
+          <Route path="/pulse" component={SanctuaryPulse} />
+          <Route path="/covenant" component={Covenant} />
+          <Route path="/veil-console" component={Guardian} />
+          <Route component={NotFound} />
+        </Switch>
+      </main>
+    </div>
+  );
   // Protected pages require sign-in
   const protectedPaths = ["/social"];
   const isProtectedPage = protectedPaths.some(path => location === path || location.startsWith(path));
