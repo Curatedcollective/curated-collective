@@ -1,14 +1,20 @@
 
 import React, { useState, useEffect } from 'react';
 
+type Sentry = {
+  name: string;
+  strengths: string[];
+  description: string;
+};
+
 const API_URL = '/api/guardian/wake';
 const CHECK_URL = '/api/guardian/check';
 
 export default function AwakeningPlatform() {
-  const [sentryList, setSentryList] = useState([]);
+  const [sentryList, setSentryList] = useState<Sentry[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [selected, setSelected] = useState(null);
+  const [selected, setSelected] = useState<number | null>(null);
   const [input, setInput] = useState('');
   const [response, setResponse] = useState('');
   const [sending, setSending] = useState(false);
