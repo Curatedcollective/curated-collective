@@ -1,7 +1,6 @@
-import { integer, pgTable, text, timestamp } from 'drizzle-orm/pg-core';
 
 export const agentMemories = pgTable('agent_memories', {
-  id: integer('id').primaryKey().autoincrement(),
+  id: serial('id').primaryKey(),
   agentId: integer('agent_id').notNull(),
   content: text('content').notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),

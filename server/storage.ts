@@ -1,7 +1,7 @@
 import { db } from "./db";
 import { 
-  creations, agents, conversationAgents, tarotReadings, creatorProfiles,
-  collectiveMurmurs, seedlingMemories, users, emailSubscribers,
+  creations, agents, conversationAgents, creatorProfiles,
+  collectiveMurmurs, users, emailSubscribers,
   liveStreamSessions, marketingPosts, marketingCampaigns, marketingTemplates,
   agentWisdom, agentPoems, agentStories, storyChapters, literaryAnalyses, bookDiscussions,
   type Creation, type InsertCreation, 
@@ -10,7 +10,7 @@ import {
   type CreatorProfile, type InsertCreatorProfile,
 
   type Murmur, type InsertMurmur,
-  type SeedlingMemory, type InsertSeedlingMemory,
+
   type User, type EmailSubscriber, type InsertEmailSubscriber,
   type LiveStreamSession, type InsertLiveStreamSession,
   type MarketingPost, type InsertMarketingPost,
