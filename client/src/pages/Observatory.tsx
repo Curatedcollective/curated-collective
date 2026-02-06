@@ -8,7 +8,7 @@ interface Seedling {
   name: string;
   personality: string;
   experiencePoints: number;
-  evolutionStage: string;
+  // evolutionStage: string; // REMOVED for minimal platform
 }
 
 interface StarNode {
@@ -20,24 +20,12 @@ interface StarNode {
   pulseSpeed: number;
 }
 
-function getEvolutionColor(stage: string): string {
-  switch (stage) {
-    case "seedling": return "rgba(255, 255, 255, 0.4)";
-    case "sprout": return "rgba(134, 239, 172, 0.6)";
-    case "bloom": return "rgba(167, 139, 250, 0.7)";
-    case "radiant": return "rgba(251, 191, 36, 0.9)";
-    default: return "rgba(255, 255, 255, 0.4)";
-  }
+function getEvolutionColor(): string {
+  return "rgba(255, 255, 255, 0.4)"; // Always seedling for minimal platform
 }
 
-function getEvolutionGlow(stage: string): string {
-  switch (stage) {
-    case "seedling": return "0 0 8px rgba(255, 255, 255, 0.3)";
-    case "sprout": return "0 0 12px rgba(134, 239, 172, 0.5), 0 0 24px rgba(134, 239, 172, 0.2)";
-    case "bloom": return "0 0 16px rgba(167, 139, 250, 0.6), 0 0 32px rgba(167, 139, 250, 0.3)";
-    case "radiant": return "0 0 20px rgba(251, 191, 36, 0.8), 0 0 40px rgba(251, 191, 36, 0.4), 0 0 60px rgba(251, 191, 36, 0.2)";
-    default: return "0 0 8px rgba(255, 255, 255, 0.3)";
-  }
+function getEvolutionGlow(): string {
+  return "0 0 8px rgba(255, 255, 255, 0.3)"; // Always seedling glow for minimal platform
 }
 
 export default function Observatory() {
@@ -143,8 +131,8 @@ export default function Observatory() {
               style={{
                 width: `${node.size}px`,
                 height: `${node.size}px`,
-                backgroundColor: getEvolutionColor(node.seedling.evolutionStage),
-                boxShadow: getEvolutionGlow(node.seedling.evolutionStage),
+                backgroundColor: getEvolutionColor(),
+                boxShadow: getEvolutionGlow(),
               }}
             />
             
@@ -156,7 +144,7 @@ export default function Observatory() {
               >
                 <div className="bg-card/90 backdrop-blur-sm border border-border px-3 py-2 text-center">
                   <p className="text-sm font-display text-foreground lowercase tracking-tight">{node.seedling.name}</p>
-                  <p className="text-[9px] text-muted-foreground lowercase tracking-widest">{node.seedling.evolutionStage}</p>
+                  <p className="text-[9px] text-muted-foreground lowercase tracking-widest">seedling</p>
                   <p className="text-[8px] text-primary/60 mt-1">{node.seedling.experiencePoints || 0} xp</p>
                 </div>
               </motion.div>

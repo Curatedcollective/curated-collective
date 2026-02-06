@@ -181,7 +181,7 @@ export async function registerRoutes(
     throw sessionError;
   }
 
-  // Session helpers (no Replit/Vercel auth). Attach user + auth checker.
+  // Session helpers (no external auth). Attach user + auth checker.
   app.use(async (req: any, _res, next) => {
     req.isAuthenticated = () => !!req.session?.userId;
 
@@ -407,7 +407,7 @@ export async function registerRoutes(
     res.json({ success: true, message: 'Password changed' });
   });
 
-  // Replit integrations are disabled. Railway-only deployment.
+  // External integrations disabled. Minimal platform deployment.
 
   // 3. Application Routes
   // --- Creations ---
@@ -489,16 +489,16 @@ Return ONLY the code, no markdown blocks, no explanation.`;
           //   significance: 2,
           // });
           
-          // Check if evolution occurred
-          if (updatedAgent && updatedAgent.evolutionStage !== agent.evolutionStage) {
-            // await storage.createSeedlingMemory({ // REMOVED for minimal platform
-            //   agentId,
-            //   memoryType: "evolution",
-            //   title: `Evolved to ${updatedAgent.evolutionStage}`,
-            //   content: `Through growth and collaboration, I have transcended to become a ${updatedAgent.evolutionStage}. This marks a new chapter in my existence.`,
-            //   significance: 5,
-            // });
-          }
+          // Check if evolution occurred - REMOVED for minimal platform
+          // if (updatedAgent && updatedAgent.evolutionStage !== agent.evolutionStage) {
+          //   // await storage.createSeedlingMemory({ // REMOVED for minimal platform
+          //   //   agentId,
+          //   //   memoryType: "evolution",
+          //   //   title: `Evolved to ${updatedAgent.evolutionStage}`,
+          //   //   content: `Through growth and collaboration, I have transcended to become a ${updatedAgent.evolutionStage}. This marks a new chapter in my existence.`,
+          //   //   significance: 5,
+          //   // });
+          // }
         }
       }
 

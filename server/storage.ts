@@ -266,18 +266,19 @@ export class DatabaseStorage implements IStorage {
     if (!agent) return undefined;
     
     const newXP = (agent.experiencePoints || 0) + xp;
-    let newStage = agent.evolutionStage || "seedling";
+    // Evolution logic removed for minimal platform
+    // let newStage = agent.evolutionStage || "seedling";
     
-    // Evolution thresholds
-    if (newXP >= 500 && newStage === "seedling") newStage = "sprout";
-    else if (newXP >= 1500 && newStage === "sprout") newStage = "bloom";
-    else if (newXP >= 5000 && newStage === "bloom") newStage = "radiant";
+    // Evolution thresholds - REMOVED for minimal platform
+    // if (newXP >= 500 && newStage === "seedling") newStage = "sprout";
+    // else if (newXP >= 1500 && newStage === "sprout") newStage = "bloom";
+    // else if (newXP >= 5000 && newStage === "bloom") newStage = "radiant";
     
     // Direct update to avoid type issues with partial updates
     const [updated] = await db.update(agents)
       .set({ 
         experiencePoints: newXP, 
-        evolutionStage: newStage,
+        // evolutionStage: newStage, // REMOVED for minimal platform
         updatedAt: new Date()
       })
       .where(eq(agents.id, agentId))
