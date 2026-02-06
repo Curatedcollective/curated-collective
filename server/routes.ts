@@ -185,7 +185,7 @@ export async function registerRoutes(
   app.use(async (req: any, _res, next) => {
     req.isAuthenticated = () => !!req.session?.userId;
 
-    if (!req.session?.userId) {
+    if (!req.session?.userId || !db) {
       req.user = undefined;
       return next();
     }
