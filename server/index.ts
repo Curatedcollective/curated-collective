@@ -155,7 +155,9 @@ async function initializeServer() {
     try {
       // Test database connection FIRST before anything else
       console.log('[INIT] Testing database connection...');
+      console.log('[INIT] DATABASE_URL configured:', !!process.env.DATABASE_URL);
       const dbImport = await import('./db');
+      console.log('[INIT] DB module loaded, testing connection...');
       await dbImport.db.execute('SELECT 1');
       console.log('[INIT] Database connection verified');
 
