@@ -28,8 +28,6 @@ const openai = new OpenAI({
 });
 
 export async function registerRoutes(
-
-export async function registerRoutes(
   httpServer: Server,
   app: Express,
   opts?: { allowOffline?: boolean }
@@ -77,10 +75,6 @@ export async function registerRoutes(
       res.status(500).json({ error: 'Guardian check failed' });
     }
   });
-  httpServer: Server,
-  app: Express,
-  opts?: { allowOffline?: boolean }
-): Promise<Server> {
 
   // --- GUARDIAN WAKE ENDPOINT RESTORED ---
   app.post('/api/guardian/wake', async (req, res) => {
