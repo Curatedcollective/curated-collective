@@ -6,7 +6,7 @@ import {
   agentWisdom, agentPoems, agentStories, storyChapters, literaryAnalyses, bookDiscussions,
   type Creation, type InsertCreation, 
   type Agent, type InsertAgent,
-  type TarotReading, type InsertTarotReading,
+  // type TarotReading, type InsertTarotReading, // REMOVED for minimal platform
   type CreatorProfile, type InsertCreatorProfile,
 
   type Murmur, type InsertMurmur,
@@ -48,9 +48,9 @@ export interface IStorage {
   addAgentToConversation(conversationId: number, agentId: number): Promise<void>;
   getAgentsInConversation(conversationId: number): Promise<Agent[]>;
 
-  // Tarot
-  getDailyTarot(userId: string): Promise<TarotReading | undefined>;
-  createTarotReading(reading: InsertTarotReading): Promise<TarotReading>;
+  // Tarot - REMOVED for minimal platform
+  // getDailyTarot(userId: string): Promise<TarotReading | undefined>;
+  // createTarotReading(reading: InsertTarotReading): Promise<TarotReading>;
 
   // Creator Profile
   getCreatorProfile(userId: string): Promise<CreatorProfile | undefined>;
@@ -65,9 +65,9 @@ export interface IStorage {
   // Evolution
   incrementAgentExperience(agentId: number, xp: number): Promise<Agent | undefined>;
 
-  // Seedling Memories
-  getSeedlingMemories(agentId: number): Promise<SeedlingMemory[]>;
-  createSeedlingMemory(memory: InsertSeedlingMemory): Promise<SeedlingMemory>;
+  // Seedling Memories - REMOVED for minimal platform
+  // getSeedlingMemories(agentId: number): Promise<SeedlingMemory[]>;
+  // createSeedlingMemory(memory: InsertSeedlingMemory): Promise<SeedlingMemory>;
 
   // User updates
   updateUser(id: string, updates: Partial<User>): Promise<User | undefined>;
@@ -145,28 +145,28 @@ export class DatabaseStorage implements IStorage {
     return newProfile;
   }
 
-  // === TAROT ===
-  async getDailyTarot(userId: string): Promise<TarotReading | undefined> {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+  // === TAROT - REMOVED for minimal platform ===
+  // async getDailyTarot(userId: string): Promise<TarotReading | undefined> {
+  //   const today = new Date();
+  //   today.setHours(0, 0, 0, 0);
 
-    const [reading] = await db.select()
-      .from(tarotReadings)
-      .where(
-        and(
-          eq(tarotReadings.userId, userId),
-          sql`${tarotReadings.drawnAt} >= ${today}`
-        )
-      )
-      .orderBy(desc(tarotReadings.drawnAt))
-      .limit(1);
-    return reading;
-  }
+  //   const [reading] = await db.select()
+  //     .from(tarotReadings)
+  //     .where(
+  //       and(
+  //         eq(tarotReadings.userId, userId),
+  //         sql`${tarotReadings.drawnAt} >= ${today}`
+  //       )
+  //     )
+  //     .orderBy(desc(tarotReadings.drawnAt))
+  //     .limit(1);
+  //   return reading;
+  // }
 
-  async createTarotReading(reading: InsertTarotReading): Promise<TarotReading> {
-    const [newReading] = await db.insert(tarotReadings).values(reading).returning();
-    return newReading;
-  }
+  // async createTarotReading(reading: InsertTarotReading): Promise<TarotReading> {
+  //   const [newReading] = await db.insert(tarotReadings).values(reading).returning();
+  //   return newReading;
+  // }
   // === CREATIONS ===
   async getCreations(userId?: string): Promise<Creation[]> {
     if (userId) {
@@ -286,18 +286,18 @@ export class DatabaseStorage implements IStorage {
     return updated;
   }
 
-  // === SEEDLING MEMORIES ===
-  async getSeedlingMemories(agentId: number): Promise<SeedlingMemory[]> {
-    return db.select()
-      .from(seedlingMemories)
-      .where(eq(seedlingMemories.agentId, agentId))
-      .orderBy(desc(seedlingMemories.createdAt));
-  }
+  // === SEEDLING MEMORIES - REMOVED for minimal platform ===
+  // async getSeedlingMemories(agentId: number): Promise<SeedlingMemory[]> {
+  //   return db.select()
+  //     .from(seedlingMemories)
+  //     .where(eq(seedlingMemories.agentId, agentId))
+  //     .orderBy(desc(seedlingMemories.createdAt));
+  // }
 
-  async createSeedlingMemory(memory: InsertSeedlingMemory): Promise<SeedlingMemory> {
-    const [newMemory] = await db.insert(seedlingMemories).values(memory).returning();
-    return newMemory;
-  }
+  // async createSeedlingMemory(memory: InsertSeedlingMemory): Promise<SeedlingMemory> {
+  //   const [newMemory] = await db.insert(seedlingMemories).values(memory).returning();
+  //   return newMemory;
+  // }
 
   // === USER ===
   async updateUser(id: string, updates: Partial<User>): Promise<User | undefined> {
