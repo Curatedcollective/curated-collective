@@ -1,4 +1,6 @@
 
+import { pgTable, serial, integer, text, timestamp } from 'drizzle-orm/pg-core';
+
 export const agentMemories = pgTable('agent_memories', {
   id: serial('id').primaryKey(),
   agentId: integer('agent_id').notNull(),

@@ -41,6 +41,7 @@ function Router() {
       <Navigation />
       <main className="flex-1 md:ml-64 p-4 md:p-8 overflow-y-auto max-w-7xl mx-auto w-full">
         <Switch>
+          <Route path="/heart" component={require('./HeartDashboard').default} />
           <Route path="/awaken" component={require('./AwakeningPlatform').default} />
           <Route path="/" component={user ? Dashboard : Landing} />
           <Route path="/creations" component={CreationsList} />
